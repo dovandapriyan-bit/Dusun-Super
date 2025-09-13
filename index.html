@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem Keamanan Dusun</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#000000">
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+    }
+    .btn {
+      background: #28a745;
+      color: white;
+      padding: 12px 20px;
+      margin-top: 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 18px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>🚨 Keamanan Dusun</h1>
+  <p>Laporkan kejadian darurat langsung dari lokasi Anda</p>
+  <button class="btn" onclick="lapor()">Buat Laporan</button>
+
+  <script>
+    function lapor() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          alert("Laporan dibuat!\nLokasi: " + pos.coords.latitude + "," + pos.coords.longitude);
+        }, () => {
+          alert("Tidak bisa ambil lokasi!");
+        });
+      } else {
+        alert("Browser tidak mendukung GPS!");
+      }
+    }
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("service-worker.js");
+    }
+  </script>
+</body>
+</html>
