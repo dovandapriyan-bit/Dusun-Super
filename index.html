@@ -1,103 +1,14 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sistem Keamanan Dusun - Modern</title>
-<style>
-html, body {
-  margin:0; padding:0; height:100%; font-family: Arial, sans-serif;
-}
-body { background:#f0f0f0; display:flex; justify-content:center; align-items:center; }
-.container { width:100%; max-width:450px; background:#fff; border-radius:15px; padding:20px; box-shadow:0 0 20px rgba(0,0,0,0.2); }
-h1 { text-align:center; }
-input, button { width:100%; padding:12px; margin:10px 0; border-radius:8px; border:1px solid #ccc; font-size:16px; }
-button { cursor:pointer; font-weight:bold; }
-#loginBtn { background:#007BFF; color:white; border:none; }
-#loginBtn:hover { background:#0056b3; }
-#sosBtn { background:#FF3B3B; color:white; font-size:18px; font-weight:bold; padding:15px; border:none; border-radius:10px; margin-top:20px; }
-#sosBtn:hover { background:#c70000; }
-.hidden { display:none; }
-#map { width:100%; height:250px; border-radius:10px; margin-top:10px; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem Keamanan Dusun</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="container">
-  <h1>Keamanan Dusun</h1>
-  <div id="loginDiv">
-    <input type="text" id="name" placeholder="Nama Lengkap">
-    <input type="text" id="idDusun" placeholder="ID Dusun">
-    <input type="text" id="code" placeholder="Kode Verifikasi">
-    <button id="loginBtn">Login</button>
-  </div>
-  <div id="dashboardDiv" class="hidden">
-    <h2>Halo, <span id="userName"></span></h2>
-    <button id="sosBtn">📢 SOS</button>
-    <div id="locationDiv">
-      <h3>Lokasi Saat Ini</h3>
-      <p id="coords">Mendapatkan lokasi...</p>
-      <div id="map"></div>
-    </div>
-    <button id="logoutBtn" style="background:#FF8C00;color:white;">Logout</button>
-  </div>
-</div>
-
-<script>
-const wargaDusun = [
-  {name:'Budi', idDusun:'001', code:'1234'},
-  {name:'Siti', idDusun:'002', code:'5678'},
-  {name:'Agus', idDusun:'003', code:'9012'}
-];
-const loginBtn = document.getElementById('loginBtn');
-const loginDiv = document.getElementById('loginDiv');
-const dashboardDiv = document.getElementById('dashboardDiv');
-const userNameSpan = document.getElementById('userName');
-loginBtn.addEventListener('click', () => {
-  const name = document.getElementById('name').value.trim();
-  const idDusun = document.getElementById('idDusun').value.trim();
-  const code = document.getElementById('code').value.trim();
-  const user = wargaDusun.find(u => u.name===name && u.idDusun===idDusun && u.code===code);
-  if(user){
-    loginDiv.classList.add('hidden');
-    dashboardDiv.classList.remove('hidden');
-    userNameSpan.textContent = user.name;
-    getLocation();
-  } else {
-    alert('Login gagal! Periksa nama, ID dusun, atau kode verifikasi.');
-  }
-});
-document.getElementById('logoutBtn').addEventListener('click', () => {
-  dashboardDiv.classList.add('hidden');
-  loginDiv.classList.remove('hidden');
-  document.getElementById('name').value='';
-  document.getElementById('idDusun').value='';
-  document.getElementById('code').value='';
-});
-document.getElementById('sosBtn').addEventListener('click', () => {
-  alert('🚨 SOS terkirim! Petugas keamanan sedang menindaklanjuti.');
-});
-const coordsP = document.getElementById('coords');
-const mapDiv = document.getElementById('map');
-function getLocation(){
-  if(navigator.geolocation){
-    navigator.geolocation.getCurrentPosition(showPosition, showError);
-  } else { coordsP.textContent='Geolocation tidak didukung'; }
-}
-function showPosition(position){
-  const lat = position.coords.latitude;
-  const lon = position.coords.longitude;
-  coordsP.textContent = `Latitude: ${lat}, Longitude: ${lon}`;
-  mapDiv.innerHTML = `<iframe width="100%" height="250" frameborder="0" style="border:0"
-    src="https://maps.google.com/maps?q=${lat},${lon}&z=16&output=embed"></iframe>`;
-}
-function showError(error){
-  switch(error.code){
-    case error.PERMISSION_DENIED: coordsP.textContent="Izin lokasi ditolak."; break;
-    case error.POSITION_UNAVAILABLE: coordsP.textContent="Lokasi tidak tersedia."; break;
-    case error.TIMEOUT: coordsP.textContent="Request lokasi timeout."; break;
-    default: coordsP.textContent="Error mendapatkan lokasi."; break;
-  }
-}
-</script>
+  <div id="app"></div>
+  <script src="app.js"></script>
 </body>
 </html>
