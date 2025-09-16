@@ -2,200 +2,236 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Sistem Keamanan Dusun</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  <title>Aplikasi Keamanan Dusun</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; background:#f9f9f9; }
+    .card { max-width:400px; margin:30px auto; background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.2); }
+    input, button { width:100%; padding:10px; margin:5px 0; border-radius:5px; border:1px solid #ccc; }
+    button { background:#007bff; color:white; border:none; cursor:pointer; }
+    button:hover { background:#0056b3; }
+    #dashboard { display:none; padding:20px; }
+    #charts { display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-top:20px; }
+    canvas { background:#fff; padding:10px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+    #map { width:100%; height:400px; margin-top:20px; border-radius:10px; }
+  </style>
+</head>
+<body>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyA6GAeIc7ZesIed9MAelUf6x_sBFdp9E-Q",
-      authDomain: "dusun-super.firebaseapp.com",
-      projectId: "dusun-super",
-      storageBucket: "dusun-super.firebasestorage.app",
-      messagingSenderId: "1083284057385",
-      appId: "1:1083284057385:web:21cfe467b047bb5a241b38",
-      measurementId: "G-LJ6KP57Q9M"
+<!-- ========== BUAT DUSUN ========== -->
+<div class="card" id="buatDusunPage">
+  <h2>Buat Dusun</h2>
+  <input id="namaDusun" placeholder="Nama Dusun">
+  <input id="kota" placeholder="Kota">
+  <input id="kabupaten" placeholder="Kabupaten">
+  <input id="kecamatan" placeholder="Kecamatan">
+  <button onclick="generateKode()">Generate Kode</button>
+  <div id="kodeContainer" style="display:none;">
+    <p>Kode Dusun: <b id="kodeDusunText"></b></p>
+    <button onclick="simpanDusun()">Simpan</button>
+  </div>
+</div>
+
+<!-- ========== DAFTAR WARGA ========== -->
+<div class="card" id="daftarPage" style="display:none;">
+  <h2>Daftar Warga</h2>
+  <input id="namaWarga" placeholder="Nama">
+  <input id="noHpDaftar" placeholder="No HP">
+  <input id="alamat" placeholder="Alamat">
+  <input id="blok" placeholder="Blok (opsional)">
+  <input id="nomor" placeholder="Nomor (opsional)">
+  <input id="rt" placeholder="RT">
+  <input id="rw" placeholder="RW">
+  <input id="passwordDaftar" type="password" placeholder="Password">
+  <input id="kodeDusunDaftar" placeholder="Kode Dusun">
+  <button onclick="daftar()">Daftar</button>
+</div>
+
+<!-- ========== LOGIN ========== -->
+<div class="card" id="loginPage" style="display:none;">
+  <h2>Login</h2>
+  <input id="noHpLogin" placeholder="No HP">
+  <input id="passwordLogin" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+</div>
+
+<!-- ========== DASHBOARD ========== -->
+<div id="dashboard">
+  <h2>Dashboard Dusun</h2>
+  <p>Selamat datang, <span id="userName"></span>!</p>
+  <div id="charts">
+    <canvas id="kejadianChart"></canvas>
+    <canvas id="keamananChart"></canvas>
+  </div>
+  <div id="map"></div>
+  <button onclick="logout()" style="margin-top:20px;">Logout</button>
+</div>
+
+<script>
+  // Konfigurasi Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyA6GAeIc7ZesIed9MAelUf6x_sBFdp9E-Q",
+    authDomain: "dusun-super.firebaseapp.com",
+    projectId: "dusun-super",
+    storageBucket: "dusun-super.firebasestorage.app",
+    messagingSenderId: "1083284057385",
+    appId: "1:1083284057385:web:21cfe467b047bb5a241b38",
+    measurementId: "G-LJ6KP57Q9M"
+  };
+
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  let generatedCode = "";
+  let currentUser = null;
+
+  // Generate kode unik
+  function generateKode(){
+    generatedCode = "DSN" + Math.random().toString(36).substr(2,6).toUpperCase();
+    document.getElementById("kodeDusunText").innerText = generatedCode;
+    document.getElementById("kodeContainer").style.display = "block";
+  }
+
+  // Simpan dusun ke Firestore
+  async function simpanDusun(){
+    const nama = document.getElementById("namaDusun").value;
+    const kota = document.getElementById("kota").value;
+    const kabupaten = document.getElementById("kabupaten").value;
+    const kecamatan = document.getElementById("kecamatan").value;
+
+    if(!nama || !generatedCode) return alert("Isi semua data dan generate kode!");
+
+    await db.collection("dusun").add({
+      nama, kota, kabupaten, kecamatan, code: generatedCode, createdAt: Date.now()
+    });
+
+    alert("Dusun berhasil dibuat! Gunakan kode: " + generatedCode);
+    document.getElementById("buatDusunPage").style.display="none";
+    document.getElementById("daftarPage").style.display="block";
+  }
+
+  // Daftar warga
+  async function daftar(){
+    const data = {
+      nama: document.getElementById("namaWarga").value,
+      noHp: document.getElementById("noHpDaftar").value,
+      alamat: document.getElementById("alamat").value,
+      blok: document.getElementById("blok").value,
+      nomor: document.getElementById("nomor").value,
+      rt: document.getElementById("rt").value,
+      rw: document.getElementById("rw").value,
+      password: document.getElementById("passwordDaftar").value,
+      kodeDusun: document.getElementById("kodeDusunDaftar").value,
+      createdAt: Date.now()
     };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    if(!data.noHp || !data.password || !data.kodeDusun) return alert("Isi semua data wajib!");
 
-    // ==== GENERATE CODE ====
-    function generateCode(length=6){
-      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-      let code = "";
-      for(let i=0;i<length;i++){
-        code += chars.charAt(Math.floor(Math.random()*chars.length));
+    const q = await db.collection("dusun").where("code","==",data.kodeDusun).get();
+    if(q.empty) return alert("Kode dusun tidak valid!");
+
+    const dusunId = q.docs[0].id;
+    data.dusunId = dusunId;
+
+    await db.collection("users").doc(data.noHp).set(data);
+
+    alert("Pendaftaran berhasil! Silakan login.");
+    document.getElementById("daftarPage").style.display="none";
+    document.getElementById("loginPage").style.display="block";
+  }
+
+  // Login
+  async function login(){
+    const noHp = document.getElementById("noHpLogin").value;
+    const password = document.getElementById("passwordLogin").value;
+
+    const docSnap = await db.collection("users").doc(noHp).get();
+    if(!docSnap.exists) return alert("User tidak ditemukan!");
+
+    const user = docSnap.data();
+    if(user.password !== password) return alert("Password salah!");
+
+    currentUser = user;
+    sessionStorage.setItem("user", JSON.stringify(user));
+
+    document.getElementById("loginPage").style.display="none";
+    document.getElementById("dashboard").style.display="block";
+    document.getElementById("userName").innerText = user.nama;
+
+    loadDashboard(user.dusunId);
+  }
+
+  // Logout
+  function logout(){
+    sessionStorage.clear();
+    document.getElementById("dashboard").style.display="none";
+    document.getElementById("loginPage").style.display="block";
+  }
+
+  // Load dashboard data
+  async function loadDashboard(dusunId){
+    // --- Grafik Kejadian (contoh data dummy) ---
+    const kejadianData = { "Pencurian": 5, "Kebakaran": 2, "Keributan": 3 };
+    const ctx1 = document.getElementById('kejadianChart').getContext('2d');
+    new Chart(ctx1, {
+      type: 'bar',
+      data: {
+        labels: Object.keys(kejadianData),
+        datasets: [{
+          label: 'Jumlah Kejadian',
+          data: Object.values(kejadianData),
+          backgroundColor: ['#ff6384','#36a2eb','#ffce56']
+        }]
       }
-      return code;
-    }
+    });
 
-    // ==== BUAT DUSUN ====
-    async function createDusun(){
-      const nama = document.getElementById("dusunNama").value.trim();
-      const kota = document.getElementById("dusunKota").value.trim();
-      const kab  = document.getElementById("dusunKab").value.trim();
-      const kec  = document.getElementById("dusunKec").value.trim();
-
-      if(!nama || !kota || !kab || !kec) return alert("Lengkapi semua field!");
-
-      // generate kode dan tampilkan
-      const code = generateCode();
-      document.getElementById("dusunCode").value = code;
-
-      // ubah tombol jadi "Simpan"
-      document.getElementById("btnBuatDusun").style.display = "none";
-      document.getElementById("btnSimpanDusun").style.display = "block";
-    }
-
-    async function simpanDusun(){
-      const nama = document.getElementById("dusunNama").value.trim();
-      const kota = document.getElementById("dusunKota").value.trim();
-      const kab  = document.getElementById("dusunKab").value.trim();
-      const kec  = document.getElementById("dusunKec").value.trim();
-      const code = document.getElementById("dusunCode").value.trim();
-
-      const ref = doc(collection(db,"dusun"));
-      await setDoc(ref,{
-        namaDusun:nama,
-        kota:kota,
-        kabupaten:kab,
-        kecamatan:kec,
-        code:code
-      });
-
-      sessionStorage.setItem("joinDusunCode", code);
-      alert("Dusun berhasil dibuat dengan kode: " + code);
-      showAuth(); // langsung arahkan ke login
-    }
-
-    // ==== REGISTER ====
-    async function registerUser(){
-      const nama = document.getElementById("regNama").value.trim();
-      const hp   = document.getElementById("regHp").value.trim();
-      const kode = document.getElementById("regKode").value.trim();
-
-      if(!nama || !hp || !kode) return alert("Lengkapi semua field!");
-
-      const q = query(collection(db,"dusun"), where("code","==",kode));
-      const snap = await getDocs(q);
-      if(snap.empty) return alert("Kode dusun tidak valid!");
-
-      const dusunDoc = snap.docs[0];
-      const dusunId = dusunDoc.id;
-
-      await setDoc(doc(db,"users",hp),{
-        nama:nama,
-        hp:hp,
-        dusunId:dusunId
-      });
-
-      sessionStorage.setItem("uid", hp);
-      sessionStorage.setItem("dusunId", dusunId);
-
-      alert("Pendaftaran berhasil!");
-      showDashboard();
-    }
-
-    // ==== LOGIN ====
-    async function loginUser(){
-      const hp   = document.getElementById("loginHp").value.trim();
-      const kode = document.getElementById("loginKode").value.trim();
-
-      if(!hp || !kode) return alert("Isi nomor HP dan kode dusun!");
-
-      const userRef = doc(db,"users",hp);
-      const userSnap = await getDoc(userRef);
-      if(!userSnap.exists()) return alert("User tidak ditemukan!");
-
-      const userData = userSnap.data();
-      const q = query(collection(db,"dusun"), where("code","==",kode));
-      const snap = await getDocs(q);
-      if(snap.empty) return alert("Kode dusun salah!");
-
-      const dusunDoc = snap.docs[0];
-      const dusunId = dusunDoc.id;
-
-      if(userData.dusunId !== dusunId){
-        return alert("Kode dusun tidak sesuai dengan akun Anda!");
+    // --- Persentase Keamanan ---
+    const total = Object.values(kejadianData).reduce((a,b)=>a+b,0);
+    const aman = Math.max(0, 100 - total*5); // contoh formula
+    const ctx2 = document.getElementById('keamananChart').getContext('2d');
+    new Chart(ctx2, {
+      type: 'doughnut',
+      data: {
+        labels: ['Aman','Terganggu'],
+        datasets: [{
+          data: [aman, 100-aman],
+          backgroundColor: ['#4caf50','#f44336']
+        }]
       }
+    });
 
-      sessionStorage.setItem("uid", hp);
-      sessionStorage.setItem("dusunId", dusunId);
+    // --- Map Pos Jaga ---
+    initMap();
+  }
 
-      alert("Login berhasil!");
-      showDashboard();
-    }
+  // Google Maps
+  function initMap(){
+    const map = new google.maps.Map(document.getElementById("map"), {
+      center: { lat: -7.250445, lng: 112.768845 }, // Surabaya default
+      zoom: 14
+    });
 
-    // ==== UI ====
-    function showSection(id){
-      ["buatDusun","authSection","dashboard"].forEach(s=>document.getElementById(s).classList.add("d-none"));
-      document.getElementById(id).classList.remove("d-none");
-    }
-    function showCreateDusun(){ showSection("buatDusun"); }
-    function showAuth(){ 
-      document.getElementById("regKode").value = sessionStorage.getItem("joinDusunCode") || "";
-      document.getElementById("loginKode").value = sessionStorage.getItem("joinDusunCode") || "";
-      showSection("authSection"); 
-    }
-    function showDashboard(){
-      showSection("dashboard");
-      document.getElementById("userInfo").innerText =
-        "Selamat datang, UID: " + sessionStorage.getItem("uid") + 
-        " | Dusun ID: " + sessionStorage.getItem("dusunId");
-    }
+    // Tambah simbol pos RT (contoh dummy)
+    const pos = [
+      {lat: -7.250445, lng: 112.768845, label:"Pos Induk"},
+      {lat: -7.252, lng: 112.77, label:"Pos RT 1"},
+      {lat: -7.248, lng: 112.765, label:"Pos RT 2"}
+    ];
 
-    window.createDusun = createDusun;
-    window.simpanDusun = simpanDusun;
-    window.registerUser = registerUser;
-    window.loginUser = loginUser;
-    window.showCreateDusun = showCreateDusun;
-    window.showAuth = showAuth;
-  </script>
-</head>
-<body class="bg-light p-4">
+    pos.forEach(p=>{
+      new google.maps.Marker({
+        position: {lat:p.lat,lng:p.lng},
+        map,
+        title:p.label
+      });
+    });
+  }
+</script>
 
-  <div class="container">
-    <h2 class="mb-4 text-center">🌐 Sistem Keamanan Dusun</h2>
-    <div class="text-center mb-3">
-      <button class="btn btn-success me-2" onclick="showCreateDusun()">Buat Dusun</button>
-      <button class="btn btn-primary" onclick="showAuth()">Login / Daftar</button>
-    </div>
-
-    <!-- BUAT DUSUN -->
-    <div id="buatDusun" class="card p-4 d-none">
-      <h4 class="mb-3">Buat Dusun Baru</h4>
-      <input id="dusunNama" class="form-control mb-2" placeholder="Nama Dusun">
-      <input id="dusunKota" class="form-control mb-2" placeholder="Kota">
-      <input id="dusunKab" class="form-control mb-2" placeholder="Kabupaten">
-      <input id="dusunKec" class="form-control mb-2" placeholder="Kecamatan">
-      <input id="dusunCode" class="form-control mb-2" placeholder="Kode Dusun" readonly>
-      <button id="btnBuatDusun" class="btn btn-warning w-100" onclick="createDusun()">Generate Kode</button>
-      <button id="btnSimpanDusun" class="btn btn-success w-100 d-none" onclick="simpanDusun()">Simpan</button>
-    </div>
-
-    <!-- LOGIN / REGISTER -->
-    <div id="authSection" class="card p-4 d-none">
-      <h4 class="mb-3">Daftar Warga</h4>
-      <input id="regNama" class="form-control mb-2" placeholder="Nama">
-      <input id="regHp" class="form-control mb-2" placeholder="Nomor HP">
-      <input id="regKode" class="form-control mb-2" placeholder="Kode Dusun">
-      <button class="btn btn-success w-100 mb-3" onclick="registerUser()">Daftar</button>
-
-      <h4 class="mb-3">Login</h4>
-      <input id="loginHp" class="form-control mb-2" placeholder="Nomor HP">
-      <input id="loginKode" class="form-control mb-2" placeholder="Kode Dusun">
-      <button class="btn btn-primary w-100" onclick="loginUser()">Login</button>
-    </div>
-
-    <!-- DASHBOARD -->
-    <div id="dashboard" class="card p-4 d-none">
-      <h4>Dashboard</h4>
-      <p id="userInfo"></p>
-      <button class="btn btn-danger" onclick="sessionStorage.clear(); location.reload();">Logout</button>
-    </div>
-  </div>
+<!-- Google Maps API -->
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY"></script>
 
 </body>
 </html>
