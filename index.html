@@ -11,7 +11,7 @@
 body{font-family:Arial,sans-serif;background:#f0f2f5;margin:0;padding:0}
 .container{max-width:480px;margin:20px auto;padding:20px;background:#fff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.1)}
 h2,h3{text-align:center}
-input, button{width:100%;padding:10px;margin:5px 0;border-radius:6px;border:1px solid #ccc}
+input, button, select{width:100%;padding:10px;margin:5px 0;border-radius:6px;border:1px solid #ccc}
 button{background:#007bff;color:white;border:none;cursor:pointer}
 button:hover{background:#0056b3}
 .hidden{display:none}
@@ -27,7 +27,7 @@ canvas{background:#fff;padding:10px;border-radius:10px;box-shadow:0 2px 6px rgba
 <div class="container" id="mainContainer">
   <h2>Aplikasi Keamanan Dusun</h2>
 
-  <!-- Buat Dusun -->
+  <!-- Buat Dusun / Desa -->
   <div id="buatDusunDiv">
     <h3>Buat Dusun (Kepala Dusun)</h3>
     <input id="namaDusun" placeholder="Nama Dusun">
@@ -55,6 +55,16 @@ canvas{background:#fff;padding:10px;border-radius:10px;box-shadow:0 2px 6px rgba
     <input id="rt" placeholder="RT">
     <input id="rw" placeholder="RW">
     <input id="passwordDaftar" type="password" placeholder="Password">
+    <select id="roleWarga">
+      <option value="kepala_desa">Kepala Desa</option>
+      <option value="kepala_dusun">Kepala Dusun</option>
+      <option value="ketua_rt">Ketua RT</option>
+      <option value="ketua_rw">Ketua RW</option>
+      <option value="kepala_keluarga">Kepala Keluarga</option>
+      <option value="istri">Istri</option>
+      <option value="anak">Anak</option>
+      <option value="lainnya">Lainnya</option>
+    </select>
     <button onclick="daftar()">Daftar</button>
   </div>
 
@@ -131,13 +141,12 @@ async function simpanDusun(){
   sessionStorage.setItem("dusunId",docRef.id);
   document.getElementById("buatDusunDiv").classList.add("hidden");
 
-  // Mulai auto refresh kode dan countdown
   startKodeTimer(docRef.id);
 }
 
 // ===== Timer & Auto Refresh Kode =====
 function startKodeTimer(dusunId){
-  let duration=3600; // 1 jam = 3600 detik
+  let duration=3600; 
   if(countdownInterval) clearInterval(countdownInterval);
   countdownInterval=setInterval(async ()=>{
     duration--;
@@ -146,7 +155,6 @@ function startKodeTimer(dusunId){
     const detik=duration%60;
     document.getElementById("countdownTimer").innerText=`${jam}h ${menit}m ${detik}s`;
     if(duration<=0){
-      // ganti kode
       const newCode="DSN"+Math.random().toString(36).substr(2,6).toUpperCase();
       await db.collection("dusun").doc(dusunId).update({code:newCode});
       generatedCode=newCode;
@@ -168,6 +176,7 @@ async function daftar(){
     rt:document.getElementById("rt").value,
     rw:document.getElementById("rw").value,
     password:document.getElementById("passwordDaftar").value,
+    role:document.getElementById("roleWarga").value,
     createdAt:Date.now()
   };
   if(!data.noHp||!data.password) return alert("Isi data wajib");
@@ -198,7 +207,6 @@ async function login(){
   document.getElementById("dashboard").style.display="block";
   document.getElementById("userName").innerText=user.nama;
 
-  // Tampilkan waktu realtime
   setInterval(()=> {
     const now=new Date();
     document.getElementById("currentDateTime").innerText=now.toLocaleString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
@@ -217,7 +225,6 @@ function logout(){
 
 // ===== Dashboard =====
 async function loadDashboard(dusunId){
-  // Dummy data laporan
   const laporanData={"Pencurian":5,"Kebakaran":2,"Keributan":3};
   const ctx1=document.getElementById('kejadianChart').getContext('2d');
   new Chart(ctx1,{type:'bar',data:{
@@ -229,25 +236,10 @@ async function loadDashboard(dusunId){
   const aman=Math.max(0,100-total*5);
   const ctx2=document.getElementById('keamananChart').getContext('2d');
   new Chart(ctx2,{type:'doughnut',data:{
-    labels:['Aman','Terganggu'],
-    datasets:[{data:[aman,100-aman],backgroundColor:['#4caf50','#f44336']}]
+    labels:['Aman','Bahaya'],
+    datasets:[{data:[aman,100-aman],backgroundColor:['#36a2eb','#ff6384'] }]
   }});
-
-  initMap();
-}
-
-// ===== Google Maps =====
-function initMap(){
-  const map=new google.maps.Map(document.getElementById("map"),{center:{lat:-7.250445,lng:112.768845},zoom:14});
-  const pos=[
-    {lat:-7.250445,lng:112.768845,label:"Pos Induk"},
-    {lat:-7.252,lng:112.77,label:"Pos RT 1"},
-    {lat:-7.248,lng:112.765,label:"Pos RT 2"}
-  ];
-  pos.forEach(p=>{new google.maps.Marker({position:{lat:p.lat,lng:p.lng},map,title:p.label})});
 }
 </script>
-
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY"></script>
 </body>
 </html>
