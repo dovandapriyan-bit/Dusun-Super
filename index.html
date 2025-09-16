@@ -2,13 +2,229 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sistem Keamanan Dusun</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f4f6f8; }
+    header { background:#2c3e50; color:white; padding:15px; text-align:center; }
+    .container { padding:20px; }
+    .card { background:white; padding:15px; margin:10px 0; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+    button { padding:8px 12px; margin:4px; border:none; border-radius:6px; background:#3498db; color:white; cursor:pointer; }
+    button:hover { background:#2980b9; }
+    table { width:100%; border-collapse: collapse; margin-top:10px; }
+    th, td { padding:8px; border:1px solid #ddd; text-align:center; }
+    th { background:#ecf0f1; }
+    .hidden { display:none; }
+  </style>
 </head>
 <body>
-  <div id="app"></div>
-  <script src="app.js"></script>
+  <header>
+    <h1>Sistem Keamanan Dusun</h1>
+  </header>
+
+  <div class="container">
+
+    <!-- LOGIN -->
+    <div id="loginCard" class="card">
+      <h2>Login</h2>
+      <input id="email" type="email" placeholder="Email"><br>
+      <input id="password" type="password" placeholder="Password"><br>
+      <button onclick="login()">Login</button>
+      <button onclick="register()">Register</button>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard" class="hidden">
+      <h2>Dashboard</h2>
+      <button onclick="logout()">Logout</button>
+
+      <!-- BUAT & GABUNG DUSUN -->
+      <div class="card">
+        <h3>Buat / Gabung Dusun</h3>
+        <input id="dusunNama" placeholder="Nama Dusun">
+        <button onclick="buatDusun()">Buat Dusun</button><br><br>
+        <input id="kodeGabung" placeholder="Kode Dusun">
+        <button onclick="gabungDusun()">Gabung Dusun</button>
+      </div>
+
+      <!-- SOS -->
+      <div class="card">
+        <h3>Panic Button SOS</h3>
+        <button onclick="kirimSOS('Kemalingan')">Kemalingan</button>
+        <button onclick="kirimSOS('Kebakaran')">Kebakaran</button>
+        <button onclick="kirimSOS('Medis')">Medis</button>
+        <button onclick="kirimSOS('Ambulance')">Ambulance (Urgent)</button>
+      </div>
+
+      <!-- LIST WARGA -->
+      <div class="card">
+        <h3>Data Warga Dusun</h3>
+        <table id="tabelWarga">
+          <thead>
+            <tr><th>Nama</th><th>RT</th><th>RW</th><th>Role</th><th>Aksi</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- RESPON SOS -->
+      <div class="card">
+        <h3>Respon SOS</h3>
+        <ul id="listRespon"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc, onSnapshot, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA6GAeIc7ZesIed9MAelUf6x_sBFdp9E-Q",
+      authDomain: "dusun-super.firebaseapp.com",
+      projectId: "dusun-super",
+      storageBucket: "dusun-super.firebasestorage.app",
+      messagingSenderId: "1083284057385",
+      appId: "1:1083284057385:web:21cfe467b047bb5a241b38",
+      measurementId: "G-LJ6KP57Q9M"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const loginCard = document.getElementById("loginCard");
+    const dashboard = document.getElementById("dashboard");
+    const tabelWarga = document.querySelector("#tabelWarga tbody");
+    const listRespon = document.getElementById("listRespon");
+
+    // LOGIN & REGISTER
+    async function login(){
+      const email = document.getElementById("email").value;
+      const pass = document.getElementById("password").value;
+      await signInWithEmailAndPassword(auth, email, pass);
+    }
+    async function register(){
+      const email = document.getElementById("email").value;
+      const pass = document.getElementById("password").value;
+      const userCred = await createUserWithEmailAndPassword(auth, email, pass);
+      await setDoc(doc(db,"Warga",userCred.user.uid),{nama:email, role:"warga"});
+    }
+    async function logout(){ await signOut(auth); }
+
+    onAuthStateChanged(auth, async user=>{
+      if(user){
+        loginCard.classList.add("hidden");
+        dashboard.classList.remove("hidden");
+        loadWarga();
+        listenSOS();
+      }else{
+        loginCard.classList.remove("hidden");
+        dashboard.classList.add("hidden");
+      }
+    });
+
+    // BUAT DUSUN
+    async function buatDusun(){
+      const namaDusun = document.getElementById("dusunNama").value;
+      const kode = Math.random().toString(36).substring(2,8).toUpperCase();
+      const user = auth.currentUser;
+      await setDoc(doc(db,"Dusun",kode),{nama:namaDusun, kode:kode, kepalaDusunID:user.uid});
+      await updateDoc(doc(db,"Warga",user.uid),{dusunID:kode, role:"kepala_dusun"});
+      alert("Dusun dibuat, kode: "+kode);
+    }
+
+    // GABUNG DUSUN
+    async function gabungDusun(){
+      const kode = document.getElementById("kodeGabung").value;
+      const user = auth.currentUser;
+      const dusunDoc = await getDoc(doc(db,"Dusun",kode));
+      if(!dusunDoc.exists()){ alert("Kode dusun tidak valid"); return; }
+      await updateDoc(doc(db,"Warga",user.uid),{dusunID:kode, role:"warga"});
+      alert("Berhasil gabung ke dusun "+dusunDoc.data().nama);
+    }
+
+    // LIST WARGA
+    async function loadWarga(){
+      const user = auth.currentUser;
+      const me = await getDoc(doc(db,"Warga",user.uid));
+      if(!me.exists()) return;
+      const dataUser = me.data();
+
+      const q = query(collection(db,"Warga"), where("dusunID","==",dataUser.dusunID));
+      const snap = await getDocs(q);
+      tabelWarga.innerHTML="";
+      snap.forEach(w=>{
+        const data=w.data();
+        const tr=document.createElement("tr");
+        tr.innerHTML=`<td>${data.nama}</td><td>${data.rt||"-"}</td><td>${data.rw||"-"}</td><td>${data.role}</td><td></td>`;
+        if(dataUser.role==="kepala_dusun"){
+          const btn=document.createElement("button");
+          btn.textContent=data.role==="ambulance"?"Jadikan Warga":"Jadikan Ambulance";
+          btn.onclick=async()=>{
+            const newRole=data.role==="ambulance"?"warga":"ambulance";
+            await updateDoc(doc(db,"Warga",w.id),{role:newRole});
+            loadWarga();
+          };
+          tr.lastElementChild.appendChild(btn);
+        }
+        tabelWarga.appendChild(tr);
+      });
+    }
+
+    // SOS
+    async function kirimSOS(jenis){
+      const user=auth.currentUser;
+      const me=await getDoc(doc(db,"Warga",user.uid));
+      const dataUser=me.data();
+      await addDoc(collection(db,"SOS"),{
+        jenis:jenis, pelapor:user.uid, dusunID:dataUser.dusunID, time:Date.now(), respon:[]
+      });
+      alert("SOS terkirim: "+jenis);
+    }
+
+    function listenSOS(){
+      const user=auth.currentUser;
+      onSnapshot(collection(db,"SOS"), snap=>{
+        listRespon.innerHTML="";
+        snap.forEach(docSnap=>{
+          const sos=docSnap.data();
+          if(sos.dusunID){
+            const li=document.createElement("li");
+            li.textContent=`${sos.jenis} - ${new Date(sos.time).toLocaleTimeString()}`;
+            const btn=document.createElement("button");
+            btn.textContent="Respon";
+            btn.onclick=async()=>{
+              const me=await getDoc(doc(db,"Warga",user.uid));
+              const nama=me.data().nama;
+              const arr=sos.respon||[];
+              if(!arr.includes(nama)){
+                arr.push(nama);
+                await updateDoc(doc(db,"SOS",docSnap.id),{respon:arr});
+              }
+            };
+            li.appendChild(btn);
+
+            if(sos.respon && sos.respon.length>0){
+              const ul=document.createElement("ul");
+              sos.respon.forEach(r=>{
+                const li2=document.createElement("li");
+                li2.textContent=r+" merespon";
+                ul.appendChild(li2);
+              });
+              li.appendChild(ul);
+            }
+            listRespon.appendChild(li);
+          }
+        });
+      });
+    }
+
+    window.login=login; window.register=register; window.logout=logout;
+    window.buatDusun=buatDusun; window.gabungDusun=gabungDusun;
+    window.kirimSOS=kirimSOS;
+  </script>
 </body>
 </html>
