@@ -4,78 +4,90 @@
   <meta charset="UTF-8">
   <title>Sistem Keamanan Dusun</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    body { font-family: Arial, sans-serif; margin:0; padding:0; background:#f4f6f8; }
-    header { background:#2c3e50; color:white; padding:15px; text-align:center; }
-    .container { padding:20px; }
-    .card { background:white; padding:15px; margin:10px 0; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
-    button { padding:8px 12px; margin:4px; border:none; border-radius:6px; background:#3498db; color:white; cursor:pointer; }
-    button:hover { background:#2980b9; }
-    table { width:100%; border-collapse: collapse; margin-top:10px; }
-    th, td { padding:8px; border:1px solid #ddd; text-align:center; }
-    th { background:#ecf0f1; }
-    .hidden { display:none; }
+    body { font-family: 'Poppins', sans-serif; }
   </style>
 </head>
-<body>
-  <header>
-    <h1>Sistem Keamanan Dusun</h1>
+<body class="bg-gray-100">
+
+  <!-- HEADER -->
+  <header class="bg-gradient-to-r from-blue-600 to-cyan-500 text-white p-4 shadow-md">
+    <h1 class="text-2xl font-bold text-center">🌐 Sistem Keamanan Dusun</h1>
   </header>
 
-  <div class="container">
-
-    <!-- LOGIN -->
-    <div id="loginCard" class="card">
-      <h2>Login</h2>
-      <input id="email" type="email" placeholder="Email"><br>
-      <input id="password" type="password" placeholder="Password"><br>
-      <button onclick="login()">Login</button>
-      <button onclick="register()">Register</button>
-    </div>
-
-    <!-- DASHBOARD -->
-    <div id="dashboard" class="hidden">
-      <h2>Dashboard</h2>
-      <button onclick="logout()">Logout</button>
-
-      <!-- BUAT & GABUNG DUSUN -->
-      <div class="card">
-        <h3>Buat / Gabung Dusun</h3>
-        <input id="dusunNama" placeholder="Nama Dusun">
-        <button onclick="buatDusun()">Buat Dusun</button><br><br>
-        <input id="kodeGabung" placeholder="Kode Dusun">
-        <button onclick="gabungDusun()">Gabung Dusun</button>
-      </div>
-
-      <!-- SOS -->
-      <div class="card">
-        <h3>Panic Button SOS</h3>
-        <button onclick="kirimSOS('Kemalingan')">Kemalingan</button>
-        <button onclick="kirimSOS('Kebakaran')">Kebakaran</button>
-        <button onclick="kirimSOS('Medis')">Medis</button>
-        <button onclick="kirimSOS('Ambulance')">Ambulance (Urgent)</button>
-      </div>
-
-      <!-- LIST WARGA -->
-      <div class="card">
-        <h3>Data Warga Dusun</h3>
-        <table id="tabelWarga">
-          <thead>
-            <tr><th>Nama</th><th>RT</th><th>RW</th><th>Role</th><th>Aksi</th></tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-
-      <!-- RESPON SOS -->
-      <div class="card">
-        <h3>Respon SOS</h3>
-        <ul id="listRespon"></ul>
-      </div>
+  <!-- LOGIN -->
+  <div id="loginCard" class="p-6">
+    <div class="bg-white p-6 rounded-xl shadow-lg max-w-md mx-auto">
+      <h2 class="text-xl font-semibold mb-4 text-center">Login Warga</h2>
+      <input id="email" type="email" placeholder="Email" class="w-full p-3 mb-3 border rounded-lg">
+      <input id="password" type="password" placeholder="Password" class="w-full p-3 mb-3 border rounded-lg">
+      <button onclick="login()" class="w-full bg-blue-600 text-white p-3 rounded-lg mb-2">Login</button>
+      <button onclick="register()" class="w-full bg-green-600 text-white p-3 rounded-lg">Register</button>
     </div>
   </div>
 
-  <!-- Firebase SDK -->
+  <!-- DASHBOARD -->
+  <div id="dashboard" class="hidden p-4">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-bold">Dashboard</h2>
+      <button onclick="logout()" class="bg-red-500 px-4 py-2 rounded-lg text-white">Logout</button>
+    </div>
+
+    <!-- BUAT & GABUNG DUSUN -->
+    <div class="bg-white rounded-xl shadow-md p-4 mb-4">
+      <h3 class="text-lg font-semibold mb-3">Buat / Gabung Dusun</h3>
+      <div class="space-y-3">
+        <input id="dusunNama" placeholder="Nama Dusun" class="w-full p-3 border rounded-lg">
+        <button onclick="buatDusun()" class="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 rounded-lg">➕ Buat Dusun</button>
+        <input id="kodeGabung" placeholder="Kode Dusun" class="w-full p-3 border rounded-lg">
+        <button onclick="gabungDusun()" class="w-full bg-gradient-to-r from-blue-500 to-cyan-600 text-white py-3 rounded-lg">🔑 Gabung Dusun</button>
+      </div>
+    </div>
+
+    <!-- SOS -->
+    <div class="bg-white rounded-xl shadow-md p-4 mb-4">
+      <h3 class="text-lg font-semibold mb-3">🚨 Panic Button SOS</h3>
+      <div class="grid grid-cols-2 gap-3">
+        <button onclick="kirimSOS('Kemalingan')" class="bg-red-500 text-white py-4 rounded-xl shadow">🚨 Kemalingan</button>
+        <button onclick="kirimSOS('Kebakaran')" class="bg-orange-500 text-white py-4 rounded-xl shadow">🔥 Kebakaran</button>
+        <button onclick="kirimSOS('Medis')" class="bg-purple-600 text-white py-4 rounded-xl shadow">🏥 Medis</button>
+        <button onclick="kirimSOS('Ambulance')" class="bg-green-600 text-white py-4 rounded-xl shadow">🚑 Ambulance</button>
+      </div>
+    </div>
+
+    <!-- LIST WARGA -->
+    <div class="bg-white rounded-xl shadow-md p-4 mb-4">
+      <h3 class="text-lg font-semibold mb-3">👥 Data Warga Dusun</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full border">
+          <thead class="bg-gray-100">
+            <tr><th class="p-2">Nama</th><th class="p-2">RT</th><th class="p-2">RW</th><th class="p-2">Role</th><th class="p-2">Aksi</th></tr>
+          </thead>
+          <tbody id="tabelWarga"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- RESPON SOS -->
+    <div class="bg-white rounded-xl shadow-md p-4 mb-20">
+      <h3 class="text-lg font-semibold mb-3">📢 Respon SOS</h3>
+      <ul id="listRespon" class="space-y-2"></ul>
+    </div>
+  </div>
+
+  <!-- FOOTER NAV -->
+  <nav class="fixed bottom-0 w-full bg-white shadow-lg border-t flex justify-around py-2">
+    <button class="flex flex-col items-center text-blue-600">🏠 <span class="text-xs">Dashboard</span></button>
+    <button class="flex flex-col items-center">👥 <span class="text-xs">Warga</span></button>
+    <button class="flex flex-col items-center">🔔 <span class="text-xs">Notifikasi</span></button>
+    <button class="flex flex-col items-center">⚙️ <span class="text-xs">Profil</span></button>
+  </nav>
+
+  <!-- Firebase SDK + Script -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-auth.js";
@@ -97,10 +109,9 @@
 
     const loginCard = document.getElementById("loginCard");
     const dashboard = document.getElementById("dashboard");
-    const tabelWarga = document.querySelector("#tabelWarga tbody");
+    const tabelWarga = document.getElementById("tabelWarga");
     const listRespon = document.getElementById("listRespon");
 
-    // LOGIN & REGISTER
     async function login(){
       const email = document.getElementById("email").value;
       const pass = document.getElementById("password").value;
@@ -126,7 +137,6 @@
       }
     });
 
-    // BUAT DUSUN
     async function buatDusun(){
       const namaDusun = document.getElementById("dusunNama").value;
       const kode = Math.random().toString(36).substring(2,8).toUpperCase();
@@ -136,7 +146,6 @@
       alert("Dusun dibuat, kode: "+kode);
     }
 
-    // GABUNG DUSUN
     async function gabungDusun(){
       const kode = document.getElementById("kodeGabung").value;
       const user = auth.currentUser;
@@ -146,7 +155,6 @@
       alert("Berhasil gabung ke dusun "+dusunDoc.data().nama);
     }
 
-    // LIST WARGA
     async function loadWarga(){
       const user = auth.currentUser;
       const me = await getDoc(doc(db,"Warga",user.uid));
@@ -159,9 +167,10 @@
       snap.forEach(w=>{
         const data=w.data();
         const tr=document.createElement("tr");
-        tr.innerHTML=`<td>${data.nama}</td><td>${data.rt||"-"}</td><td>${data.rw||"-"}</td><td>${data.role}</td><td></td>`;
+        tr.innerHTML=`<td class="p-2">${data.nama}</td><td class="p-2">${data.rt||"-"}</td><td class="p-2">${data.rw||"-"}</td><td class="p-2">${data.role}</td><td class="p-2"></td>`;
         if(dataUser.role==="kepala_dusun"){
           const btn=document.createElement("button");
+          btn.className="bg-blue-500 text-white px-3 py-1 rounded";
           btn.textContent=data.role==="ambulance"?"Jadikan Warga":"Jadikan Ambulance";
           btn.onclick=async()=>{
             const newRole=data.role==="ambulance"?"warga":"ambulance";
@@ -174,7 +183,6 @@
       });
     }
 
-    // SOS
     async function kirimSOS(jenis){
       const user=auth.currentUser;
       const me=await getDoc(doc(db,"Warga",user.uid));
@@ -193,8 +201,10 @@
           const sos=docSnap.data();
           if(sos.dusunID){
             const li=document.createElement("li");
+            li.className="bg-gray-100 p-3 rounded-lg shadow";
             li.textContent=`${sos.jenis} - ${new Date(sos.time).toLocaleTimeString()}`;
             const btn=document.createElement("button");
+            btn.className="ml-3 bg-green-500 text-white px-2 py-1 rounded";
             btn.textContent="Respon";
             btn.onclick=async()=>{
               const me=await getDoc(doc(db,"Warga",user.uid));
