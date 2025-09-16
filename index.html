@@ -3,94 +3,94 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Sistem Keamanan Dusun - FULL</title>
+<title>Sistem Keamanan Dusun - FULL (All-in-one)</title>
 
+<!-- Bootstrap -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+
+<!-- Firebase compat (easy namespaced API: firebase.firestore(), etc.) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-  body { background:#f4f7ff; font-family: Inter, 'Segoe UI', Arial, sans-serif; }
+  body { background:#f4f7ff; font-family:Inter, 'Segoe UI', Arial, sans-serif; }
   .card { border-radius:12px; box-shadow:0 6px 18px rgba(20,30,60,0.06); }
-  .form-control, .btn { border-radius:10px; }
-  #map { width:100%; height:350px; border-radius:8px; }
+  .form-control, .btn { border-radius:8px; }
+  #map { width:100%; height:320px; border-radius:8px; background:#eef; }
   .small-muted { font-size:.9rem; color:#555; }
   .hidden { display:none !important; }
+  .input-copy { display:flex; gap:8px; }
 </style>
 </head>
 <body>
 <div class="container py-4">
+  <div class="mx-auto" style="max-width:1100px;">
+    <h3 class="text-center mb-3">Sistem Keamanan Dusun — FULL</h3>
 
-  <div id="app" class="mx-auto" style="max-width:1100px;">
-    <h3 class="mb-3 text-center">Sistem Keamanan Dusun — FULL</h3>
-
-    <!-- AUTH / CREATE UI -->
+    <!-- TOP: Create Dusun / Register / Login -->
     <div id="authCard" class="card p-3 mb-4">
       <div class="row g-3">
-        <!-- Left: Buat Dusun -->
+        <!-- Create Dusun -->
         <div class="col-md-6">
           <h5>Buat Dusun (Kepala Dusun)</h5>
-          <div class="mb-2">
-            <input id="namaDusun" class="form-control mb-2" placeholder="Nama Dusun">
-            <input id="desa" class="form-control mb-2" placeholder="Desa">
-            <input id="kota" class="form-control mb-2" placeholder="Kota">
-            <input id="kabupaten" class="form-control mb-2" placeholder="Kabupaten">
-            <input id="kecamatan" class="form-control mb-2" placeholder="Kecamatan">
-            <!-- Kode Dusun tampil sebagai input agar bisa copy -->
-            <div class="input-group mb-2 d-none" id="kodeGroup">
-              <input id="kodeDusunField" class="form-control" placeholder="Kode Dusun (generated)" readonly>
-              <button class="btn btn-outline-secondary" id="copyKodeBtn" title="Copy Kode">Copy</button>
-            </div>
-            <div class="d-grid gap-2">
-              <button id="generateBtn" class="btn btn-primary" onclick="generateKode()">Generate Kode</button>
-              <button id="saveDusunBtn" class="btn btn-success hidden" onclick="simpanDusun()">Simpan Dusun</button>
-            </div>
-            <div class="small-muted mt-2">Setelah generate, salin kode dan bagikan ke warga. Kepala Dusun juga akan melihat kode ini di dashboard-nya.</div>
+          <input id="dusun_nama" class="form-control mb-2" placeholder="Nama Dusun">
+          <input id="dusun_desa" class="form-control mb-2" placeholder="Desa">
+          <input id="dusun_kota" class="form-control mb-2" placeholder="Kota">
+          <input id="dusun_kab" class="form-control mb-2" placeholder="Kabupaten">
+          <input id="dusun_kec" class="form-control mb-2" placeholder="Kecamatan">
+
+          <!-- KODE FIELD (muncul setelah Generate) -->
+          <div id="kodeGroup" class="input-copy mb-2 hidden">
+            <input id="dusun_code" class="form-control" placeholder="Kode Dusun" readonly>
+            <button id="copyCodeBtn" class="btn btn-outline-secondary">Copy</button>
           </div>
+
+          <div class="d-grid gap-2">
+            <button id="btnGenerate" class="btn btn-primary" onclick="generateDusunCode()">Generate Kode</button>
+            <button id="btnSaveDusun" class="btn btn-success hidden" onclick="saveDusun()">Simpan Dusun</button>
+          </div>
+          <div class="small-muted mt-2">Setelah generate: salin kode & bagikan ke warga. Kepala Dusun akan melihat kode ini di dashboard (hanya kepala dusun).</div>
         </div>
 
-        <!-- Right: Daftar / Login -->
+        <!-- Register + Login -->
         <div class="col-md-6">
           <h5>Daftar Warga</h5>
-          <div class="mb-2">
-            <input id="namaWarga" class="form-control mb-2" placeholder="Nama Lengkap">
-            <input id="noHpDaftar" class="form-control mb-2" placeholder="No HP">
-            <input id="alamat" class="form-control mb-2" placeholder="Alamat (Jalan)">
-            <input id="blok" class="form-control mb-2" placeholder="Blok (opsional)">
-            <input id="nomor" class="form-control mb-2" placeholder="No Rumah (opsional)">
-            <div class="row g-2 mb-2">
-              <div class="col"><input id="rt" class="form-control" placeholder="RT"></div>
-              <div class="col"><input id="rw" class="form-control" placeholder="RW"></div>
-            </div>
-            <select id="roleWarga" class="form-control mb-2">
-              <option value="kepala_desa">Kepala Desa</option>
-              <option value="kepala_dusun">Kepala Dusun</option>
-              <option value="ketua_rt">Ketua RT</option>
-              <option value="ketua_rw">Ketua RW</option>
-              <option value="kepala_keluarga">Kepala Keluarga</option>
-              <option value="istri">Istri</option>
-              <option value="anak">Anak</option>
-              <option value="lainnya">Lainnya</option>
-            </select>
-            <input id="kodeDusunInput" class="form-control mb-2" placeholder="Kode Dusun (dapat dari Kepala Dusun)">
-            <input id="passwordDaftar" type="password" class="form-control mb-2" placeholder="Password">
-            <div class="d-grid gap-2">
-              <button class="btn btn-success" onclick="daftarWarga()">Daftar</button>
-              <button class="btn btn-outline-secondary" onclick="clearRegister()">Reset Form</button>
-            </div>
+          <input id="reg_nama" class="form-control mb-2" placeholder="Nama lengkap">
+          <input id="reg_hp" class="form-control mb-2" placeholder="No HP (dipakai sebagai username)">
+          <input id="reg_alamat" class="form-control mb-2" placeholder="Alamat (jalan)">
+          <input id="reg_blok" class="form-control mb-2" placeholder="Blok (opsional)">
+          <input id="reg_no" class="form-control mb-2" placeholder="No Rumah (opsional)">
+          <div class="row g-2 mb-2">
+            <div class="col"><input id="reg_rt" class="form-control" placeholder="RT"></div>
+            <div class="col"><input id="reg_rw" class="form-control" placeholder="RW"></div>
+          </div>
+          <select id="reg_role" class="form-control mb-2">
+            <option value="kepala_desa">Kepala Desa</option>
+            <option value="kepala_dusun">Kepala Dusun</option>
+            <option value="ketua_rt">Ketua RT</option>
+            <option value="ketua_rw">Ketua RW</option>
+            <option value="kepala_keluarga">Kepala Keluarga</option>
+            <option value="istri">Istri</option>
+            <option value="anak">Anak</option>
+            <option value="lainnya">Lainnya</option>
+          </select>
+          <input id="reg_kodeDusun" class="form-control mb-2" placeholder="Kode Dusun (dapat dari Kepala Dusun)">
+          <input id="reg_password" type="password" class="form-control mb-2" placeholder="Password">
+          <div class="d-grid gap-2 mb-2">
+            <button class="btn btn-success" onclick="registerUser()">Daftar</button>
+            <button class="btn btn-outline-secondary" onclick="clearRegisterForm()">Reset</button>
           </div>
 
           <hr>
 
           <h5>Login</h5>
-          <div>
-            <input id="noHpLogin" class="form-control mb-2" placeholder="No HP">
-            <input id="passwordLogin" type="password" class="form-control mb-2" placeholder="Password">
-            <div class="d-grid gap-2">
-              <button class="btn btn-primary" onclick="login()">Login</button>
-            </div>
-            <div class="small-muted mt-2">Catatan: pendaftaran menggunakan <b>Kode Dusun</b> dari Kepala Dusun.</div>
+          <input id="login_hp" class="form-control mb-2" placeholder="No HP">
+          <input id="login_password" type="password" class="form-control mb-2" placeholder="Password">
+          <div class="d-grid gap-2">
+            <button class="btn btn-primary" onclick="login()">Login</button>
           </div>
         </div>
       </div>
@@ -100,85 +100,79 @@
     <div id="dashboardCard" class="card p-3 hidden">
       <div class="d-flex justify-content-between align-items-start">
         <div>
-          <h4 id="dashTitle">Dashboard Dusun</h4>
-          <div class="small-muted">Selamat datang, <b id="userName"></b> · <span id="realtimeClock"></span></div>
+          <h4>Dashboard Dusun</h4>
+          <div class="small-muted">Selamat datang, <b id="displayName"></b> · <span id="realtimeClock"></span></div>
         </div>
         <div class="text-end">
           <button class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
         </div>
       </div>
 
-      <!-- Kode dusun only for kepala_dusun -->
+      <!-- Kode tampil hanya kepala_dusun -->
       <div id="kodeDashboard" class="card p-3 mt-3 d-none">
         <div class="d-flex justify-content-between align-items-center">
-          <div>
-            <div class="small-muted">Kode Dusun</div>
-            <h5 id="profileKode"></h5>
-          </div>
-          <div>
-            <div class="small-muted">Sisa waktu pergantian</div>
-            <div id="profileCountdown" style="font-weight:600"></div>
-          </div>
+          <div><div class="small-muted">Kode Dusun</div><h5 id="displayCode"></h5></div>
+          <div><div class="small-muted">Sisa waktu</div><div id="displayCountdown" style="font-weight:600"></div></div>
         </div>
       </div>
 
-      <div class="row g-3 mt-3">
+      <div class="row mt-3 g-3">
         <div class="col-lg-5">
           <!-- Laporan SOS -->
           <div class="card p-3 mb-3">
             <h6>Buat Laporan SOS</h6>
-            <select id="jenisKejadian" class="form-control mb-2">
-              <option value="Kemalingan">Kemalingan</option>
-              <option value="Kebakaran">Kebakaran</option>
-              <option value="Medis">Medis</option>
-              <option value="Ambulance">Ambulance</option>
-              <option value="Mencurigakan">Mencurigakan</option>
+            <select id="lap_jenis" class="form-control mb-2">
+              <option>Kemalingan</option>
+              <option>Kebakaran</option>
+              <option>Medis</option>
+              <option>Ambulance</option>
+              <option>Mencurigakan</option>
             </select>
-            <select id="lokasiOption" class="form-control mb-2" onchange="toggleLokasi()">
+            <select id="lap_lokasiOpt" class="form-control mb-2" onchange="toggleLokasiField()">
               <option value="saat_ini">Lokasi Saat Ini</option>
               <option value="lainnya">Lokasi Lain</option>
             </select>
-            <textarea id="lokasiDesc" class="form-control mb-2 hidden" placeholder="Deskripsi lokasi (opsional)"></textarea>
+            <textarea id="lap_lokasiDesc" class="form-control mb-2 hidden" placeholder="Deskripsi lokasi (opsional)"></textarea>
             <div class="d-grid">
-              <button class="btn btn-danger" onclick="kirimLaporan()">Kirim Laporan</button>
+              <button class="btn btn-danger" onclick="sendReport()">Kirim Laporan</button>
             </div>
           </div>
 
           <!-- Statistik -->
           <div class="card p-3 mb-3">
             <h6>Statistik Kejadian</h6>
-            <canvas id="chartKejadian"></canvas>
+            <canvas id="chartKejadian" style="width:100%;height:220px"></canvas>
           </div>
 
-          <div class="card p-3 mb-3">
+          <div class="card p-3">
             <h6>Daftar Laporan Terbaru</h6>
-            <div id="listLaporan"></div>
+            <div id="listReports"></div>
           </div>
         </div>
 
         <div class="col-lg-7">
-          <!-- Map & Pos -->
           <div class="card p-3 mb-3">
             <h6>Pos Jaga Dusun</h6>
-            <div id="map" class="mb-3">Memuat peta...</div>
-            <div class="d-flex gap-2">
-              <button class="btn btn-primary" onclick="promptTambahPos()">Tambah Pos RT</button>
-              <button class="btn btn-outline-secondary" onclick="loadPosJaga()">Muat Ulang Pos</button>
+            <div id="map">Memuat peta...</div>
+            <div class="d-flex gap-2 mt-3">
+              <button class="btn btn-primary" onclick="promptAddPos()">Tambah Pos RT</button>
+              <button class="btn btn-outline-secondary" onclick="loadPos()">Muat Ulang Pos</button>
             </div>
             <div id="listPos" class="mt-3"></div>
           </div>
         </div>
       </div>
+
     </div>
 
   </div>
 </div>
 
-<!-- Google Maps (ganti key di bawah) -->
+<!-- Google Maps API - GANTI KEY -->
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY"></script>
 
 <script>
-/* ========== Firebase init ========== */
+/* ================= Firebase init ================= */
 const firebaseConfig = {
   apiKey: "AIzaSyA6GAeIc7ZesIed9MAelUf6x_sBFdp9E-Q",
   authDomain: "dusun-super.firebaseapp.com",
@@ -191,41 +185,43 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-/* ========== State ========== */
-let currentUser = null;       // object user setelah login
-let currentDusunId = null;    // id doc dusun user
+/* ================= State ================= */
+let currentUser = null;      // { id, nama, hp, role, dusunId, ... }
+let currentDusunId = null;
 let map = null;
 let markers = [];
-let chart = null;
-let kodeWatcherUnsub = null;
-let kodeCountdownInterval = null;
+let laporanChart = null;
+let kodeUnsubscribe = null;
+let kodeInterval = null;
 
-/* ========= Utilities ========= */
-function $(id){ return document.getElementById(id); }
-function showToast(text){ alert(text); }
+/* ================= Helpers ================= */
+const $ = id => document.getElementById(id);
+const show = id => $(id).classList.remove('hidden');
+const hide = id => $(id).classList.add('hidden');
+const toast = txt => alert(txt);
 
-/* ========= Generate & Save Dusun ========= */
-function generateKode(){
+/* ================ Create Dusun ================ */
+function generateDusunCode(){
   const code = "DSN" + Math.random().toString(36).substring(2,8).toUpperCase();
-  $('kodeDusunField').value = code;
-  $('kodeGroup').classList.remove('d-none');
-  $('generateBtn').classList.add('hidden');
-  $('saveDusunBtn').classList.remove('hidden');
+  $('dusun_code').value = code;
+  show('kodeGroup');
+  hide('btnGenerate');
+  show('btnSaveDusun');
 }
-$('copyKodeBtn').addEventListener('click', ()=>{
-  const val = $('kodeDusunField').value;
-  if(!val) return showToast("Belum ada kode untuk disalin.");
-  navigator.clipboard?.writeText(val).then(()=> showToast("Kode disalin ke clipboard."));
+$('copyCodeBtn').addEventListener('click', ()=>{
+  const v = $('dusun_code').value;
+  if(!v) return toast("Belum ada kode.");
+  navigator.clipboard?.writeText(v).then(()=> toast("Kode disalin ke clipboard."));
 });
 
-async function simpanDusun(){
-  const nama = $('namaDusun').value.trim();
-  const desa = $('desa').value.trim();
-  const kota = $('kota').value.trim();
-  const kab = $('kabupaten').value.trim();
-  const kec = $('kecamatan').value.trim();
-  const code = $('kodeDusunField').value.trim();
-  if(!nama || !desa || !kota || !kab || !kec || !code) return showToast("Lengkapi semua field & generate kode.");
+async function saveDusun(){
+  const nama = $('dusun_nama').value.trim();
+  const desa = $('dusun_desa').value.trim();
+  const kota = $('dusun_kota').value.trim();
+  const kab = $('dusun_kab').value.trim();
+  const kec = $('dusun_kec').value.trim();
+  const code = $('dusun_code').value.trim();
+  if(!nama||!desa||!kota||!kab||!kec||!code) return toast("Lengkapi field & generate kode.");
 
   const codeExpiresAt = Date.now() + 3600000; // 1 jam
   try{
@@ -233,191 +229,195 @@ async function simpanDusun(){
       nama, desa, kota, kabupaten: kab, kecamatan: kec,
       code, codeExpiresAt, createdAt: Date.now()
     });
-    showToast("Dusun tersimpan. Kode: " + code);
-    // reset UI
-    $('generateBtn').classList.remove('hidden');
-    $('saveDusunBtn').classList.add('hidden');
-    // leave kode field visible so kepala dusun bisa copy
-    // advise user to register as kepala_dusun with the code
+    toast("Dusun tersimpan. Kode: " + code);
+    // keep code visible so Kepala Dusun bisa copy/share
+    hide('btnSaveDusun');
+    show('btnGenerate');
   }catch(e){
-    console.error(e);
-    showToast("Gagal menyimpan dusun: " + e.message);
+    console.error(e); toast("Gagal simpan dusun: " + e.message);
   }
 }
 
-/* ========= Registration (users stored in Firestore) ========= */
-async function daftarWarga(){
-  const nama = $('namaWarga').value.trim();
-  const noHp = $('noHpDaftar').value.trim();
-  const alamat = $('alamat').value.trim();
-  const blok = $('blok').value.trim();
-  const nomor = $('nomor').value.trim();
-  const rt = $('rt').value.trim();
-  const rw = $('rw').value.trim();
-  const role = $('roleWarga').value;
-  const kode = $('kodeDusunInput').value.trim();
-  const pass = $('passwordDaftar').value;
-  if(!nama||!noHp||!alamat||!rt||!rw||!role||!kode||!pass) return showToast("Lengkapi field wajib.");
+/* ================ Register User (with duplicate check) ================ */
+async function registerUser(){
+  const nama = $('reg_nama').value.trim();
+  const hp = $('reg_hp').value.trim();
+  const alamat = $('reg_alamat').value.trim();
+  const blok = $('reg_blok').value.trim();
+  const no = $('reg_no').value.trim();
+  const rt = $('reg_rt').value.trim();
+  const rw = $('reg_rw').value.trim();
+  const role = $('reg_role').value;
+  const kodeDusun = $('reg_kodeDusun').value.trim();
+  const pass = $('reg_password').value;
 
-  // verify kode dusun
-  const q = await db.collection('dusun').where('code','==',kode).get();
-  if(q.empty) return showToast("Kode dusun tidak valid. Pastikan kode terbaru dari Kepala Dusun.");
+  if(!nama||!hp||!pass||!kodeDusun) return toast("Nama, No HP, Password, dan Kode Dusun wajib diisi.");
+
+  // duplicate check: user doc id = hp (simple)
+  const userDoc = await db.collection('users').doc(hp).get();
+  if(userDoc.exists) return toast("Nomor HP sudah terdaftar — 1 nomor hanya bisa untuk 1 user/dusun.");
+
+  // validate dusun code
+  const q = await db.collection('dusun').where('code','==',kodeDusun).get();
+  if(q.empty) return toast("Kode Dusun tidak valid. Pastikan kode dari Kepala Dusun.");
+
   const dusunDoc = q.docs[0];
   const dusunId = dusunDoc.id;
 
-  // store user with doc id = phone (or auto id)
   try{
-    await db.collection('users').doc(noHp).set({
-      nama, noHp, alamat, blok, nomor, rt, rw, role, dusunId, password: pass, createdAt: Date.now()
+    await db.collection('users').doc(hp).set({
+      nama, hp, alamat, blok, no, rt, rw,
+      role, dusunId, password: pass, createdAt: Date.now()
     });
-    showToast("Pendaftaran berhasil. Silakan login.");
-    // clear fields
-    $('namaWarga').value=''; $('noHpDaftar').value=''; $('alamat').value=''; $('blok').value='';
-    $('nomor').value=''; $('rt').value=''; $('rw').value=''; $('kodeDusunInput').value=''; $('passwordDaftar').value='';
+    toast("Pendaftaran berhasil — silakan login.");
+    clearRegisterForm();
   }catch(e){
     console.error(e);
-    showToast("Gagal mendaftar: " + e.message);
+    toast("Gagal daftar: " + e.message);
   }
 }
-function clearRegister(){
-  $('namaWarga').value=''; $('noHpDaftar').value=''; $('alamat').value=''; $('blok').value='';
-  $('nomor').value=''; $('rt').value=''; $('rw').value=''; $('kodeDusunInput').value=''; $('passwordDaftar').value='';
+
+function clearRegisterForm(){
+  $('reg_nama').value=''; $('reg_hp').value=''; $('reg_alamat').value='';
+  $('reg_blok').value=''; $('reg_no').value=''; $('reg_rt').value=''; $('reg_rw').value='';
+  $('reg_role').selectedIndex=0; $('reg_kodeDusun').value=''; $('reg_password').value='';
 }
 
-/* ========= Login ========= */
+/* ================ Login ================ */
 async function login(){
-  const noHp = $('noHpLogin').value.trim();
-  const pass = $('passwordLogin').value;
-  if(!noHp||!pass) return showToast("Masukkan No HP & Password");
+  const hp = $('login_hp').value.trim();
+  const pw = $('login_password').value;
+  if(!hp||!pw) return toast("Isi No HP & Password");
 
-  const doc = await db.collection('users').doc(noHp).get();
-  if(!doc.exists) return showToast("User tidak ditemukan");
+  const doc = await db.collection('users').doc(hp).get();
+  if(!doc.exists) return toast("User tidak ditemukan");
   const user = doc.data();
-  if(user.password !== pass) return showToast("Password salah");
+  if(user.password !== pw) return toast("Password salah");
+
+  // set current user
   currentUser = { id: doc.id, ...user };
   currentDusunId = user.dusunId || null;
 
   // show dashboard
-  document.querySelector('#authCard').classList.add('hidden');
-  document.querySelector('#dashboardCard').classList.remove('hidden');
-  $('userName').innerText = currentUser.nama || currentUser.noHp;
+  hide('authCard');
+  show('dashboardCard');
+  $('displayName').innerText = currentUser.nama || currentUser.hp;
 
-  // realtime clock
-  startClock();
+  startRealtimeClock();
 
-  // if kepala_dusun -> show kode & start watcher
+  // if kepala dusun: show code and listen for changes & rotate when expired
   if(currentUser.role === 'kepala_dusun'){
-    $('kodeDashboard').classList.remove('d-none');
-    // find the dusun doc (we have dusunId)
+    // ensure currentDusunId exists (it should, since registration stored dusunId)
     if(currentDusunId){
-      startKodeListener(currentDusunId, true);
+      show('kodeDashboard');
+      startDusunCodeWatcher(currentDusunId, true);
     } else {
-      // try to find dusun by matching code in user doc (if we stored kode there)
-      showToast("Anda terdaftar sebagai Kepala Dusun tetapi tidak terikat ke dusun. Pastikan mendaftar dengan kode dusun yang dibuat.");
+      // try to find dusun where createdBy? (not implemented). Warn user:
+      toast("Anda Kepala Dusun tetapi tidak terkait ke Dusun manapun. Pastikan daftar dengan Kode Dusun yang dibuat.");
     }
   } else {
-    $('kodeDashboard').classList.add('d-none');
+    hide('kodeDashboard');
   }
 
-  // load map, laporan, chart
-  waitForMapsThenInit();
-  loadPosJaga();
-  loadLaporanAndChart();
+  // load map, pos, laporan, chart
+  initMapWhenReady();
+  loadPos();
+  loadReportsAndChart();
 
-  // listen laporan changes for this dusun realtime
+  // realtime updates to reports
   if(currentDusunId){
     db.collection('laporan').where('dusunId','==',currentDusunId)
-      .onSnapshot(()=> loadLaporanAndChart());
+      .onSnapshot(()=> loadReportsAndChart());
   }
 }
 
-/* ========= Logout ========= */
+/* ================ Logout ================ */
 function logout(){
-  currentUser = null;
-  currentDusunId = null;
-  // remove listeners
-  if(kodeWatcherUnsub){ kodeWatcherUnsub(); kodeWatcherUnsub = null; }
-  if(kodeCountdownInterval){ clearInterval(kodeCountdownInterval); kodeCountdownInterval = null; }
-  // reset UI
-  document.querySelector('#authCard').classList.remove('hidden');
-  document.querySelector('#dashboardCard').classList.add('hidden');
+  currentUser = null; currentDusunId = null;
+  // stop watchers
+  if(kodeUnsubscribe){ kodeUnsubscribe(); kodeUnsubscribe = null; }
+  if(kodeInterval){ clearInterval(kodeInterval); kodeInterval = null; }
+  // UI
+  show('authCard'); hide('dashboardCard');
 }
 
-/* ========= Clock ========= */
-function startClock(){
+/* ================ Realtime Clock ================ */
+function startRealtimeClock(){
   setInterval(()=>{
-    const now = new Date();
-    $('realtimeClock').innerText = now.toLocaleString('id-ID', { weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' });
+    $('realtimeClock').innerText = new Date().toLocaleString('id-ID', { weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' });
   },1000);
 }
 
-/* ========= Laporan SOS ========= */
-function toggleLokasi(){
-  const v = $('lokasiOption')?.value;
-  if(v === 'lainnya') $('lokasiDesc').classList.remove('hidden'); else $('lokasiDesc').classList.add('hidden');
+/* ================ Reports (SOS) ================ */
+function toggleLokasiField(){
+  const v = $('lap_lokasiOpt').value;
+  if(v === 'lainnya') $('lap_lokasiDesc').classList.remove('hidden'); else $('lap_lokasiDesc').classList.add('hidden');
 }
-async function kirimLaporan(){
-  if(!currentUser) return showToast("Login dulu untuk lapor.");
-  const kejadian = $('jenisKejadian').value;
-  const lokasiOpt = $('lokasiOption').value;
-  const lokasi = lokasiOpt === 'lainnya' ? $('lokasiDesc').value.trim() : 'Lokasi Saat Ini';
-  if(!kejadian) return showToast("Pilih jenis kejadian");
+
+async function sendReport(){
+  if(!currentUser) return toast("Login dulu untuk mengirim laporan.");
+  const jenis = $('lap_jenis').value;
+  const lokasiOpt = $('lap_lokasiOpt').value;
+  const lokasi = lokasiOpt === 'lainnya' ? $('lap_lokasiDesc').value.trim() : 'Lokasi Saat Ini';
+  if(!jenis) return toast("Pilih jenis kejadian");
   try{
     await db.collection('laporan').add({
       dusunId: currentDusunId,
       uid: currentUser.id,
-      kejadian, lokasi, createdAt: Date.now()
+      jenis, lokasi, createdAt: Date.now()
     });
-    showToast("Laporan terkirim.");
-    $('lokasiDesc').value='';
-  }catch(e){ console.error(e); showToast("Gagal kirim laporan: " + e.message); }
+    toast("Laporan tersimpan.");
+    $('lap_lokasiDesc').value='';
+    loadReportsAndChart();
+  }catch(e){ console.error(e); toast("Gagal kirim laporan: " + e.message); }
 }
 
-/* ========= Load laporan & render chart ========= */
-async function loadLaporanAndChart(){
+/* ================ Load Reports & Chart ================ */
+async function loadReportsAndChart(){
   if(!currentDusunId) return;
-  const snap = await db.collection('laporan').where('dusunId','==',currentDusunId).orderBy('createdAt','desc').limit(100).get();
-  const reports = snap.docs.map(d => ({ id:d.id, ...d.data() }));
+  const snap = await db.collection('laporan').where('dusunId','==',currentDusunId).orderBy('createdAt','desc').limit(200).get();
+  const rows = snap.docs.map(d=>({ id:d.id, ...d.data() }));
   // list
-  const list = $('listLaporan'); list.innerHTML = '';
-  if(reports.length === 0) list.innerHTML = '<div class="small-muted">Belum ada laporan.</div>';
-  reports.slice(0,20).forEach(r => {
-    const dt = new Date(r.createdAt).toLocaleString();
+  const list = $('listReports'); list.innerHTML = '';
+  if(rows.length === 0) list.innerHTML = '<div class="small-muted">Belum ada laporan.</div>';
+  rows.slice(0,30).forEach(r=>{
+    const t = new Date(r.createdAt).toLocaleString();
     const el = document.createElement('div'); el.className='mb-2';
-    el.innerHTML = `<div><b>${r.kejadian}</b> — ${r.lokasi || ''}</div><div class="small-muted">${dt}</div>`;
+    el.innerHTML = `<div><b>${r.jenis}</b> — ${r.lokasi||''}</div><div class="small-muted">${t}</div>`;
     list.appendChild(el);
   });
   // chart
   const counts = {};
-  reports.forEach(r => counts[r.kejadian] = (counts[r.kejadian]||0)+1);
-  const labels = Object.keys(counts).length ? Object.keys(counts) : ['Tidak ada'];
+  rows.forEach(r => counts[r.jenis] = (counts[r.jenis]||0) + 1);
+  const labels = Object.keys(counts).length ? Object.keys(counts) : ['Belum ada'];
   const data = labels.map(l => counts[l] || 0);
-  if(chart) chart.destroy();
+  if(laporanChart) laporanChart.destroy();
   const ctx = document.getElementById('chartKejadian').getContext('2d');
-  chart = new Chart(ctx, {
+  laporanChart = new Chart(ctx, {
     type: 'bar',
     data: { labels, datasets: [{ label:'Jumlah', data, backgroundColor: labels.map((_,i)=>['#36a2eb','#ff6384','#ffce56','#4caf50','#9c27b0'][i%5]) }] },
     options: { responsive:true, plugins:{ legend:{ display:false } } }
   });
 }
 
-/* ========= Google Maps & Pos Jaga ========= */
-function waitForMapsThenInit(){
+/* ================ Google Maps & Pos Jaga ================ */
+function initMapWhenReady(){
   if(window.google && window.google.maps && !map){
-    map = new google.maps.Map(document.getElementById('map'), { center:{lat:-6.200000, lng:106.816666}, zoom:12 });
-  }
-  if(!map){
-    setTimeout(waitForMapsThenInit, 500);
+    map = new google.maps.Map(document.getElementById('map'), { center:{lat:-6.200, lng:106.816}, zoom:12 });
+  } else if(!window.google || !window.google.maps){
+    // wait until loaded
+    setTimeout(initMapWhenReady, 500);
   }
 }
-async function loadPosJaga(){
-  waitForMapsThenInit();
+
+async function loadPos(){
+  initMapWhenReady();
   // clear markers
   markers.forEach(m=>m.setMap(null)); markers = [];
   $('listPos').innerHTML = '';
   if(!currentDusunId) return;
   const snap = await db.collection('dusun').doc(currentDusunId).collection('posJaga').get();
-  if(snap.empty) { $('listPos').innerHTML = '<div class="small-muted">Belum ada pos jaga.</div>'; return; }
+  if(snap.empty){ $('listPos').innerHTML = '<div class="small-muted">Belum ada pos jaga.</div>'; return; }
   const bounds = new google.maps.LatLngBounds();
   snap.forEach(doc=>{
     const p = doc.data();
@@ -431,65 +431,67 @@ async function loadPosJaga(){
   });
   if(markers.length) map.fitBounds(bounds);
 }
-async function promptTambahPos(){
-  if(!currentUser) return showToast("Login dulu.");
+
+async function promptAddPos(){
+  if(!currentUser) return toast("Login dulu.");
   const nama = prompt("Nama pos (contoh: Pos RT 01)");
   if(!nama) return;
-  const lat = parseFloat(prompt("Latitude (contoh -6.200)"));
+  const lat = parseFloat(prompt("Latitude (contoh -6.2)"));
   const lng = parseFloat(prompt("Longitude (contoh 106.816)"));
-  if(Number.isNaN(lat) || Number.isNaN(lng)) return showToast("Koordinat tidak valid.");
+  if(Number.isNaN(lat) || Number.isNaN(lng)) return toast("Koordinat tidak valid.");
   try{
     await db.collection('dusun').doc(currentDusunId).collection('posJaga').add({ nama, lat, lng, createdAt: Date.now() });
-    showToast("Pos tersimpan.");
-    loadPosJaga();
-  }catch(e){ console.error(e); showToast("Gagal simpan pos: " + e.message); }
+    toast("Pos jaga tersimpan.");
+    loadPos();
+  }catch(e){ console.error(e); toast("Gagal simpan pos: " + e.message); }
 }
 
-/* ========= Kode watcher + auto rotate jika kepala_dusun =========
-   - Jika current user kepala_dusun, pas login kita listen dokumen dusun,
-     tampilkan code & countdown; jika expired, kita buat kode baru dan update Firestore.
-*/
-function startKodeListener(dusunId, amIKepalaDusun){
-  // unsubscribe existing
-  if(kodeWatcherUnsub){ kodeWatcherUnsub(); kodeWatcherUnsub = null; }
+/* ================ Dusun code watcher + rotate ================ */
+function startDusunCodeWatcher(dusunId, autoRotateIfExpired){
+  // unsubscribe previous
+  if(kodeUnsubscribe){ kodeUnsubscribe(); kodeUnsubscribe = null; }
   const ref = db.collection('dusun').doc(dusunId);
-  kodeWatcherUnsub = ref.onSnapshot(async snap=>{
+  kodeUnsubscribe = ref.onSnapshot(async snap=>{
     if(!snap.exists) return;
     const data = snap.data();
     const code = data.code || '';
     const expires = data.codeExpiresAt || 0;
-    $('profileKode').innerText = code;
-    // show code in create form too so kepala dusun can copy later
-    $('kodeGroup').classList.remove('d-none');
-    $('kodeDusunField').value = code;
-    // start countdown timer
-    if(kodeCountdownInterval) clearInterval(kodeCountdownInterval);
-    kodeCountdownInterval = setInterval(async ()=>{
+    $('displayCode').innerText = code;
+    // also show in create UI for copy convenience
+    if(code){
+      $('dusun_code').value = code;
+      show('kodeGroup');
+    }
+    // start countdown interval
+    if(kodeInterval) clearInterval(kodeInterval);
+    kodeInterval = setInterval(async ()=>{
       const now = Date.now();
-      const remaining = Math.max(0, Math.floor((expires - now) / 1000));
-      const hh = Math.floor(remaining/3600);
-      const mm = Math.floor((remaining%3600)/60);
-      const ss = remaining%60;
-      $('profileCountdown').innerText = `${hh}h ${mm}m ${ss}s`;
-      $('countdownTimer')?.innerText = `${hh}h ${mm}m ${ss}s`;
-      if(remaining <= 0){
-        // expired -> if kepala dusun, rotate code
-        if(amIKepalaDusun && currentUser && currentUser.role==='kepala_dusun'){
+      const remain = Math.max(0, Math.floor((expires - now)/1000));
+      const hh = Math.floor(remain/3600);
+      const mm = Math.floor((remain%3600)/60);
+      const ss = remain%60;
+      $('displayCountdown').innerText = `${hh}h ${mm}m ${ss}s`;
+      // also show near generate if present
+      const el = $('dusun_code');
+      if(el) $('dusun_code').nextSibling; // noop but keep element present
+      if(remain <= 0){
+        // expired: if kepala_dusun and allowed: rotate
+        if(autoRotateIfExpired && currentUser && currentUser.role === 'kepala_dusun'){
           const newCode = "DSN" + Math.random().toString(36).substring(2,8).toUpperCase();
           const newExpires = Date.now() + 3600000;
           try{
             await ref.update({ code: newCode, codeExpiresAt: newExpires });
-            // the onSnapshot will pick up new values and update UI
-          }catch(e){ console.error("Gagal update kode:", e); }
+            // changes reflected via onSnapshot
+          }catch(e){ console.error("Gagal ganti kode:", e); }
         }
       }
     }, 1000);
   });
 }
 
-/* ========= On load: nothing to do ========= */
+/* ================ On load ================ */
 window.addEventListener('load', ()=>{
-  // nothing — UI waits for user actions
+  // nothing required; UI waits for user actions
 });
 </script>
 </body>
