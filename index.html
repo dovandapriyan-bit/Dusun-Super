@@ -3,22 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Aplikasi Keamanan Dusun</title>
+<title>Keamanan Dusun</title>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-body { font-family: Arial,sans-serif; background:#f0f2f5; margin:0; padding:0; }
-.container { max-width:480px; margin:20px auto; padding:20px; background:#fff; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1); }
-h2,h3 { text-align:center; }
-input, button { width:100%; padding:10px; margin:5px 0; border-radius:6px; border:1px solid #ccc; }
-button { background:#007bff; color:white; border:none; cursor:pointer; }
-button:hover { background:#0056b3; }
-.hidden { display:none; }
-#dashboard { display:none; padding:10px; }
-#charts { display:flex; gap:20px; flex-wrap:wrap; justify-content:center; margin-top:20px; }
-canvas { background:#fff; padding:10px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1); width:200px !important; height:200px !important; }
-#map { width:100%; height:350px; margin-top:20px; border-radius:10px; }
+body{font-family:Arial,sans-serif;background:#f0f2f5;margin:0;padding:0}
+.container{max-width:480px;margin:20px auto;padding:20px;background:#fff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+h2,h3{text-align:center}
+input, button{width:100%;padding:10px;margin:5px 0;border-radius:6px;border:1px solid #ccc}
+button{background:#007bff;color:white;border:none;cursor:pointer}
+button:hover{background:#0056b3}
+.hidden{display:none}
+#dashboard{display:none;padding:10px}
+#charts{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;margin-top:20px}
+canvas{background:#fff;padding:10px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1);width:200px !important;height:200px !important}
+#map{width:100%;height:350px;margin-top:20px;border-radius:10px}
+#profileInfo{text-align:center;margin-top:10px;font-weight:bold}
 </style>
 </head>
 <body>
@@ -26,23 +27,24 @@ canvas { background:#fff; padding:10px; border-radius:10px; box-shadow:0 2px 6px
 <div class="container" id="mainContainer">
   <h2>Aplikasi Keamanan Dusun</h2>
 
-  <!-- === Buat Dusun === -->
+  <!-- Buat Dusun -->
   <div id="buatDusunDiv">
-    <h3>Buat Dusun</h3>
+    <h3>Buat Dusun (Kepala Dusun)</h3>
     <input id="namaDusun" placeholder="Nama Dusun">
+    <input id="desa" placeholder="Desa">
     <input id="kota" placeholder="Kota">
     <input id="kabupaten" placeholder="Kabupaten">
     <input id="kecamatan" placeholder="Kecamatan">
-    <button onclick="generateKode()">Generate Kode</button>
+    <button id="generateBtn" onclick="generateKode()">Generate Kode</button>
     <div id="kodeContainer" class="hidden">
       <p>Kode Dusun: <b id="kodeDusunText"></b></p>
-      <button onclick="simpanDusun()">Simpan</button>
+      <p>Sisa waktu pergantian kode: <span id="countdownTimer"></span></p>
     </div>
   </div>
 
   <hr>
 
-  <!-- === Daftar Warga === -->
+  <!-- Daftar Warga -->
   <div id="daftarDiv">
     <h3>Daftar Warga</h3>
     <input id="namaWarga" placeholder="Nama">
@@ -53,13 +55,12 @@ canvas { background:#fff; padding:10px; border-radius:10px; box-shadow:0 2px 6px
     <input id="rt" placeholder="RT">
     <input id="rw" placeholder="RW">
     <input id="passwordDaftar" type="password" placeholder="Password">
-    <input id="kodeDusunDaftar" placeholder="Kode Dusun">
     <button onclick="daftar()">Daftar</button>
   </div>
 
   <hr>
 
-  <!-- === Login === -->
+  <!-- Login -->
   <div id="loginDiv">
     <h3>Login</h3>
     <input id="noHpLogin" placeholder="No HP">
@@ -68,145 +69,183 @@ canvas { background:#fff; padding:10px; border-radius:10px; box-shadow:0 2px 6px
   </div>
 </div>
 
-<!-- === Dashboard === -->
+<!-- Dashboard -->
 <div id="dashboard">
   <h2>Dashboard Dusun</h2>
   <p>Selamat datang, <span id="userName"></span>!</p>
-
+  <div id="profileInfo">
+    <span id="currentDateTime"></span>
+  </div>
   <div id="charts">
     <canvas id="kejadianChart"></canvas>
     <canvas id="keamananChart"></canvas>
   </div>
-
   <div id="map"></div>
   <button onclick="logout()" style="margin-top:20px;">Logout</button>
 </div>
 
 <script>
-  // Firebase
-  const firebaseConfig = {
-    apiKey: "AIzaSyA6GAeIc7ZesIed9MAelUf6x_sBFdp9E-Q",
-    authDomain: "dusun-super.firebaseapp.com",
-    projectId: "dusun-super",
-    storageBucket: "dusun-super.firebasestorage.app",
-    messagingSenderId: "1083284057385",
-    appId: "1:1083284057385:web:21cfe467b047bb5a241b38",
-    measurementId: "G-LJ6KP57Q9M"
+const firebaseConfig = {
+apiKey:"AIzaSyA6GAeIc7ZesIed9MAelUf6x_sBFdp9E-Q",
+authDomain:"dusun-super.firebaseapp.com",
+projectId:"dusun-super",
+storageBucket:"dusun-super.firebasestorage.app",
+messagingSenderId:"1083284057385",
+appId:"1:1083284057385:web:21cfe467b047bb5a241b38",
+measurementId:"G-LJ6KP57Q9M"
+};
+const app=firebase.initializeApp(firebaseConfig);
+const db=firebase.firestore();
+
+let currentUser=null;
+let generatedCode="";
+let countdownInterval=null;
+
+// ===== Buat Dusun =====
+function generateKode(){
+  generatedCode="DSN"+Math.random().toString(36).substr(2,6).toUpperCase();
+  document.getElementById("kodeDusunText").innerText=generatedCode;
+  document.getElementById("kodeContainer").classList.remove("hidden");
+  const btn=document.getElementById("generateBtn");
+  btn.innerText="Simpan";
+  btn.onclick=simpanDusun;
+}
+
+// Simpan data dusun + auto refresh kode tiap 1 jam
+async function simpanDusun(){
+  const nama=document.getElementById("namaDusun").value;
+  const desa=document.getElementById("desa").value;
+  const kota=document.getElementById("kota").value;
+  const kabupaten=document.getElementById("kabupaten").value;
+  const kecamatan=document.getElementById("kecamatan").value;
+  if(!nama||!desa||!kota||!kabupaten||!kecamatan||!generatedCode) return alert("Isi semua data!");
+
+  const docRef=await db.collection("dusun").add({
+    nama, desa, kota, kabupaten, kecamatan,
+    code:generatedCode,
+    createdAt:Date.now()
+  });
+
+  alert("Dusun berhasil dibuat! Kode: "+generatedCode);
+  sessionStorage.setItem("kodeDusun",generatedCode);
+  sessionStorage.setItem("dusunId",docRef.id);
+  document.getElementById("buatDusunDiv").classList.add("hidden");
+
+  // Mulai auto refresh kode dan countdown
+  startKodeTimer(docRef.id);
+}
+
+// ===== Timer & Auto Refresh Kode =====
+function startKodeTimer(dusunId){
+  let duration=3600; // 1 jam = 3600 detik
+  if(countdownInterval) clearInterval(countdownInterval);
+  countdownInterval=setInterval(async ()=>{
+    duration--;
+    const jam=Math.floor(duration/3600);
+    const menit=Math.floor((duration%3600)/60);
+    const detik=duration%60;
+    document.getElementById("countdownTimer").innerText=`${jam}h ${menit}m ${detik}s`;
+    if(duration<=0){
+      // ganti kode
+      const newCode="DSN"+Math.random().toString(36).substr(2,6).toUpperCase();
+      await db.collection("dusun").doc(dusunId).update({code:newCode});
+      generatedCode=newCode;
+      sessionStorage.setItem("kodeDusun",newCode);
+      document.getElementById("kodeDusunText").innerText=newCode;
+      duration=3600;
+    }
+  },1000);
+}
+
+// ===== Daftar Warga =====
+async function daftar(){
+  const data={
+    nama:document.getElementById("namaWarga").value,
+    noHp:document.getElementById("noHpDaftar").value,
+    alamat:document.getElementById("alamat").value,
+    blok:document.getElementById("blok").value,
+    nomor:document.getElementById("nomor").value,
+    rt:document.getElementById("rt").value,
+    rw:document.getElementById("rw").value,
+    password:document.getElementById("passwordDaftar").value,
+    createdAt:Date.now()
   };
-  const app = firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+  if(!data.noHp||!data.password) return alert("Isi data wajib");
 
-  let generatedCode = "";
-  let currentUser = null;
+  const kodeDusun=sessionStorage.getItem("kodeDusun");
+  if(!kodeDusun) return alert("Minta kode dari Kepala Dusun");
 
-  // ======= Buat Dusun =======
-  function generateKode(){
-    generatedCode = "DSN" + Math.random().toString(36).substr(2,6).toUpperCase();
-    document.getElementById("kodeDusunText").innerText = generatedCode;
-    document.getElementById("kodeContainer").classList.remove("hidden");
-  }
+  const q=await db.collection("dusun").where("code","==",kodeDusun).get();
+  if(q.empty) return alert("Kode dusun tidak valid!");
+  data.dusunId=q.docs[0].id;
 
-  async function simpanDusun(){
-    const nama = document.getElementById("namaDusun").value;
-    const kota = document.getElementById("kota").value;
-    const kabupaten = document.getElementById("kabupaten").value;
-    const kecamatan = document.getElementById("kecamatan").value;
-    if(!nama || !generatedCode) return alert("Isi semua data dan generate kode!");
+  await db.collection("users").doc(data.noHp).set(data);
+  alert("Daftar berhasil! Silakan login.");
+}
 
-    await db.collection("dusun").add({nama,kota,kabupaten,kecamatan,code:generatedCode,createdAt:Date.now()});
-    alert("Dusun berhasil dibuat! Gunakan kode: "+generatedCode);
-  }
+// ===== Login =====
+async function login(){
+  const noHp=document.getElementById("noHpLogin").value;
+  const password=document.getElementById("passwordLogin").value;
 
-  // ======= Daftar =======
-  async function daftar(){
-    const data = {
-      nama: document.getElementById("namaWarga").value,
-      noHp: document.getElementById("noHpDaftar").value,
-      alamat: document.getElementById("alamat").value,
-      blok: document.getElementById("blok").value,
-      nomor: document.getElementById("nomor").value,
-      rt: document.getElementById("rt").value,
-      rw: document.getElementById("rw").value,
-      password: document.getElementById("passwordDaftar").value,
-      kodeDusun: document.getElementById("kodeDusunDaftar").value,
-      createdAt: Date.now()
-    };
-    if(!data.noHp||!data.password||!data.kodeDusun) return alert("Isi semua data wajib!");
+  const docSnap=await db.collection("users").doc(noHp).get();
+  if(!docSnap.exists) return alert("User tidak ditemukan!");
+  const user=docSnap.data();
+  if(user.password!==password) return alert("Password salah!");
 
-    const q = await db.collection("dusun").where("code","==",data.kodeDusun).get();
-    if(q.empty) return alert("Kode dusun tidak valid!");
+  currentUser=user;
+  document.getElementById("mainContainer").classList.add("hidden");
+  document.getElementById("dashboard").style.display="block";
+  document.getElementById("userName").innerText=user.nama;
 
-    data.dusunId = q.docs[0].id;
-    await db.collection("users").doc(data.noHp).set(data);
+  // Tampilkan waktu realtime
+  setInterval(()=> {
+    const now=new Date();
+    document.getElementById("currentDateTime").innerText=now.toLocaleString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  },1000);
 
-    alert("Pendaftaran berhasil! Silakan login.");
-  }
+  loadDashboard(user.dusunId);
+}
 
-  // ======= Login =======
-  async function login(){
-    const noHp = document.getElementById("noHpLogin").value;
-    const password = document.getElementById("passwordLogin").value;
+// ===== Logout =====
+function logout(){
+  sessionStorage.clear();
+  currentUser=null;
+  document.getElementById("dashboard").style.display="none";
+  document.getElementById("mainContainer").classList.remove("hidden");
+}
 
-    const docSnap = await db.collection("users").doc(noHp).get();
-    if(!docSnap.exists) return alert("User tidak ditemukan!");
-    const user = docSnap.data();
-    if(user.password!==password) return alert("Password salah!");
+// ===== Dashboard =====
+async function loadDashboard(dusunId){
+  // Dummy data laporan
+  const laporanData={"Pencurian":5,"Kebakaran":2,"Keributan":3};
+  const ctx1=document.getElementById('kejadianChart').getContext('2d');
+  new Chart(ctx1,{type:'bar',data:{
+    labels:Object.keys(laporanData),
+    datasets:[{label:'Jumlah Kejadian',data:Object.values(laporanData),backgroundColor:['#ff6384','#36a2eb','#ffce56']}]
+  }});
 
-    currentUser = user;
-    sessionStorage.setItem("user",JSON.stringify(user));
+  const total=Object.values(laporanData).reduce((a,b)=>a+b,0);
+  const aman=Math.max(0,100-total*5);
+  const ctx2=document.getElementById('keamananChart').getContext('2d');
+  new Chart(ctx2,{type:'doughnut',data:{
+    labels:['Aman','Terganggu'],
+    datasets:[{data:[aman,100-aman],backgroundColor:['#4caf50','#f44336']}]
+  }});
 
-    document.getElementById("mainContainer").classList.add("hidden");
-    document.getElementById("dashboard").style.display="block";
-    document.getElementById("userName").innerText = user.nama;
+  initMap();
+}
 
-    loadDashboard(user.dusunId);
-  }
-
-  function logout(){
-    sessionStorage.clear();
-    document.getElementById("dashboard").style.display="none";
-    document.getElementById("mainContainer").classList.remove("hidden");
-  }
-
-  // ======= Dashboard =======
-  async function loadDashboard(dusunId){
-    // --- Grafik Kejadian (dummy) ---
-    const laporanData = { "Pencurian": 5, "Kebakaran": 2, "Keributan": 3 };
-    const ctx1 = document.getElementById('kejadianChart').getContext('2d');
-    new Chart(ctx1, {type:'bar', data:{
-      labels:Object.keys(laporanData),
-      datasets:[{label:'Jumlah Kejadian', data:Object.values(laporanData), backgroundColor:['#ff6384','#36a2eb','#ffce56']}]
-    }});
-
-    // --- Persentase Keamanan ---
-    const total = Object.values(laporanData).reduce((a,b)=>a+b,0);
-    const aman = Math.max(0, 100 - total*5);
-    const ctx2 = document.getElementById('keamananChart').getContext('2d');
-    new Chart(ctx2,{type:'doughnut', data:{
-      labels:['Aman','Terganggu'],
-      datasets:[{data:[aman,100-aman], backgroundColor:['#4caf50','#f44336']}]
-    }});
-
-    initMap();
-  }
-
-  // ======= Google Maps =======
-  function initMap(){
-    const map = new google.maps.Map(document.getElementById("map"),{
-      center:{lat:-7.250445,lng:112.768845},
-      zoom:14
-    });
-
-    const pos = [
-      {lat:-7.250445,lng:112.768845,label:"Pos Induk"},
-      {lat:-7.252,lng:112.77,label:"Pos RT 1"},
-      {lat:-7.248,lng:112.765,label:"Pos RT 2"}
-    ];
-
-    pos.forEach(p=>{
-      new google.maps.Marker({position:{lat:p.lat,lng:p.lng},map,title:p.label});
-    });
-  }
+// ===== Google Maps =====
+function initMap(){
+  const map=new google.maps.Map(document.getElementById("map"),{center:{lat:-7.250445,lng:112.768845},zoom:14});
+  const pos=[
+    {lat:-7.250445,lng:112.768845,label:"Pos Induk"},
+    {lat:-7.252,lng:112.77,label:"Pos RT 1"},
+    {lat:-7.248,lng:112.765,label:"Pos RT 2"}
+  ];
+  pos.forEach(p=>{new google.maps.Marker({position:{lat:p.lat,lng:p.lng},map,title:p.label})});
+}
 </script>
 
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY"></script>
