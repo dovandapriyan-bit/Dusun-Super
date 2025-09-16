@@ -4,10 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sistem Keamanan Dusun</title>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>
 body { background: #f0f4ff; font-family: 'Segoe UI', sans-serif; }
@@ -16,6 +13,7 @@ body { background: #f0f4ff; font-family: 'Segoe UI', sans-serif; }
 .form-control { border-radius: 12px; }
 #map { width: 100%; height: 300px; border-radius: 16px; }
 .hidden { display:none; }
+#listPos div { margin-bottom: 5px; }
 </style>
 </head>
 <body>
@@ -96,7 +94,13 @@ body { background: #f0f4ff; font-family: 'Segoe UI', sans-serif; }
 </div>
 </div>
 
-<script>
+<!-- Google Maps API -->
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY"></script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, collection, addDoc, doc, setDoc, getDocs, query, where, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
 const firebaseConfig = {
 apiKey: "AIzaSyA6GAeIc7ZesIed9MAelUf6x_sBFdp9E-Q",
 authDomain: "dusun-super.firebaseapp.com",
@@ -106,17 +110,19 @@ messagingSenderId: "1083284057385",
 appId: "1:1083284057385:web:21cfe467b047bb5a241b38",
 measurementId: "G-LJ6KP57Q9M"
 };
-const app = firebase.initializeApp(firebaseConfig);
-const auth = firebase.getAuth(app);
-const db = firebase.getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let map;
+let markers = [];
+let currentDusunId = null;
 
 function show(id){
-document.getElementById("login-container").classList.add("hidden");
-document.getElementById("dusun-container").classList.add("hidden");
-document.getElementById("dashboard-container").classList.add("hidden");
-document.getElementById(id).classList.remove("hidden");
+  document.getElementById("login-container").classList.add("hidden");
+  document.getElementById("dusun-container").classList.add("hidden");
+  document.getElementById("dashboard-container").classList.add("hidden");
+  document.getElementById(id).classList.remove("hidden");
 }
-
 function showAddJoinDusun(){ show("dusun-container"); }
 function backToLogin(){ show("login-container"); }
 function toggleLokasi(){
@@ -124,84 +130,137 @@ function toggleLokasi(){
   document.getElementById("lokasiDeskripsi").classList.toggle("hidden", opt!=="lainnya");
 }
 
-// --- LOGIN / DAFTAR NOMOR HP ---
+// LOGIN / REGISTER
 async function registerLogin(){
   const phone=document.getElementById("phone").value;
   const name=document.getElementById("name").value;
   const role=document.getElementById("role").value;
-
   if(!phone || !name) return alert("Nama dan Nomor HP wajib diisi");
 
-  const usersRef=db.collection("users");
-  const userSnap=await usersRef.where("phone","==",phone).get();
+  const usersRef = collection(db, "users");
+  const q = query(usersRef, where("phone", "==", phone));
+  const snap = await getDocs(q);
 
   let uid;
-  if(userSnap.empty){
-    // daftar baru
-    const newUser=await usersRef.add({phone,name,role,createdAt:Date.now()});
-    uid=newUser.id;
+  if(snap.empty){
+    const docRef = await addDoc(usersRef, {phone, name, role, createdAt: Date.now()});
+    uid = docRef.id;
   } else {
-    // login
-    uid=userSnap.docs[0].id;
+    uid = snap.docs[0].id;
   }
 
-  sessionStorage.setItem("uid",uid);
+  sessionStorage.setItem("uid", uid);
   loadDashboard();
 }
 
-// --- DUSUN ---
+// BUAT DUSUN
 async function createDusun(){
   const uid=sessionStorage.getItem("uid");
   const name=document.getElementById("dusunName").value;
   const kota=document.getElementById("dusunKota").value;
   const kab=document.getElementById("dusunKabupaten").value;
   const kec=document.getElementById("dusunKecamatan").value;
-
   if(!name || !kota || !kab || !kec) return alert("Semua field harus diisi");
 
   const code=Math.random().toString(36).substring(2,8).toUpperCase();
   document.getElementById("dusunCode").value=code;
 
-  const dusunRef=await db.collection("dusun").add({
-    name,kota,kabupaten:kab,kecamatan:kec,code,createdBy:uid,createdAt:Date.now()
-  });
+  const dusunRef = await addDoc(collection(db,"dusun"), {name,kota,kabupaten:kab,kecamatan:kec,code,createdBy:uid,createdAt:Date.now()});
+  const userDoc = doc(db,"users",uid);
+  await updateDoc(userDoc,{role:"kepala_dusun",dusunId:dusunRef.id});
 
-  await db.collection("users").doc(uid).update({role:"kepala_dusun",dusunId:dusunRef.id});
-  document.getElementById("dusunCodeDisplay").innerText=code;
   alert("Dusun berhasil dibuat!");
   loadDashboard();
 }
 
+// GABUNG DUSUN
 async function joinDusun(){
   const uid=sessionStorage.getItem("uid");
   const code=document.getElementById("dusunCodeJoin").value;
-  const query=db.collection("dusun").where("code","==",code);
-  const snap=await query.get();
+  const q=query(collection(db,"dusun"), where("code","==",code));
+  const snap=await getDocs(q);
   if(snap.empty) return alert("Kode dusun salah");
+
   const dusunDoc=snap.docs[0];
-  await db.collection("dusun").doc(dusunDoc.id).collection("warga").doc(uid).set({joinedAt:Date.now()});
-  await db.collection("users").doc(uid).update({dusunId:dusunDoc.id});
+  currentDusunId = dusunDoc.id;
+  await setDoc(doc(db,"dusun",dusunDoc.id,"warga",uid), {joinedAt:Date.now()});
+  await updateDoc(doc(db,"users",uid), {dusunId:dusunDoc.id});
   alert("Gabung dusun berhasil!");
   loadDashboard();
 }
 
-// --- DASHBOARD ---
-function loadDashboard(){
+// DASHBOARD
+async function loadDashboard(){
   show("dashboard-container");
-  document.getElementById("dusunCodeDisplay").innerText="(Data Dusun akan tampil)";
+  const uid = sessionStorage.getItem("uid");
+  if(!uid) { backToLogin(); return; }
+
+  // Ambil data user
+  const userDoc = doc(db,"users",uid);
+  const userSnap = await getDocs(query(collection(db,"users"), where("phone","!=", "")));
+  const userData = (await getDocs(query(collection(db,"users"), where("phone","!=", "")))).docs.find(d=>d.id===uid)?.data() || {};
+  const dusunId = userData.dusunId || null;
+  currentDusunId = dusunId;
+
+  // Tampilkan kode dusun
+  let dusunCode="(Data Dusun belum tersedia)";
+  if(dusunId){
+    const dusunSnap = await getDocs(query(collection(db,"dusun"), where("__name__","==",dusunId)));
+    if(!dusunSnap.empty) dusunCode = dusunSnap.docs[0].data().code;
+  }
+  document.getElementById("dusunCodeDisplay").innerText = dusunCode;
+
+  // Load chart kejadian
+  const laporanSnap = await getDocs(collection(db,"laporan"));
+  const counts = {};
+  laporanSnap.forEach(doc=> { const kej = doc.data().kejadian; counts[kej] = (counts[kej] || 0)+1; });
+  const ctx = document.getElementById("chartKejadian").getContext("2d");
+  new Chart(ctx,{type:"bar",data:{labels:Object.keys(counts),datasets:[{label:"Jumlah Kejadian",data:Object.values(counts),backgroundColor:"rgba(255,99,132,0.5)"}]},options:{responsive:true,plugins:{legend:{display:false}}}});
+
+  // Init peta
+  if(!map){
+    map = new google.maps.Map(document.getElementById("map"), {center:{lat:-6.200000,lng:106.816666},zoom:13});
+    map.addListener("click", async (e)=> {
+      const posName = prompt("Nama Pos / RT:");
+      if(!posName) return;
+      const posRef = await addDoc(collection(db,"dusun",currentDusunId,"pos"),{name:posName,lat:e.latLng.lat(),lng:e.latLng.lng(),createdAt:Date.now()});
+      addMarker(posRef.id,e.latLng,posName);
+    });
+  }
+
+  // Load pos dari Firestore
+  markers.forEach(m=>m.setMap(null)); markers=[]; document.getElementById("listPos").innerHTML="";
+  if(dusunId){
+    const posSnap = await getDocs(collection(db,"dusun",dusunId,"pos"));
+    posSnap.forEach(doc=>{
+      const data = doc.data();
+      const latlng = {lat:data.lat,lng:data.lng};
+      addMarker(doc.id,latlng,data.name);
+    });
+  }
 }
 
-function lapor(){
+// Tambah marker & daftar
+function addMarker(id,latlng,name){
+  const marker = new google.maps.Marker({position:latlng,map:map,title:name});
+  markers.push(marker);
+  const div = document.createElement("div");
+  div.innerText = name;
+  document.getElementById("listPos").appendChild(div);
+}
+
+async function lapor(){
   const uid=sessionStorage.getItem("uid");
   const kejadian=document.getElementById("kejadian").value;
   const lokasiOpt=document.getElementById("lokasiOption").value;
   const lokasiDes=lokasiOpt==="lainnya"?document.getElementById("lokasiDeskripsi").value:"Lokasi Saat Ini";
-  db.collection("laporan").add({uid,kejadian,lokasi:lokasiDes,createdAt:Date.now()});
+  await addDoc(collection(db,"laporan"),{uid,kejadian,lokasi:lokasiDes,createdAt:Date.now()});
   alert("Laporan terkirim!");
+  loadDashboard();
 }
 
 function tambahPos(){
-  alert("Fitur tambah pos dengan map (Google Maps API) bisa ditambahkan di sini");
+  alert("Klik peta untuk menambahkan pos RT.");
 }
 
 function logout(){
