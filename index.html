@@ -1,225 +1,165 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Sistem Keamanan Dusun</title>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js"></script>
+  <meta name="color-scheme" content="light">
   <style>
     body {
-      margin: 0; padding: 0;
-      font-family: sans-serif;
-      min-height: 100vh;
-      background: linear-gradient(to bottom right, #dbeafe, #ffffff, #f0f9ff);
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom right, #f0f9ff, #ffffff, #e0f2fe);
       color: #111;
     }
+    header {
+      background: linear-gradient(90deg, #2563eb, #3b82f6);
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+    header h1 {
+      margin: 0;
+      font-size: 26px;
+    }
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      background: #1e40af;
+    }
+    nav a {
+      color: #fff;
+      padding: 14px 20px;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    nav a:hover { background: #1d4ed8; }
+    .container { padding: 20px; }
     .card {
       background: #fff;
-      border-radius: 16px;
+      border-radius: 12px;
       padding: 20px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      max-width: 400px;
       margin: 20px auto;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      max-width: 800px;
     }
-    .btn {
-      display: block;
-      width: 100%;
-      padding: 12px;
-      margin: 10px 0;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .btn-blue { background: #2563eb; color:#fff; }
-    .btn-red { background: #dc2626; color:#fff; }
-    .btn-green { background: #16a34a; color:#fff; }
-    .btn-yellow { background: #ca8a04; color:#fff; }
-    .hidden { display: none; }
-    h2 { text-align:center; color:#1e3a8a; }
+    h2 { color: #1e3a8a; margin-top: 0; }
+    label { display: block; margin: 10px 0 5px; }
     input, select {
       width: 100%;
       padding: 10px;
-      margin: 8px 0;
       border: 1px solid #ccc;
       border-radius: 8px;
+      margin-bottom: 15px;
     }
-    .list-item {
-      background:#f9fafb;
-      border:1px solid #e5e7eb;
-      border-radius:8px;
-      padding:10px;
-      margin:5px 0;
+    button {
+      padding: 12px 18px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      color: #fff;
+      margin: 5px;
+    }
+    .btn-primary { background: #2563eb; }
+    .btn-danger { background: #dc2626; }
+    .btn-success { background: #16a34a; }
+    .btn-warning { background: #f59e0b; color: #111; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    table, th, td { border: 1px solid #ccc; }
+    th, td { padding: 10px; text-align: left; }
+    th { background: #e0f2fe; }
+    footer {
+      background: #2563eb;
+      color: #fff;
+      text-align: center;
+      padding: 15px;
+      margin-top: 30px;
     }
   </style>
 </head>
 <body>
+  <header>
+    <h1>Sistem Keamanan Dusun</h1>
+    <p>Login Warga • SOS • Notifikasi • RT/RW</p>
+  </header>
 
-  <!-- LOGIN -->
-  <div id="loginPage" class="card">
-    <h2>Login Warga</h2>
-    <input id="email" type="email" placeholder="Email">
-    <input id="password" type="password" placeholder="Password">
-    <button class="btn btn-blue" onclick="login()">Login</button>
-    <p style="text-align:center;">Belum punya akun? <a href="#" onclick="showRegister()">Daftar</a></p>
+  <nav>
+    <a href="#login">Login</a>
+    <a href="#dusun">Gabung/Buat Dusun</a>
+    <a href="#warga">Data Warga</a>
+    <a href="#sos">SOS</a>
+    <a href="#rt-rw">RT/RW</a>
+  </nav>
+
+  <div class="container">
+
+    <!-- Login -->
+    <div id="login" class="card">
+      <h2>Login Warga</h2>
+      <label>Email</label>
+      <input type="email" placeholder="Masukkan email..."/>
+      <label>Password</label>
+      <input type="password" placeholder="Masukkan password..."/>
+      <button class="btn-primary">Login</button>
+      <button class="btn-warning">Logout</button>
+    </div>
+
+    <!-- Buat & Gabung Dusun -->
+    <div id="dusun" class="card">
+      <h2>Buat / Gabung Dusun</h2>
+      <button class="btn-success">Buat Dusun (Kepala Dusun)</button>
+      <label>Kode Unik Dusun</label>
+      <input type="text" placeholder="Masukkan kode dusun..."/>
+      <label>Nama Lengkap</label>
+      <input type="text" placeholder="Masukkan nama lengkap..."/>
+      <label>Upload Foto Wajah</label>
+      <input type="file" accept="image/*"/>
+      <button class="btn-primary">Gabung Dusun</button>
+    </div>
+
+    <!-- Data Warga -->
+    <div id="warga" class="card">
+      <h2>Data Warga & Keluarga</h2>
+      <table>
+        <tr><th>Kepala Keluarga</th><th>Istri</th><th>Anak</th><th>Blok</th><th>No. Rumah</th><th>Role</th></tr>
+        <tr><td>Pak Joko</td><td>Bu Siti</td><td>2</td><td>B</td><td>12</td><td>Warga</td></tr>
+        <tr><td>Pak Budi</td><td>Bu Lina</td><td>1</td><td>A</td><td>5</td><td>Petugas Ambulance</td></tr>
+      </table>
+      <button class="btn-warning">Verifikasi Anggota Baru</button>
+      <button class="btn-success">Ubah Role → Petugas Ambulance</button>
+    </div>
+
+    <!-- SOS -->
+    <div id="sos" class="card">
+      <h2>Panggilan Darurat (SOS)</h2>
+      <button class="btn-danger">Kemalingan</button>
+      <button class="btn-warning">Kebakaran</button>
+      <button class="btn-primary">Medis</button>
+      <button class="btn-success">Ambulance (Urgent)</button>
+      <h3>Daftar Warga yang Merespon</h3>
+      <table>
+        <tr><th>Nama</th><th>Respon</th></tr>
+        <tr><td>Pak Andi</td><td>Menuju Lokasi</td></tr>
+        <tr><td>Bu Siti</td><td>Menghubungi RT</td></tr>
+      </table>
+    </div>
+
+    <!-- RT / RW -->
+    <div id="rt-rw" class="card">
+      <h2>RT / RW</h2>
+      <table>
+        <tr><th>Dusun</th><th>RT</th><th>RW</th><th>Kepala Dusun</th></tr>
+        <tr><td>Dusun A</td><td>01</td><td>05</td><td>Pak Slamet</td></tr>
+      </table>
+    </div>
+
   </div>
 
-  <!-- REGISTER -->
-  <div id="registerPage" class="card hidden">
-    <h2>Daftar Warga</h2>
-    <input id="regEmail" type="email" placeholder="Email">
-    <input id="regPassword" type="password" placeholder="Password">
-    <input id="regName" type="text" placeholder="Nama Lengkap">
-    <input id="regRT" type="text" placeholder="RT">
-    <input id="regRW" type="text" placeholder="RW">
-    <input id="regBlock" type="text" placeholder="Blok / Nomor Rumah">
-    <input id="regDusunCode" type="text" placeholder="Kode Dusun">
-    <input id="regPhoto" type="file" accept="image/*">
-    <button class="btn btn-green" onclick="register()">Daftar</button>
-    <p style="text-align:center;"><a href="#" onclick="showLogin()">Sudah punya akun? Login</a></p>
-  </div>
-
-  <!-- DASHBOARD -->
-  <div id="dashboard" class="card hidden">
-    <h2>Dashboard Dusun</h2>
-    <p id="welcome"></p>
-    <button class="btn btn-red" onclick="sendSOS('Kemalingan')">🚨 Kemalingan</button>
-    <button class="btn btn-yellow" onclick="sendSOS('Kebakaran')">🔥 Kebakaran</button>
-    <button class="btn btn-green" onclick="sendSOS('Medis')">💊 Medis</button>
-    <button class="btn btn-blue" onclick="sendSOS('Ambulance')">🚑 Ambulance</button>
-    <h3>Laporan Masuk</h3>
-    <div id="sosList"></div>
-    <button class="btn btn-blue" onclick="logout()">Logout</button>
-  </div>
-
-  <script>
-    // Firebase config (jangan dirubah tanpa perintahmu)
-    const firebaseConfig = {
-      apiKey: "AIzaSyA6GAeIc7ZesIed9MAelUf6x_sBFdp9E-Q",
-      authDomain: "dusun-super.firebaseapp.com",
-      projectId: "dusun-super",
-      storageBucket: "dusun-super.firebasestorage.app",
-      messagingSenderId: "1083284057385",
-      appId: "1:1083284057385:web:21cfe467b047bb5a241b38",
-      measurementId: "G-LJ6KP57Q9M"
-    };
-
-    const app = firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-
-    // NAVIGATION
-    function showRegister() {
-      document.getElementById("loginPage").classList.add("hidden");
-      document.getElementById("registerPage").classList.remove("hidden");
-    }
-    function showLogin() {
-      document.getElementById("registerPage").classList.add("hidden");
-      document.getElementById("loginPage").classList.remove("hidden");
-    }
-
-    // REGISTER
-    async function register() {
-      const email = document.getElementById("regEmail").value;
-      const password = document.getElementById("regPassword").value;
-      const name = document.getElementById("regName").value;
-      const rt = document.getElementById("regRT").value;
-      const rw = document.getElementById("regRW").value;
-      const block = document.getElementById("regBlock").value;
-      const dusunCode = document.getElementById("regDusunCode").value;
-
-      try {
-        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-        const uid = userCredential.user.uid;
-        await db.collection("warga").doc(uid).set({
-          email, name, rt, rw, block, dusunCode, role: "warga", verified: false, createdAt: new Date()
-        });
-        alert("Registrasi berhasil, menunggu verifikasi kepala keluarga.");
-        showLogin();
-      } catch (error) {
-        alert(error.message);
-      }
-    }
-
-    // LOGIN
-    async function login() {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      try {
-        await auth.signInWithEmailAndPassword(email, password);
-        document.getElementById("loginPage").classList.add("hidden");
-        document.getElementById("dashboard").classList.remove("hidden");
-        const user = auth.currentUser;
-        document.getElementById("welcome").innerText = "Selamat datang, " + user.email;
-        listenSOS();
-      } catch (error) {
-        alert(error.message);
-      }
-    }
-
-    // LOGOUT
-    async function logout() {
-      await auth.signOut();
-      document.getElementById("dashboard").classList.add("hidden");
-      document.getElementById("loginPage").classList.remove("hidden");
-    }
-
-    // SEND SOS
-    async function sendSOS(type) {
-      const user = auth.currentUser;
-      if (!user) return;
-      const wargaDoc = await db.collection("warga").doc(user.uid).get();
-      const data = wargaDoc.data();
-      await db.collection("sos").add({
-        uid: user.uid,
-        name: data.name,
-        rt: data.rt,
-        rw: data.rw,
-        dusunCode: data.dusunCode,
-        type,
-        responders: [],
-        status: "open",
-        createdAt: new Date()
-      });
-      alert("SOS terkirim: " + type);
-    }
-
-    // LISTEN SOS
-    function listenSOS() {
-      const user = auth.currentUser;
-      if (!user) return;
-      db.collection("sos").orderBy("createdAt", "desc").onSnapshot(snapshot => {
-        const sosList = document.getElementById("sosList");
-        sosList.innerHTML = "";
-        snapshot.forEach(doc => {
-          const data = doc.data();
-          const div = document.createElement("div");
-          div.className = "list-item";
-          div.innerHTML = `<b>${data.type}</b> oleh ${data.name} (RT ${data.rt}/RW ${data.rw})<br>
-                           Status: ${data.status}<br>
-                           Respon: ${(data.responders || []).join(", ")}<br>
-                           <button onclick="respondSOS('${doc.id}')">Respon</button>`;
-          sosList.appendChild(div);
-        });
-      });
-    }
-
-    // RESPOND SOS
-    async function respondSOS(id) {
-      const user = auth.currentUser;
-      const docRef = db.collection("sos").doc(id);
-      const docSnap = await docRef.get();
-      const data = docSnap.data();
-      const responders = data.responders || [];
-      if (!responders.includes(user.email)) {
-        responders.push(user.email);
-        await docRef.update({ responders });
-      }
-    }
-  </script>
+  <footer>
+    <p>&copy; 2025 Sistem Keamanan Dusun - Semua Hak Dilindungi</p>
+  </footer>
 </body>
 </html>
