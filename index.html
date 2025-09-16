@@ -10,68 +10,69 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js"></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body class="bg-gradient-to-br from-blue-900 via-gray-900 to-black text-white min-h-screen flex items-center justify-center">
+<body class="bg-gradient-to-br from-blue-100 via-white to-blue-200 text-gray-900 min-h-screen flex items-center justify-center">
 
   <!-- LOGIN -->
-  <div id="loginPage" class="w-full max-w-sm bg-gray-800 p-6 rounded-xl shadow-xl">
-    <h2 class="text-2xl font-bold mb-4 text-center">Login Warga</h2>
-    <input id="email" type="email" placeholder="Email" class="w-full mb-3 p-2 rounded bg-gray-700 text-white">
-    <input id="password" type="password" placeholder="Password" class="w-full mb-3 p-2 rounded bg-gray-700 text-white">
-    <button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-700 p-2 rounded-lg">Login</button>
-    <p class="text-sm mt-3 text-center">Belum punya akun? <a href="#" onclick="showRegister()" class="text-yellow-400">Daftar</a></p>
+  <div id="loginPage" class="w-full max-w-sm bg-white p-6 rounded-2xl shadow-xl border border-gray-200">
+    <h2 class="text-2xl font-bold mb-4 text-center text-blue-700">Login Warga</h2>
+    <input id="email" type="email" placeholder="Email" class="w-full mb-3 p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400">
+    <input id="password" type="password" placeholder="Password" class="w-full mb-3 p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400">
+    <button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold p-2 rounded-lg">Login</button>
+    <p class="text-sm mt-3 text-center text-gray-600">Belum punya akun? <a href="#" onclick="showRegister()" class="text-blue-600 font-semibold">Daftar</a></p>
   </div>
 
   <!-- REGISTER -->
-  <div id="registerPage" class="hidden w-full max-w-sm bg-gray-800 p-6 rounded-xl shadow-xl">
-    <h2 class="text-2xl font-bold mb-4 text-center">Daftar Warga</h2>
-    <input id="regName" type="text" placeholder="Nama Lengkap" class="w-full mb-3 p-2 rounded bg-gray-700 text-white">
-    <input id="regDusun" type="text" placeholder="Kode Dusun" class="w-full mb-3 p-2 rounded bg-gray-700 text-white">
-    <input id="regRT" type="text" placeholder="RT" class="w-full mb-3 p-2 rounded bg-gray-700 text-white">
-    <input id="regRW" type="text" placeholder="RW" class="w-full mb-3 p-2 rounded bg-gray-700 text-white">
-    <input id="regHouse" type="text" placeholder="Nomor Rumah" class="w-full mb-3 p-2 rounded bg-gray-700 text-white">
-    <input id="regEmail" type="email" placeholder="Email" class="w-full mb-3 p-2 rounded bg-gray-700 text-white">
-    <input id="regPassword" type="password" placeholder="Password" class="w-full mb-3 p-2 rounded bg-gray-700 text-white">
+  <div id="registerPage" class="hidden w-full max-w-sm bg-white p-6 rounded-2xl shadow-xl border border-gray-200">
+    <h2 class="text-2xl font-bold mb-4 text-center text-green-700">Daftar Warga</h2>
+    <input id="regName" type="text" placeholder="Nama Lengkap" class="w-full mb-3 p-2 rounded-lg border border-gray-300">
+    <input id="regDusun" type="text" placeholder="Kode Dusun" class="w-full mb-3 p-2 rounded-lg border border-gray-300">
+    <input id="regRT" type="text" placeholder="RT" class="w-full mb-3 p-2 rounded-lg border border-gray-300">
+    <input id="regRW" type="text" placeholder="RW" class="w-full mb-3 p-2 rounded-lg border border-gray-300">
+    <input id="regHouse" type="text" placeholder="Nomor Rumah" class="w-full mb-3 p-2 rounded-lg border border-gray-300">
+    <input id="regEmail" type="email" placeholder="Email" class="w-full mb-3 p-2 rounded-lg border border-gray-300">
+    <input id="regPassword" type="password" placeholder="Password" class="w-full mb-3 p-2 rounded-lg border border-gray-300">
     <input id="regPhoto" type="file" accept="image/*" class="w-full mb-3 text-sm">
-    <button onclick="register()" class="w-full bg-green-600 hover:bg-green-700 p-2 rounded-lg">Daftar</button>
-    <p class="text-sm mt-3 text-center"><a href="#" onclick="showLogin()" class="text-yellow-400">Sudah punya akun?</a></p>
+    <button onclick="register()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold p-2 rounded-lg">Daftar</button>
+    <p class="text-sm mt-3 text-center text-gray-600"><a href="#" onclick="showLogin()" class="text-blue-600 font-semibold">Sudah punya akun?</a></p>
   </div>
 
   <!-- DASHBOARD -->
-  <div id="dashboard" class="hidden w-full max-w-3xl bg-gray-800 p-6 rounded-xl shadow-xl">
-    <h2 class="text-2xl font-bold mb-6 text-center">Sistem Keamanan Dusun</h2>
+  <div id="dashboard" class="hidden w-full max-w-4xl bg-white p-6 rounded-2xl shadow-2xl border border-gray-200">
+    <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">🚨 Sistem Keamanan Dusun</h2>
     
     <!-- SOS -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      <button onclick="sendSOS('Kemalingan')" class="bg-red-600 hover:bg-red-700 p-4 rounded-lg font-bold">🚨 Kemalingan</button>
-      <button onclick="sendSOS('Kebakaran')" class="bg-yellow-600 hover:bg-yellow-700 p-4 rounded-lg font-bold">🔥 Kebakaran</button>
-      <button onclick="sendSOS('Medis')" class="bg-green-600 hover:bg-green-700 p-4 rounded-lg font-bold">🩺 Medis</button>
-      <button onclick="sendSOS('Ambulance')" class="bg-blue-600 hover:bg-blue-700 p-4 rounded-lg font-bold">🚑 Ambulance</button>
+      <button onclick="sendSOS('Kemalingan')" class="bg-red-600 hover:bg-red-700 text-white p-6 rounded-xl font-bold text-lg shadow-lg">🚨 Kemalingan</button>
+      <button onclick="sendSOS('Kebakaran')" class="bg-yellow-500 hover:bg-yellow-600 text-white p-6 rounded-xl font-bold text-lg shadow-lg">🔥 Kebakaran</button>
+      <button onclick="sendSOS('Medis')" class="bg-green-600 hover:bg-green-700 text-white p-6 rounded-xl font-bold text-lg shadow-lg">🩺 Medis</button>
+      <button onclick="sendSOS('Ambulance')" class="bg-blue-600 hover:bg-blue-700 text-white p-6 rounded-xl font-bold text-lg shadow-lg">🚑 Ambulance</button>
     </div>
 
     <!-- Laporan -->
-    <h3 class="text-lg font-semibold mb-2">Laporan Terkini:</h3>
-    <ul id="sosList" class="space-y-2 max-h-60 overflow-y-auto text-sm"></ul>
+    <h3 class="text-lg font-semibold mb-2 text-gray-800">📋 Laporan Terkini:</h3>
+    <ul id="sosList" class="space-y-3 max-h-60 overflow-y-auto text-sm"></ul>
 
     <!-- Admin Menu -->
     <div id="adminPanel" class="hidden mt-6">
-      <h3 class="text-lg font-semibold mb-2">Panel Kepala Dusun</h3>
-      <ul id="wargaList" class="space-y-2 max-h-60 overflow-y-auto text-sm"></ul>
+      <h3 class="text-lg font-semibold mb-2 text-gray-800">⚙️ Panel Kepala Dusun</h3>
+      <ul id="wargaList" class="space-y-3 max-h-60 overflow-y-auto text-sm"></ul>
     </div>
 
     <div class="mt-6 text-center">
-      <button onclick="logout()" class="bg-gray-600 hover:bg-gray-700 px-6 py-2 rounded-lg">Logout</button>
+      <button onclick="logout()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg">Logout</button>
     </div>
   </div>
 
 <script>
-  // Firebase Config (ganti dengan punyamu)
+  // Firebase Config
   const firebaseConfig = {
-    apiKey: "AIzaSyXXXXXX",
+    apiKey: "AIzaSyA6GAeIc7ZesIed9MAelUf6x_sBFdp9E-Q",
     authDomain: "dusun-super.firebaseapp.com",
     projectId: "dusun-super",
     storageBucket: "dusun-super.appspot.com",
-    messagingSenderId: "1234567890",
-    appId: "1:1234567890:web:abcdef"
+    messagingSenderId: "1083284057385",
+    appId: "1:1083284057385:web:21cfe467b047bb5a241b38",
+    measurementId: "G-LJ6KP57Q9M"
   };
   const app = firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
@@ -178,10 +179,10 @@
       snapshot.forEach(doc => {
         const d = doc.data();
         const li = document.createElement("li");
-        li.className = "p-2 bg-gray-700 rounded";
-        li.innerHTML = `<b>${d.type}</b> oleh ${d.name} (RT ${d.rt}/RW ${d.rw} - ${d.house}) 
-          <br><small>Respon: ${d.responders.join(", ") || "Belum ada"}</small>
-          <br><button onclick="respondSOS('${doc.id}')" class="mt-1 bg-green-600 px-2 py-1 rounded text-xs">Respon</button>`;
+        li.className = "p-3 bg-gray-100 rounded-lg border border-gray-300";
+        li.innerHTML = `<b class="text-red-600">${d.type}</b> oleh <b>${d.name}</b> (RT ${d.rt}/RW ${d.rw} - ${d.house}) 
+          <br><small class="text-gray-600">Respon: ${d.responders.join(", ") || "Belum ada"}</small>
+          <br><button onclick="respondSOS('${doc.id}')" class="mt-2 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs">Respon</button>`;
         sosList.appendChild(li);
       });
     });
@@ -200,10 +201,10 @@
           snapshot.forEach(w => {
             const wd = w.data();
             const li = document.createElement("li");
-            li.className = "p-2 bg-gray-700 rounded";
-            li.innerHTML = `${wd.name} - ${wd.rt}/${wd.rw} - ${wd.house} (${wd.role})
-              <button onclick="makeAmbulance('${wd.uid}')" class="ml-2 bg-blue-600 px-2 py-1 rounded text-xs">Jadikan Ambulance</button>
-              <button onclick="verify('${wd.uid}')" class="ml-2 bg-yellow-600 px-2 py-1 rounded text-xs">Verifikasi</button>`;
+            li.className = "p-3 bg-gray-100 rounded-lg border border-gray-300";
+            li.innerHTML = `${wd.name} - RT ${wd.rt}/RW ${wd.rw} - ${wd.house} (${wd.role})
+              <button onclick="makeAmbulance('${wd.uid}')" class="ml-2 bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs">Jadikan Ambulance</button>
+              <button onclick="verify('${wd.uid}')" class="ml-2 bg-yellow-600 hover:bg-yellow-700 text-white px-2 py-1 rounded text-xs">Verifikasi</button>`;
             wargaList.appendChild(li);
           });
         });
