@@ -1,76 +1,89 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>Aplikasi Keamanan Dusun</title>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; background:#f9f9f9; }
-    .card { max-width:400px; margin:30px auto; background:#fff; padding:20px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.2); }
-    input, button { width:100%; padding:10px; margin:5px 0; border-radius:5px; border:1px solid #ccc; }
-    button { background:#007bff; color:white; border:none; cursor:pointer; }
-    button:hover { background:#0056b3; }
-    #dashboard { display:none; padding:20px; }
-    #charts { display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-top:20px; }
-    canvas { background:#fff; padding:10px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
-    #map { width:100%; height:400px; margin-top:20px; border-radius:10px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aplikasi Keamanan Dusun</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body { font-family: Arial,sans-serif; background:#f0f2f5; margin:0; padding:0; }
+.container { max-width:480px; margin:20px auto; padding:20px; background:#fff; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1); }
+h2,h3 { text-align:center; }
+input, button { width:100%; padding:10px; margin:5px 0; border-radius:6px; border:1px solid #ccc; }
+button { background:#007bff; color:white; border:none; cursor:pointer; }
+button:hover { background:#0056b3; }
+.hidden { display:none; }
+#dashboard { display:none; padding:10px; }
+#charts { display:flex; gap:20px; flex-wrap:wrap; justify-content:center; margin-top:20px; }
+canvas { background:#fff; padding:10px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1); width:200px !important; height:200px !important; }
+#map { width:100%; height:350px; margin-top:20px; border-radius:10px; }
+</style>
 </head>
 <body>
 
-<!-- ========== BUAT DUSUN ========== -->
-<div class="card" id="buatDusunPage">
-  <h2>Buat Dusun</h2>
-  <input id="namaDusun" placeholder="Nama Dusun">
-  <input id="kota" placeholder="Kota">
-  <input id="kabupaten" placeholder="Kabupaten">
-  <input id="kecamatan" placeholder="Kecamatan">
-  <button onclick="generateKode()">Generate Kode</button>
-  <div id="kodeContainer" style="display:none;">
-    <p>Kode Dusun: <b id="kodeDusunText"></b></p>
-    <button onclick="simpanDusun()">Simpan</button>
+<div class="container" id="mainContainer">
+  <h2>Aplikasi Keamanan Dusun</h2>
+
+  <!-- === Buat Dusun === -->
+  <div id="buatDusunDiv">
+    <h3>Buat Dusun</h3>
+    <input id="namaDusun" placeholder="Nama Dusun">
+    <input id="kota" placeholder="Kota">
+    <input id="kabupaten" placeholder="Kabupaten">
+    <input id="kecamatan" placeholder="Kecamatan">
+    <button onclick="generateKode()">Generate Kode</button>
+    <div id="kodeContainer" class="hidden">
+      <p>Kode Dusun: <b id="kodeDusunText"></b></p>
+      <button onclick="simpanDusun()">Simpan</button>
+    </div>
+  </div>
+
+  <hr>
+
+  <!-- === Daftar Warga === -->
+  <div id="daftarDiv">
+    <h3>Daftar Warga</h3>
+    <input id="namaWarga" placeholder="Nama">
+    <input id="noHpDaftar" placeholder="No HP">
+    <input id="alamat" placeholder="Alamat">
+    <input id="blok" placeholder="Blok (opsional)">
+    <input id="nomor" placeholder="Nomor (opsional)">
+    <input id="rt" placeholder="RT">
+    <input id="rw" placeholder="RW">
+    <input id="passwordDaftar" type="password" placeholder="Password">
+    <input id="kodeDusunDaftar" placeholder="Kode Dusun">
+    <button onclick="daftar()">Daftar</button>
+  </div>
+
+  <hr>
+
+  <!-- === Login === -->
+  <div id="loginDiv">
+    <h3>Login</h3>
+    <input id="noHpLogin" placeholder="No HP">
+    <input id="passwordLogin" type="password" placeholder="Password">
+    <button onclick="login()">Login</button>
   </div>
 </div>
 
-<!-- ========== DAFTAR WARGA ========== -->
-<div class="card" id="daftarPage" style="display:none;">
-  <h2>Daftar Warga</h2>
-  <input id="namaWarga" placeholder="Nama">
-  <input id="noHpDaftar" placeholder="No HP">
-  <input id="alamat" placeholder="Alamat">
-  <input id="blok" placeholder="Blok (opsional)">
-  <input id="nomor" placeholder="Nomor (opsional)">
-  <input id="rt" placeholder="RT">
-  <input id="rw" placeholder="RW">
-  <input id="passwordDaftar" type="password" placeholder="Password">
-  <input id="kodeDusunDaftar" placeholder="Kode Dusun">
-  <button onclick="daftar()">Daftar</button>
-</div>
-
-<!-- ========== LOGIN ========== -->
-<div class="card" id="loginPage" style="display:none;">
-  <h2>Login</h2>
-  <input id="noHpLogin" placeholder="No HP">
-  <input id="passwordLogin" type="password" placeholder="Password">
-  <button onclick="login()">Login</button>
-</div>
-
-<!-- ========== DASHBOARD ========== -->
+<!-- === Dashboard === -->
 <div id="dashboard">
   <h2>Dashboard Dusun</h2>
   <p>Selamat datang, <span id="userName"></span>!</p>
+
   <div id="charts">
     <canvas id="kejadianChart"></canvas>
     <canvas id="keamananChart"></canvas>
   </div>
+
   <div id="map"></div>
   <button onclick="logout()" style="margin-top:20px;">Logout</button>
 </div>
 
 <script>
-  // Konfigurasi Firebase
+  // Firebase
   const firebaseConfig = {
     apiKey: "AIzaSyA6GAeIc7ZesIed9MAelUf6x_sBFdp9E-Q",
     authDomain: "dusun-super.firebaseapp.com",
@@ -80,39 +93,31 @@
     appId: "1:1083284057385:web:21cfe467b047bb5a241b38",
     measurementId: "G-LJ6KP57Q9M"
   };
-
   const app = firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
   let generatedCode = "";
   let currentUser = null;
 
-  // Generate kode unik
+  // ======= Buat Dusun =======
   function generateKode(){
     generatedCode = "DSN" + Math.random().toString(36).substr(2,6).toUpperCase();
     document.getElementById("kodeDusunText").innerText = generatedCode;
-    document.getElementById("kodeContainer").style.display = "block";
+    document.getElementById("kodeContainer").classList.remove("hidden");
   }
 
-  // Simpan dusun ke Firestore
   async function simpanDusun(){
     const nama = document.getElementById("namaDusun").value;
     const kota = document.getElementById("kota").value;
     const kabupaten = document.getElementById("kabupaten").value;
     const kecamatan = document.getElementById("kecamatan").value;
-
     if(!nama || !generatedCode) return alert("Isi semua data dan generate kode!");
 
-    await db.collection("dusun").add({
-      nama, kota, kabupaten, kecamatan, code: generatedCode, createdAt: Date.now()
-    });
-
-    alert("Dusun berhasil dibuat! Gunakan kode: " + generatedCode);
-    document.getElementById("buatDusunPage").style.display="none";
-    document.getElementById("daftarPage").style.display="block";
+    await db.collection("dusun").add({nama,kota,kabupaten,kecamatan,code:generatedCode,createdAt:Date.now()});
+    alert("Dusun berhasil dibuat! Gunakan kode: "+generatedCode);
   }
 
-  // Daftar warga
+  // ======= Daftar =======
   async function daftar(){
     const data = {
       nama: document.getElementById("namaWarga").value,
@@ -126,112 +131,84 @@
       kodeDusun: document.getElementById("kodeDusunDaftar").value,
       createdAt: Date.now()
     };
-
-    if(!data.noHp || !data.password || !data.kodeDusun) return alert("Isi semua data wajib!");
+    if(!data.noHp||!data.password||!data.kodeDusun) return alert("Isi semua data wajib!");
 
     const q = await db.collection("dusun").where("code","==",data.kodeDusun).get();
     if(q.empty) return alert("Kode dusun tidak valid!");
 
-    const dusunId = q.docs[0].id;
-    data.dusunId = dusunId;
-
+    data.dusunId = q.docs[0].id;
     await db.collection("users").doc(data.noHp).set(data);
 
     alert("Pendaftaran berhasil! Silakan login.");
-    document.getElementById("daftarPage").style.display="none";
-    document.getElementById("loginPage").style.display="block";
   }
 
-  // Login
+  // ======= Login =======
   async function login(){
     const noHp = document.getElementById("noHpLogin").value;
     const password = document.getElementById("passwordLogin").value;
 
     const docSnap = await db.collection("users").doc(noHp).get();
     if(!docSnap.exists) return alert("User tidak ditemukan!");
-
     const user = docSnap.data();
-    if(user.password !== password) return alert("Password salah!");
+    if(user.password!==password) return alert("Password salah!");
 
     currentUser = user;
-    sessionStorage.setItem("user", JSON.stringify(user));
+    sessionStorage.setItem("user",JSON.stringify(user));
 
-    document.getElementById("loginPage").style.display="none";
+    document.getElementById("mainContainer").classList.add("hidden");
     document.getElementById("dashboard").style.display="block";
     document.getElementById("userName").innerText = user.nama;
 
     loadDashboard(user.dusunId);
   }
 
-  // Logout
   function logout(){
     sessionStorage.clear();
     document.getElementById("dashboard").style.display="none";
-    document.getElementById("loginPage").style.display="block";
+    document.getElementById("mainContainer").classList.remove("hidden");
   }
 
-  // Load dashboard data
+  // ======= Dashboard =======
   async function loadDashboard(dusunId){
-    // --- Grafik Kejadian (contoh data dummy) ---
-    const kejadianData = { "Pencurian": 5, "Kebakaran": 2, "Keributan": 3 };
+    // --- Grafik Kejadian (dummy) ---
+    const laporanData = { "Pencurian": 5, "Kebakaran": 2, "Keributan": 3 };
     const ctx1 = document.getElementById('kejadianChart').getContext('2d');
-    new Chart(ctx1, {
-      type: 'bar',
-      data: {
-        labels: Object.keys(kejadianData),
-        datasets: [{
-          label: 'Jumlah Kejadian',
-          data: Object.values(kejadianData),
-          backgroundColor: ['#ff6384','#36a2eb','#ffce56']
-        }]
-      }
-    });
+    new Chart(ctx1, {type:'bar', data:{
+      labels:Object.keys(laporanData),
+      datasets:[{label:'Jumlah Kejadian', data:Object.values(laporanData), backgroundColor:['#ff6384','#36a2eb','#ffce56']}]
+    }});
 
     // --- Persentase Keamanan ---
-    const total = Object.values(kejadianData).reduce((a,b)=>a+b,0);
-    const aman = Math.max(0, 100 - total*5); // contoh formula
+    const total = Object.values(laporanData).reduce((a,b)=>a+b,0);
+    const aman = Math.max(0, 100 - total*5);
     const ctx2 = document.getElementById('keamananChart').getContext('2d');
-    new Chart(ctx2, {
-      type: 'doughnut',
-      data: {
-        labels: ['Aman','Terganggu'],
-        datasets: [{
-          data: [aman, 100-aman],
-          backgroundColor: ['#4caf50','#f44336']
-        }]
-      }
-    });
+    new Chart(ctx2,{type:'doughnut', data:{
+      labels:['Aman','Terganggu'],
+      datasets:[{data:[aman,100-aman], backgroundColor:['#4caf50','#f44336']}]
+    }});
 
-    // --- Map Pos Jaga ---
     initMap();
   }
 
-  // Google Maps
+  // ======= Google Maps =======
   function initMap(){
-    const map = new google.maps.Map(document.getElementById("map"), {
-      center: { lat: -7.250445, lng: 112.768845 }, // Surabaya default
-      zoom: 14
+    const map = new google.maps.Map(document.getElementById("map"),{
+      center:{lat:-7.250445,lng:112.768845},
+      zoom:14
     });
 
-    // Tambah simbol pos RT (contoh dummy)
     const pos = [
-      {lat: -7.250445, lng: 112.768845, label:"Pos Induk"},
-      {lat: -7.252, lng: 112.77, label:"Pos RT 1"},
-      {lat: -7.248, lng: 112.765, label:"Pos RT 2"}
+      {lat:-7.250445,lng:112.768845,label:"Pos Induk"},
+      {lat:-7.252,lng:112.77,label:"Pos RT 1"},
+      {lat:-7.248,lng:112.765,label:"Pos RT 2"}
     ];
 
     pos.forEach(p=>{
-      new google.maps.Marker({
-        position: {lat:p.lat,lng:p.lng},
-        map,
-        title:p.label
-      });
+      new google.maps.Marker({position:{lat:p.lat,lng:p.lng},map,title:p.label});
     });
   }
 </script>
 
-<!-- Google Maps API -->
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY"></script>
-
 </body>
 </html>
