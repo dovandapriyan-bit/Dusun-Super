@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Aplikasi Keamanan Dusun</title>
+  <title>Sistem Keamanan Dusun</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
@@ -20,7 +21,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // ==== GENERATE CODE UNIK ====
+    // ==== GENERATE CODE ====
     function generateCode(length=6){
       const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
       let code = "";
@@ -39,7 +40,21 @@
 
       if(!nama || !kota || !kab || !kec) return alert("Lengkapi semua field!");
 
+      // generate kode dan tampilkan
       const code = generateCode();
+      document.getElementById("dusunCode").value = code;
+
+      // ubah tombol jadi "Simpan"
+      document.getElementById("btnBuatDusun").style.display = "none";
+      document.getElementById("btnSimpanDusun").style.display = "block";
+    }
+
+    async function simpanDusun(){
+      const nama = document.getElementById("dusunNama").value.trim();
+      const kota = document.getElementById("dusunKota").value.trim();
+      const kab  = document.getElementById("dusunKab").value.trim();
+      const kec  = document.getElementById("dusunKec").value.trim();
+      const code = document.getElementById("dusunCode").value.trim();
 
       const ref = doc(collection(db,"dusun"));
       await setDoc(ref,{
@@ -50,27 +65,12 @@
         code:code
       });
 
-      alert("Dusun berhasil dibuat! Kode: " + code);
-      // simpan kode sementara untuk gabung
-      sessionStorage.setItem("newDusunCode", code);
-      showJoinDusun();
-    }
-
-    // ==== GABUNG DUSUN ====
-    async function joinDusun(){
-      const code = document.getElementById("dusunCodeJoin").value.trim();
-      if(!code) return alert("Masukkan kode dusun!");
-
-      const q = query(collection(db,"dusun"), where("code","==",code));
-      const snap = await getDocs(q);
-      if(snap.empty) return alert("Kode dusun tidak ditemukan!");
-
       sessionStorage.setItem("joinDusunCode", code);
-      alert("Kode valid! Silakan login atau daftar.");
-      showAuth(); // alihkan ke login/daftar
+      alert("Dusun berhasil dibuat dengan kode: " + code);
+      showAuth(); // langsung arahkan ke login
     }
 
-    // ==== REGISTER USER ====
+    // ==== REGISTER ====
     async function registerUser(){
       const nama = document.getElementById("regNama").value.trim();
       const hp   = document.getElementById("regHp").value.trim();
@@ -98,7 +98,7 @@
       showDashboard();
     }
 
-    // ==== LOGIN USER ====
+    // ==== LOGIN ====
     async function loginUser(){
       const hp   = document.getElementById("loginHp").value.trim();
       const kode = document.getElementById("loginKode").value.trim();
@@ -110,7 +110,6 @@
       if(!userSnap.exists()) return alert("User tidak ditemukan!");
 
       const userData = userSnap.data();
-
       const q = query(collection(db,"dusun"), where("code","==",kode));
       const snap = await getDocs(q);
       if(snap.empty) return alert("Kode dusun salah!");
@@ -129,19 +128,12 @@
       showDashboard();
     }
 
-    // ==== UI HANDLER ====
+    // ==== UI ====
     function showSection(id){
-      document.getElementById("buatDusun").style.display="none";
-      document.getElementById("gabungDusun").style.display="none";
-      document.getElementById("authSection").style.display="none";
-      document.getElementById("dashboard").style.display="none";
-      document.getElementById(id).style.display="block";
+      ["buatDusun","authSection","dashboard"].forEach(s=>document.getElementById(s).classList.add("d-none"));
+      document.getElementById(id).classList.remove("d-none");
     }
     function showCreateDusun(){ showSection("buatDusun"); }
-    function showJoinDusun(){
-      document.getElementById("dusunCodeJoin").value = sessionStorage.getItem("newDusunCode") || "";
-      showSection("gabungDusun");
-    }
     function showAuth(){ 
       document.getElementById("regKode").value = sessionStorage.getItem("joinDusunCode") || "";
       document.getElementById("loginKode").value = sessionStorage.getItem("joinDusunCode") || "";
@@ -155,56 +147,55 @@
     }
 
     window.createDusun = createDusun;
-    window.joinDusun = joinDusun;
+    window.simpanDusun = simpanDusun;
     window.registerUser = registerUser;
     window.loginUser = loginUser;
     window.showCreateDusun = showCreateDusun;
-    window.showJoinDusun = showJoinDusun;
     window.showAuth = showAuth;
   </script>
 </head>
-<body>
-  <h2>Aplikasi Keamanan Dusun</h2>
+<body class="bg-light p-4">
 
-  <button onclick="showCreateDusun()">Buat Dusun</button>
-  <button onclick="showJoinDusun()">Gabung Dusun</button>
+  <div class="container">
+    <h2 class="mb-4 text-center">🌐 Sistem Keamanan Dusun</h2>
+    <div class="text-center mb-3">
+      <button class="btn btn-success me-2" onclick="showCreateDusun()">Buat Dusun</button>
+      <button class="btn btn-primary" onclick="showAuth()">Login / Daftar</button>
+    </div>
 
-  <!-- BUAT DUSUN -->
-  <div id="buatDusun" style="display:none;">
-    <h3>Buat Dusun</h3>
-    <input id="dusunNama" placeholder="Nama Dusun"><br>
-    <input id="dusunKota" placeholder="Kota"><br>
-    <input id="dusunKab" placeholder="Kabupaten"><br>
-    <input id="dusunKec" placeholder="Kecamatan"><br>
-    <button onclick="createDusun()">Simpan</button>
+    <!-- BUAT DUSUN -->
+    <div id="buatDusun" class="card p-4 d-none">
+      <h4 class="mb-3">Buat Dusun Baru</h4>
+      <input id="dusunNama" class="form-control mb-2" placeholder="Nama Dusun">
+      <input id="dusunKota" class="form-control mb-2" placeholder="Kota">
+      <input id="dusunKab" class="form-control mb-2" placeholder="Kabupaten">
+      <input id="dusunKec" class="form-control mb-2" placeholder="Kecamatan">
+      <input id="dusunCode" class="form-control mb-2" placeholder="Kode Dusun" readonly>
+      <button id="btnBuatDusun" class="btn btn-warning w-100" onclick="createDusun()">Generate Kode</button>
+      <button id="btnSimpanDusun" class="btn btn-success w-100 d-none" onclick="simpanDusun()">Simpan</button>
+    </div>
+
+    <!-- LOGIN / REGISTER -->
+    <div id="authSection" class="card p-4 d-none">
+      <h4 class="mb-3">Daftar Warga</h4>
+      <input id="regNama" class="form-control mb-2" placeholder="Nama">
+      <input id="regHp" class="form-control mb-2" placeholder="Nomor HP">
+      <input id="regKode" class="form-control mb-2" placeholder="Kode Dusun">
+      <button class="btn btn-success w-100 mb-3" onclick="registerUser()">Daftar</button>
+
+      <h4 class="mb-3">Login</h4>
+      <input id="loginHp" class="form-control mb-2" placeholder="Nomor HP">
+      <input id="loginKode" class="form-control mb-2" placeholder="Kode Dusun">
+      <button class="btn btn-primary w-100" onclick="loginUser()">Login</button>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard" class="card p-4 d-none">
+      <h4>Dashboard</h4>
+      <p id="userInfo"></p>
+      <button class="btn btn-danger" onclick="sessionStorage.clear(); location.reload();">Logout</button>
+    </div>
   </div>
 
-  <!-- GABUNG DUSUN -->
-  <div id="gabungDusun" style="display:none;">
-    <h3>Gabung Dusun</h3>
-    <input id="dusunCodeJoin" placeholder="Kode Dusun"><br>
-    <button onclick="joinDusun()">Gabung</button>
-  </div>
-
-  <!-- LOGIN & REGISTER -->
-  <div id="authSection" style="display:none;">
-    <h3>Daftar</h3>
-    <input id="regNama" placeholder="Nama"><br>
-    <input id="regHp" placeholder="No HP"><br>
-    <input id="regKode" placeholder="Kode Dusun"><br>
-    <button onclick="registerUser()">Daftar</button>
-
-    <h3>Login</h3>
-    <input id="loginHp" placeholder="No HP"><br>
-    <input id="loginKode" placeholder="Kode Dusun"><br>
-    <button onclick="loginUser()">Login</button>
-  </div>
-
-  <!-- DASHBOARD -->
-  <div id="dashboard" style="display:none;">
-    <h3>Dashboard</h3>
-    <p id="userInfo"></p>
-    <button onclick="sessionStorage.clear(); location.reload();">Logout</button>
-  </div>
 </body>
 </html>
