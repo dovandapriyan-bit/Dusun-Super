@@ -1,147 +1,625 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistem Keamanan Dusun</title>
-  <style>
-    /* Global */
-    * {margin:0;padding:0;box-sizing:border-box;font-family:Arial, sans-serif;}
-    body {background:#f4f6f9;color:#333;min-height:100vh;}
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Sistem Keamanan Dusun — Full</title>
 
-    header {
-      background:#1976d2;
-      color:white;
-      padding:15px;
-      text-align:center;
-      font-size:20px;
-      font-weight:bold;
-    }
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
 
-    .container {padding:20px;max-width:600px;margin:auto;}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    .card {
-      background:white;
-      border-radius:10px;
-      box-shadow:0 3px 6px rgba(0,0,0,0.15);
-      padding:20px;
-      margin-bottom:20px;
-    }
-
-    h2 {margin-bottom:15px;text-align:center;color:#1976d2;}
-
-    input,select {
-      width:100%;padding:12px;margin:8px 0;
-      border:1px solid #ccc;border-radius:8px;font-size:15px;
-    }
-
-    button {
-      width:100%;padding:14px;margin-top:10px;
-      border:none;border-radius:8px;font-size:16px;
-      cursor:pointer;transition:.3s;
-    }
-    .btn-blue {background:#1976d2;color:white;}
-    .btn-blue:hover {background:#125a9c;}
-    .btn-green {background:#2ecc71;color:white;}
-    .btn-green:hover {background:#27ae60;}
-    .btn-red {background:#e74c3c;color:white;}
-    .btn-red:hover {background:#c0392b;}
-
-    ul {list-style:none;margin-top:10px;}
-    ul li {
-      background:#ecf0f1;margin:5px 0;padding:10px;border-radius:6px;
-    }
-  </style>
+<style>
+  /* --- BASIC THEME (BLUE, CLEAN) --- */
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,Arial,Helvetica,sans-serif;background:#f0f8ff;color:#0b2545}
+  header{background:linear-gradient(90deg,#1976d2,#3b82f6);color:#fff;padding:18px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  .container{max-width:980px;margin:18px auto;padding:12px}
+  .card{background:#fff;border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 4px 12px rgba(2,6,23,.06)}
+  h1,h2,h3{margin:0 0 10px}
+  label{display:block;margin:8px 0 4px;color:#1f3c88;font-weight:600}
+  input[type=text],input[type=password],input[type=email],select,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #d3e3ff;background:#fbfdff}
+  textarea{min-height:80px;resize:vertical}
+  button{display:inline-block;padding:10px 14px;border-radius:8px;border:none;background:#1976d2;color:#fff;font-weight:700;cursor:pointer}
+  button.ghost{background:transparent;border:1px solid #1976d2;color:#1976d2}
+  .row{display:flex;gap:12px}
+  .col{flex:1}
+  .muted{color:#6b7280}
+  .small{font-size:13px}
+  ul{list-style:none;padding:0;margin:0}
+  li.item{padding:10px;border-radius:8px;background:#eef6ff;margin:8px 0;border:1px solid #d8eefe}
+  .danger{background:#ffeef0;color:#9b1c1c}
+  .success{background:#ecfdf5;color:#065f46}
+  .map-wrap{height:360px;border-radius:10px;overflow:hidden;border:1px solid #dfeeff}
+  .flex{display:flex;gap:12px;align-items:center}
+  .right{margin-left:auto}
+  .note{font-size:13px;color:#374151;margin-top:8px}
+  .btn-red{background:#ef4444}
+  .btn-yellow{background:#f59e0b;color:#000}
+  .legend{display:flex;gap:8px;align-items:center;margin-top:8px}
+  .legend span{display:inline-block;width:12px;height:12px;border-radius:3px}
+  .marker-pos{background:#2563eb}
+  .marker-induk{background:#059669}
+  .small-muted{font-size:12px;color:#6b7280}
+  .center{text-align:center}
+</style>
 </head>
 <body>
-  <header>Sistem Keamanan Dusun</header>
-  <div class="container">
+<header>
+  <h1>Sistem Keamanan Dusun</h1>
+  <div class="small-muted">Login • Daftar • Lapor • Pos Jaga • Kehadiran • Dashboard</div>
+</header>
 
-    <!-- LOGIN -->
-    <div class="card" id="loginCard">
-      <h2>Login Warga</h2>
-      <input type="text" id="loginEmail" placeholder="Email">
-      <input type="password" id="loginPassword" placeholder="Password">
-      <button class="btn-blue" onclick="login()">Login</button>
-      <button class="btn-green" onclick="showRegister()">Daftar Warga Baru</button>
+<div class="container">
+  <!-- Register / Login -->
+  <div id="authArea" class="card">
+    <h2 class="center">Daftar / Login</h2>
+
+    <div id="registerBox">
+      <label>Nama Lengkap</label>
+      <input id="reg_name" type="text" placeholder="Nama lengkap (contoh: Budi Santoso)">
+      <div class="row">
+        <div class="col">
+          <label>Email</label>
+          <input id="reg_email" type="email" placeholder="email@domain.com">
+        </div>
+        <div class="col">
+          <label>Password</label>
+          <input id="reg_password" type="password" placeholder="Minimal 6 karakter">
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <label>Dusun (Kode)</label>
+          <input id="reg_dusun" type="text" placeholder="Kode Dusun (contoh: dusunA)">
+        </div>
+        <div class="col">
+          <label>RT</label>
+          <input id="reg_rt" type="text" placeholder="01">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <label>RW</label>
+          <input id="reg_rw" type="text" placeholder="05">
+        </div>
+        <div class="col">
+          <label>Blok / No Rumah</label>
+          <input id="reg_block" type="text" placeholder="Blok A-5">
+        </div>
+      </div>
+
+      <label>Role (pilih dari dropdown)</label>
+      <select id="reg_role">
+        <option value="kepala_desa">Kepala Desa</option>
+        <option value="kepala_dusun">Kepala Dusun</option>
+        <option value="ketua_rw">Ketua RW</option>
+        <option value="ketua_rt">Ketua RT</option>
+        <option value="kepala_keluarga">Kepala Keluarga</option>
+        <option value="istri">Istri</option>
+        <option value="anak">Anak</option>
+      </select>
+
+      <div class="row" style="margin-top:10px">
+        <button id="btnRegister">Daftar</button>
+        <button id="showLoginBtn" class="ghost">Saya sudah punya akun (Login)</button>
+      </div>
+      <div class="note">Catatan: Jika ada salah input, hapus akun dan daftar ulang. Kepala keluarga tidak bisa menambah keluarga — hanya memverifikasi pendaftar baru pada alamat sama.</div>
     </div>
 
-    <!-- REGISTER -->
-    <div class="card" id="registerCard" style="display:none;">
-      <h2>Daftar Warga Baru</h2>
-      <input type="text" id="regName" placeholder="Nama Lengkap">
-      <input type="text" id="regDusunCode" placeholder="Kode Dusun">
-      <input type="file" id="regPhoto">
-      <input type="email" id="regEmail" placeholder="Email">
-      <input type="password" id="regPassword" placeholder="Password">
-      <button class="btn-blue" onclick="register()">Daftar</button>
-      <button class="btn-green" onclick="showLogin()">Kembali ke Login</button>
+    <div id="loginBox" style="display:none;margin-top:14px">
+      <label>Email</label><input id="login_email" type="email" placeholder="email@domain.com">
+      <label>Password</label><input id="login_pass" type="password" placeholder="Password">
+      <div class="row">
+        <button id="btnLogin">Login</button>
+        <button id="showRegisterBtn" class="ghost">Belum punya akun (Daftar)</button>
+      </div>
+      <div style="margin-top:8px">
+        <button id="btnDeleteAccount" class="ghost" style="background:#fff;color:#ef4444;border-color:#ef4444">Hapus Akun (jika salah input)</button>
+      </div>
     </div>
-
-    <!-- DASHBOARD -->
-    <div class="card" id="dashboard" style="display:none;">
-      <h2>Menu SOS</h2>
-      <button class="btn-red" onclick="sendSOS('Kemalingan')">Kemalingan</button>
-      <button class="btn-red" onclick="sendSOS('Kebakaran')">Kebakaran</button>
-      <button class="btn-red" onclick="sendSOS('Medis')">Medis</button>
-      <button class="btn-red" onclick="sendSOS('Ambulance (Urgent)')">Ambulance (Urgent)</button>
-
-      <h2>Data Warga (RT/RW)</h2>
-      <ul id="wargaList">
-        <li>Kepala Keluarga: Budi (Blok A1)</li>
-        <li>Istri: Siti (Blok A1)</li>
-        <li>Anak: Andi (Blok A1)</li>
-      </ul>
-
-      <h2>Respon Laporan</h2>
-      <ul id="responList"></ul>
-
-      <button class="btn-green" onclick="logout()">Logout</button>
-    </div>
-
   </div>
 
-  <script>
-    // Firebase Config (isi asli sing wes mbok kasih)
-    const firebaseConfig = {
-      apiKey: "AIzaSyA6GAeIc7ZesIed9MAelUf6x_sBFdp9E-Q",
-      authDomain: "dusun-super.firebaseapp.com",
-      projectId: "dusun-super",
-      storageBucket: "dusun-super.firebasestorage.app",
-      messagingSenderId: "1083284057385",
-      appId: "1:1083284057385:web:21cfe467b047bb5a241b38",
-      measurementId: "G-LJ6KP57Q9M"
-    };
+  <!-- Dashboard -->
+  <div id="dashboard" class="card" style="display:none">
+    <div class="flex">
+      <div>
+        <h2 id="dashTitle">Dashboard Dusun</h2>
+        <div id="whoami" class="small-muted"></div>
+      </div>
+      <div class="right">
+        <button id="btnLogout" class="ghost">Logout</button>
+      </div>
+    </div>
 
-    // TODO: Tambah Firebase SDK script kene (auth, firestore, messaging)
-    // Dummy Functions
-    function showRegister() {
-      document.getElementById("loginCard").style.display="none";
-      document.getElementById("registerCard").style.display="block";
+    <!-- Buat Laporan -->
+    <div class="card" style="margin-top:12px">
+      <h3>Buat Laporan (semua warga bisa)</h3>
+      <label>Jenis Kejadian</label>
+      <select id="lap_jenis">
+        <option value="Kemalingan">Kemalingan</option>
+        <option value="Kebakaran">Kebakaran</option>
+        <option value="Medis">Medis</option>
+        <option value="Ambulance">Ambulance</option>
+        <option value="Mencurigakan">Mencurigakan</option>
+      </select>
+      <label>Deskripsi</label>
+      <textarea id="lap_deskripsi" placeholder="Deskripsi singkat..."></textarea>
+      <div class="row">
+        <button id="btnKirimLaporan">Kirim Laporan</button>
+        <button id="btnRefreshLaporan" class="ghost">Refresh</button>
+      </div>
+    </div>
+
+    <!-- Statistik -->
+    <div class="card">
+      <h3>Statistik Kejadian</h3>
+      <canvas id="chartKejadian" style="width:100%;height:200px"></canvas>
+      <div id="securityPercent" class="note"></div>
+    </div>
+
+    <!-- Laporan list -->
+    <div class="card">
+      <h3>Laporan Dusun (hanya dusun setempat)</h3>
+      <div id="laporanList"></div>
+    </div>
+
+    <!-- Pos Jaga -->
+    <div class="card">
+      <h3>Pos Jaga — Full Map</h3>
+      <div class="row">
+        <div class="col">
+          <label>Nama Pos</label>
+          <input id="pos_name" type="text" placeholder="Contoh: POS RT 01">
+        </div>
+        <div style="width:160px">
+          <label>Tipe</label>
+          <select id="pos_type">
+            <option value="RT">RT</option>
+            <option value="Induk">Induk</option>
+          </select>
+        </div>
+      </div>
+      <div class="note">Klik tombol "Tandai Lokasi" lalu klik peta untuk menempatkan pos (satu pos nama hanya boleh sekali per dusun).</div>
+      <div class="row" style="margin-top:8px">
+        <button id="btnStartMark">Tandai Lokasi</button>
+        <button id="btnAddPos" class="ghost">Simpan / Edit Pos</button>
+      </div>
+      <div id="map" class="map-wrap" style="margin-top:12px"></div>
+      <div class="legend">
+        <div><span style="background:#2563eb"></span> POS RT</div>
+        <div><span style="background:#059669"></span> POS Induk</div>
+      </div>
+      <div style="margin-top:10px">
+        <button id="btnFillAttend" class="green" style="display:inline-block;background:#10b981">Isi Kehadiran di Pos (Auto cek jarak ≤20m)</button>
+        <button id="btnConfirmLeave" class="ghost">Konfirmasi Pulang / Pindah Pos</button>
+        <div id="attendNote" class="small-muted note"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<!-- Firebase (compat) -->
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+
+<script>
+/* ============================
+   CONFIG — GANTI DENGAN MILIKMU
+   ============================ */
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "SENDER_ID",
+  appId: "APP_ID"
+};
+/* ============================ */
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const storage = firebase.storage();
+
+/* ---------- STATE ---------- */
+let currentUser = null;
+let currentUserDoc = null;
+let leafletMap = null;
+let markingMode = false;
+let tempMarker = null;
+let allPosMarkers = []; // leaflet markers for pos
+let todayDateStr = getDateStr(new Date()); // YYYY-MM-DD
+
+/* ---------- UTIL ---------- */
+function $(id){return document.getElementById(id)}
+function getDateStr(d){
+  const y=d.getFullYear(); const m=(d.getMonth()+1).toString().padStart(2,'0'); const day=d.getDate().toString().padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function distanceMeters(lat1, lon1, lat2, lon2){
+  function toRad(x){return x*Math.PI/180}
+  const R=6371000;
+  const dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
+  const a=Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+  const c=2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+  return R*c;
+}
+
+/* ---------- UI SWITCH ---------- */
+$('showLoginBtn').onclick = ()=>{ $('registerBox').style.display='none'; $('loginBox').style.display='block'; }
+$('showRegisterBtn').onclick = ()=>{ $('loginBox').style.display='none'; $('registerBox').style.display='block'; }
+
+/* ---------- REGISTER (with role uniqueness checks) ---------- */
+$('btnRegister').onclick = async ()=>{
+  const nama = $('reg_name').value.trim();
+  const email = $('reg_email').value.trim();
+  const password = $('reg_password').value;
+  const dusunId = $('reg_dusun').value.trim();
+  const rt = $('reg_rt').value.trim();
+  const rw = $('reg_rw').value.trim();
+  const block = $('reg_block').value.trim();
+  const subRole = $('reg_role').value;
+
+  if(!nama||!email||!password||!dusunId){ return alert('Lengkapi data'); }
+  if(password.length < 6) return alert('Password minimal 6 karakter');
+
+  // ROLE UNIQUENESS LOGIC:
+  // kepala_desa => unique globally
+  // kepala_dusun => unique per dusun (dusunId)
+  // ketua_rw => unique per dusun + RW
+  // ketua_rt => unique per dusun + RW + RT
+  // other roles allowed
+
+  try{
+    // check uniqueness
+    if(subRole === 'kepala_desa'){
+      const q = await db.collection('users').where('subRole','==','kepala_desa').get();
+      if(!q.empty) return alert('Role kepala_desa sudah terisi oleh user lain (unik global).');
+    }else if(subRole === 'kepala_dusun'){
+      const q = await db.collection('users').where('subRole','==','kepala_dusun').where('dusunId','==',dusunId).get();
+      if(!q.empty) return alert('Role kepala_dusun sudah terisi di dusun ini.');
+    }else if(subRole === 'ketua_rw'){
+      const q = await db.collection('users').where('subRole','==','ketua_rw')
+                 .where('dusunId','==',dusunId).where('rw','==',rw).get();
+      if(!q.empty) return alert('Role ketua_rw sudah terisi di RW ini.');
+    }else if(subRole === 'ketua_rt'){
+      const q = await db.collection('users').where('subRole','==','ketua_rt')
+                 .where('dusunId','==',dusunId).where('rw','==',rw).where('rt','==',rt).get();
+      if(!q.empty) return alert('Role ketua_rt sudah terisi di RT ini.');
+    }else if(subRole === 'istri' || subRole === 'anak'){
+      // must have existing kepala_keluarga with same address in this dusun/rt/rw/block
+      const q = await db.collection('users').where('subRole','==','kepala_keluarga')
+        .where('dusunId','==',dusunId).where('rt','==',rt).where('rw','==',rw).where('block','==',block).get();
+      if(q.empty) return alert('Tidak ditemukan Kepala Keluarga pada alamat ini. Istri/Anak harus terdaftar di alamat yang punya Kepala Keluarga.');
     }
-    function showLogin() {
-      document.getElementById("loginCard").style.display="block";
-      document.getElementById("registerCard").style.display="none";
+
+    // create auth user
+    const cred = await auth.createUserWithEmailAndPassword(email, password);
+    const uid = cred.user.uid;
+    await db.collection('users').doc(uid).set({
+      uid, nama, email, dusunId, rt, rw, block, role: 'warga', subRole, createdAt: new Date()
+    });
+
+    alert('Registrasi berhasil. Silakan login.');
+    // clear form
+    $('reg_name').value=''; $('reg_email').value=''; $('reg_password').value=''; $('reg_dusun').value=''; $('reg_rt').value=''; $('reg_rw').value=''; $('reg_block').value='';
+    $('registerBox').style.display='none'; $('loginBox').style.display='block';
+  }catch(err){
+    alert('Error pendaftaran: '+err.message);
+  }
+};
+
+/* ---------- LOGIN ---------- */
+$('btnLogin').onclick = async ()=>{
+  const email = $('login_email').value.trim();
+  const pass = $('login_pass').value;
+  if(!email||!pass) return alert('Lengkapi login');
+  try{
+    const res = await auth.signInWithEmailAndPassword(email, pass);
+    currentUser = res.user;
+    $('authArea').style.display='none';
+    $('dashboard').style.display='block';
+    await loadCurrentUser();
+  }catch(err){ alert('Login gagal: '+err.message); }
+};
+
+/* ---------- DELETE ACCOUNT (user must confirm) ---------- */
+$('btnDeleteAccount').onclick = async ()=>{
+  if(!confirm('Yakin hapus akunmu? Semua data akan terhapus. Jika salah input, ini prosedur yang harus dilakukan.')) return;
+  const user = auth.currentUser;
+  if(!user) return alert('Login dulu');
+  try{
+    // delete user doc then delete auth user
+    await db.collection('users').doc(user.uid).delete();
+    await user.delete();
+    alert('Akun dihapus. Silakan daftar ulang jika perlu.');
+    location.reload();
+  }catch(err){ alert('Gagal hapus akun: '+err.message + '. Jika token expired, login ulang dulu.'); }
+};
+
+/* ---------- LOAD CURRENT USER, DASHBOARD ---------- */
+async function loadCurrentUser(){
+  const user = auth.currentUser;
+  if(!user) return;
+  const doc = await db.collection('users').doc(user.uid).get();
+  currentUserDoc = doc.exists ? doc.data() : null;
+  $('whoami').innerText = currentUserDoc.nama + ' ('+currentUserDoc.subRole+') — Dusun: ' + currentUserDoc.dusunId + ' — RT/RW: ' + (currentUserDoc.rt||'-') + '/' + (currentUserDoc.rw||'-');
+  // load reports, pos, chart
+  await loadReports();
+  await loadPosForDusun(currentUserDoc.dusunId);
+  initChart(); // prepare chart (will be updated by loadReports)
+}
+
+/* ---------- REPORTS (LAPORAN) ---------- */
+$('btnKirimLaporan').onclick = async ()=>{
+  const teks = $('lap_deskripsi').value.trim();
+  const jenis = $('lap_jenis').value;
+  if(!teks) return alert('Isi deskripsi laporan');
+  if(!currentUserDoc) return alert('User error');
+  try{
+    await db.collection('laporan').add({
+      dusunId: currentUserDoc.dusunId,
+      jenis, teks, pelaporId: currentUserDoc.uid, pelaporName: currentUserDoc.nama, waktu: new Date(),
+      responders: []
+    });
+    $('lap_deskripsi').value='';
+    await loadReports();
+    alert('Laporan terkirim.');
+  }catch(err){ alert('Gagal kirim: '+err.message); }
+};
+
+$('btnRefreshLaporan').onclick = ()=> loadReports();
+
+async function loadReports(){
+  if(!currentUserDoc) return;
+  const listDiv = $('laporanList'); listDiv.innerHTML='';
+  const snap = await db.collection('laporan').where('dusunId','==',currentUserDoc.dusunId).orderBy('waktu','desc').get();
+  const counts = {Kemalingan:0,Kebakaran:0,Medis:0,Ambulance:0,Mencurigakan:0};
+  snap.forEach(doc=>{
+    const d = doc.data();
+    counts[d.jenis] = (counts[d.jenis]||0) + 1;
+    const html = document.createElement('div');
+    html.className = 'item';
+    html.innerHTML = `<b>${d.pelaporName}</b> • <span class="small-muted">${new Date(d.waktu.seconds*1000).toLocaleString()}</span>
+      <div style="margin-top:6px">${d.jenis} — ${d.teks}</div>
+      <div style="margin-top:8px"><button onclick="respondReport('${doc.id}')">Terima</button> <span class="small-muted">Respon: ${ (d.responders||[]).join(', ') || 'Belum ada' }</span></div>`;
+    listDiv.appendChild(html);
+  });
+  updateChart(counts);
+}
+
+/* Everyone in the same dusun can "respond" to a report */
+async function respondReport(reportId){
+  if(!currentUserDoc) return alert('User data missing');
+  const ref = db.collection('laporan').doc(reportId);
+  const snap = await ref.get();
+  if(!snap.exists) return alert('Laporan tidak ditemukan');
+  const d = snap.data();
+  if(d.dusunId !== currentUserDoc.dusunId) return alert('Laporan bukan untuk dusun Anda');
+  // Append responder name if not exists
+  const name = currentUserDoc.nama;
+  if((d.responders||[]).includes(name)) return alert('Anda sudah merespon');
+  await ref.update({responders: firebase.firestore.FieldValue.arrayUnion(name)});
+  alert('Anda merespon laporan ini.');
+  loadReports();
+}
+
+/* ---------- CHART ---------- */
+let chartInstance = null;
+function initChart(){
+  const ctx = document.getElementById('chartKejadian').getContext('2d');
+  if(chartInstance) chartInstance.destroy();
+  chartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: { labels:['Kemalingan','Kebakaran','Medis','Ambulance','Mencurigakan'], datasets:[{label:'Jumlah', data:[0,0,0,0,0], backgroundColor:'#1976d2'}] },
+    options: { responsive:true, maintainAspectRatio:false }
+  });
+}
+function updateChart(counts){
+  if(!chartInstance) initChart();
+  chartInstance.data.datasets[0].data = ['Kemalingan','Kebakaran','Medis','Ambulance','Mencurigakan'].map(k=>counts[k]||0);
+  chartInstance.update();
+  // Security percent simple heuristic: lebih sedikit laporan -> lebih aman
+  const total = Object.values(counts).reduce((a,b)=>a+b,0);
+  const percent = total === 0 ? 100 : Math.max(0, 100 - Math.min(100, total*8)); // tiap laporan -8% sampai floor 0
+  $('securityPercent').innerText = `Tingkat Keamanan Dusun: ${percent}% (${total} laporan hari ini)`;
+}
+
+/* ---------- POS JAGA (Leaflet) ---------- */
+async function loadPosForDusun(dusunId){
+  // initialize map if not
+  if(!leafletMap){
+    leafletMap = L.map('map').setView([-7.250445,112.768845], 15); // default center (change if needed)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+      maxZoom: 19, attribution: '&copy; OpenStreetMap'
+    }).addTo(leafletMap);
+
+    // click handler for marking pos (if markingMode true)
+    leafletMap.on('click', function(e){
+      if(!markingMode) return;
+      if(tempMarker) leafletMap.removeLayer(tempMarker);
+      tempMarker = L.marker(e.latlng).addTo(leafletMap);
+      tempMarker.bindPopup('Lokasi terpilih').openPopup();
+      // store temp coords in element attributes
+      tempMarker.lat = e.latlng.lat; tempMarker.lng = e.latlng.lng;
+      $('attendNote').innerText = `Lokasi pos terpilih: ${tempMarker.lat.toFixed(6)}, ${tempMarker.lng.toFixed(6)} - Klik "Simpan / Edit Pos" untuk menyimpan.`;
+      // stop marking mode
+      markingMode = false;
+      $('btnStartMark').innerText = 'Tandai Lokasi';
     }
-    function login() {
-      document.getElementById("loginCard").style.display="none";
-      document.getElementById("dashboard").style.display="block";
+  );
+  }
+
+  // clear existing markers
+  allPosMarkers.forEach(m=>leafletMap.removeLayer(m));
+  allPosMarkers = [];
+
+  // load pos from firestore for this dusun
+  const snap = await db.collection('pos_jaga').where('dusunId','==',dusunId).get();
+  snap.forEach(doc=>{
+    const d = doc.data();
+    const marker = L.marker([d.lokasi_lat, d.lokasi_lng], {title: d.nama_pos}).addTo(leafletMap);
+    marker.bindPopup(`<b>${d.nama_pos}</b><br>Tipe: ${d.tipe}<br><small>${d.dibuat_pada?.toDate ? d.dibuat_pada.toDate() : ''}</small>`);
+    allPosMarkers.push(marker);
+  });
+
+  // fit bounds if markers exist
+  if(allPosMarkers.length){
+    const group = L.featureGroup(allPosMarkers);
+    leafletMap.fitBounds(group.getBounds().pad(0.3));
+  }
+}
+
+/* Start marking mode */
+$('btnStartMark').onclick = ()=>{
+  markingMode = !markingMode;
+  $('btnStartMark').innerText = markingMode ? 'Klik di peta untuk pilih lokasi...' : 'Tandai Lokasi';
+  $('attendNote').innerText = markingMode ? 'Mode tandai: klik peta untuk memilih lokasi pos.' : '';
+};
+
+/* Save / Edit pos */
+$('btnAddPos').onclick = async ()=>{
+  const name = $('pos_name').value.trim();
+  const tipe = $('pos_type').value;
+  const dusun = currentUserDoc ? currentUserDoc.dusunId : $('reg_dusun').value.trim();
+  if(!name) return alert('Masukkan nama pos');
+  if(!tempMarker) return alert('Tandai lokasi pos di peta terlebih dahulu (klik "Tandai Lokasi")');
+
+  // unique per dusun: pos name only one
+  const q = await db.collection('pos_jaga').where('dusunId','==',dusun).where('nama_pos','==',name).get();
+  if(!q.empty){
+    // If exists - allow edit (we'll update first doc found)
+    const docRef = q.docs[0].ref;
+    await docRef.update({nama_pos:name, tipe, lokasi_lat: tempMarker.lat, lokasi_lng: tempMarker.lng, diupdate_pada: new Date()});
+    alert('Pos diperbarui.');
+  } else {
+    // create
+    await db.collection('pos_jaga').add({
+      nama_pos: name, tipe, dusunId: dusun, lokasi_lat: tempMarker.lat, lokasi_lng: tempMarker.lng, dibuat_pada: new Date()
+    });
+    alert('Pos disimpan.');
+  }
+  // reload pos
+  await loadPosForDusun(dusun);
+  // clear temp marker
+  if(tempMarker){ leafletMap.removeLayer(tempMarker); tempMarker=null; $('attendNote').innerText='Pos tersimpan.' }
+};
+
+/* ---------- KEHADIRAN (attendance) ---------- */
+/* Insert attendance only if within 20m of any pos in same dusun,
+   one active attendance per user per date; allow confirm leave/pindah. */
+$('btnFillAttend').onclick = ()=> isiKehadiran();
+$('btnConfirmLeave').onclick = ()=> konfirmasiPulang();
+
+async function isiKehadiran(){
+  if(!currentUserDoc) return alert('Login dulu');
+  // get user location
+  if(!navigator.geolocation) return alert('Geolocation tidak didukung');
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    const lat = pos.coords.latitude, lng = pos.coords.longitude;
+    // fetch all pos in this dusun
+    const snap = await db.collection('pos_jaga').where('dusunId','==',currentUserDoc.dusunId).get();
+    if(snap.empty) return alert('Belum ada pos di dusun ini.');
+    // find nearest within 20m
+    let chosen = null; let minDist=999999;
+    snap.forEach(doc=>{
+      const d = doc.data();
+      const dist = distanceMeters(lat,lng,d.lokasi_lat,d.lokasi_lng);
+      if(dist < minDist){ minDist = dist; chosen = {id:doc.id, ...d, dist}; }
+    });
+    if(!chosen) return alert('Gagal cek pos');
+    if(chosen.dist > 20) return alert('Anda berada diluar radius 20 meter dari semua pos (jarak terdekat: '+Math.round(chosen.dist)+' m).');
+    // check if user already has attendance today in a pos
+    const today = getDateStr(new Date());
+    const attRef = db.collection('kehadiran').doc(currentUserDoc.uid + '_' + today);
+    const attSnap = await attRef.get();
+    if(attSnap.exists){
+      const data = attSnap.data();
+      if(data.pos_id === chosen.id) return alert('Anda sudah terdaftar hadir di pos ini hari ini.');
+      // else: user wants to switch pos — ask confirm
+      if(!confirm('Anda sudah terdaftar hadir di pos lain hari ini. Konfirmasi pindah ke pos ini?')) return;
     }
-    function register() {
-      alert("Pendaftaran berhasil (dummy). Tambah integrasi Firebase!");
-      showLogin();
+    // save attendance (doc id: uid_date) — ensures 1 attendance per user per date
+    await attRef.set({
+      user_id: currentUserDoc.uid,
+      nama: currentUserDoc.nama,
+      pos_id: chosen.id,
+      pos_name: chosen.nama_pos,
+      lokasi_user: {lat,lng},
+      waktu: new Date(),
+      date: today
+    });
+    alert('Kehadiran tercatat di pos: ' + chosen.nama_pos);
+  }, err => { alert('Gagal ambil lokasi: '+err.message) }, {enableHighAccuracy:true, timeout:10000});
+}
+
+async function konfirmasiPulang(){
+  if(!currentUserDoc) return alert('Login dulu');
+  const today = getDateStr(new Date());
+  const attRef = db.collection('kehadiran').doc(currentUserDoc.uid + '_' + today);
+  const attSnap = await attRef.get();
+  if(!attSnap.exists) return alert('Belum ada catatan kehadiran hari ini.');
+  if(!confirm('Konfirmasi pulang? Ini akan menghapus catatan kehadiran hari ini.')) return;
+  await attRef.delete();
+  alert('Kehadiran dihapus (pulang).');
+}
+
+/* ---------- ON AUTH STATE CHANGE (stay login) ---------- */
+auth.onAuthStateChanged(async user=>{
+  if(user){
+    currentUser = user;
+    // if user doc exists -> load dashboard
+    const doc = await db.collection('users').doc(user.uid).get();
+    if(!doc.exists){ // shouldn't happen normally
+      alert('Akun ini belum lengkap. Silakan lengkapi pendaftaran.');
+      $('registerBox').style.display='block'; $('loginBox').style.display='none';
+      return;
     }
-    function logout() {
-      document.getElementById("dashboard").style.display="none";
-      document.getElementById("loginCard").style.display="block";
-    }
-    function sendSOS(type) {
-      const list=document.getElementById("responList");
-      const li=document.createElement("li");
-      li.textContent="Laporan SOS: "+type+" (dummy)";
-      list.appendChild(li);
-      alert("SOS '"+type+"' terkirim!");
-    }
-  </script>
+    currentUserDoc = doc.data();
+    $('authArea').style.display='none';
+    $('dashboard').style.display='block';
+    loadCurrentUser();
+  } else {
+    // show auth area
+    $('authArea').style.display='block';
+    $('dashboard').style.display='none';
+    $('registerBox').style.display='block';
+    $('loginBox').style.display='none';
+  }
+});
+
+/* ---------- Utility: loadCurrentUser (refresh data) ---------- */
+async function loadCurrentUser(){
+  if(!currentUser) return;
+  const doc = await db.collection('users').doc(currentUser.uid).get();
+  currentUserDoc = doc.data();
+  $('whoami').innerText = currentUserDoc.nama + ' ('+currentUserDoc.subRole+') — Dusun: '+currentUserDoc.dusunId;
+  await loadReports();
+  await loadPosForDusun(currentUserDoc.dusunId);
+}
+
+/* ---------- INITIAL MAP CENTER - set to first pos or default ---------- */
+(async function tryInit(){
+  // create map early with default center until pos loaded
+  leafletMap = L.map('map').setView([-6.200000,106.816666], 13); // default Jakarta view
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(leafletMap);
+})();
+
+/* ---------- Reset kehadiran tiap 00:00 ----------
+   Implementation detail:
+   - We don't delete old docs automatically here.
+   - We ensure attendance queries use 'date' field = today's date. So effectively attendance per day is separate.
+   - If you want automatic deletion, deploy a Cloud Function / scheduled job to delete old attendance docs.
+--------------------------------------------*/
+</script>
 </body>
 </html>
