@@ -1,165 +1,174 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sistem Keamanan Dusun</title>
-  <meta name="color-scheme" content="light">
   <style>
+    /* RESET */
+    * { margin:0; padding:0; box-sizing:border-box; font-family:Arial, sans-serif; }
+
     body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: linear-gradient(to bottom right, #f0f9ff, #ffffff, #e0f2fe);
-      color: #111;
+      background:#f4f6f9;
+      color:#333;
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
+      min-height:100vh;
+      padding:20px;
     }
-    header {
-      background: linear-gradient(90deg, #2563eb, #3b82f6);
-      color: #fff;
-      text-align: center;
-      padding: 20px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+
+    .container {
+      width:100%;
+      max-width:500px;
     }
-    header h1 {
-      margin: 0;
-      font-size: 26px;
-    }
-    nav {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      background: #1e40af;
-    }
-    nav a {
-      color: #fff;
-      padding: 14px 20px;
-      text-decoration: none;
-      font-weight: bold;
-    }
-    nav a:hover { background: #1d4ed8; }
-    .container { padding: 20px; }
+
     .card {
-      background: #fff;
-      border-radius: 12px;
-      padding: 20px;
-      margin: 20px auto;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      max-width: 800px;
+      background:#fff;
+      border-radius:12px;
+      box-shadow:0 4px 8px rgba(0,0,0,0.1);
+      padding:20px;
+      margin-bottom:20px;
     }
-    h2 { color: #1e3a8a; margin-top: 0; }
-    label { display: block; margin: 10px 0 5px; }
+
+    h1,h2,h3 {
+      margin-bottom:15px;
+      color:#2c3e50;
+      text-align:center;
+    }
+
     input, select {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      margin-bottom: 15px;
+      width:100%;
+      padding:10px;
+      margin:8px 0;
+      border:1px solid #ccc;
+      border-radius:8px;
     }
+
     button {
-      padding: 12px 18px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: bold;
-      color: #fff;
-      margin: 5px;
+      display:block;
+      width:100%;
+      padding:12px;
+      margin-top:10px;
+      background:#3498db;
+      color:#fff;
+      border:none;
+      border-radius:8px;
+      font-size:16px;
+      cursor:pointer;
+      transition:background 0.3s;
     }
-    .btn-primary { background: #2563eb; }
-    .btn-danger { background: #dc2626; }
-    .btn-success { background: #16a34a; }
-    .btn-warning { background: #f59e0b; color: #111; }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-    table, th, td { border: 1px solid #ccc; }
-    th, td { padding: 10px; text-align: left; }
-    th { background: #e0f2fe; }
-    footer {
-      background: #2563eb;
-      color: #fff;
-      text-align: center;
-      padding: 15px;
-      margin-top: 30px;
+    button:hover { background:#2980b9; }
+
+    .sos-buttons button {
+      margin:10px 0;
+      background:#e74c3c;
     }
+    .sos-buttons button:hover { background:#c0392b; }
+
+    .green { background:#2ecc71; }
+    .green:hover { background:#27ae60; }
+
+    ul { list-style:none; margin-top:10px; }
+    ul li { background:#ecf0f1; margin:5px 0; padding:10px; border-radius:6px; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Sistem Keamanan Dusun</h1>
-    <p>Login Warga • SOS • Notifikasi • RT/RW</p>
-  </header>
-
-  <nav>
-    <a href="#login">Login</a>
-    <a href="#dusun">Gabung/Buat Dusun</a>
-    <a href="#warga">Data Warga</a>
-    <a href="#sos">SOS</a>
-    <a href="#rt-rw">RT/RW</a>
-  </nav>
-
   <div class="container">
 
-    <!-- Login -->
-    <div id="login" class="card">
+    <!-- LOGIN -->
+    <div class="card" id="loginCard">
       <h2>Login Warga</h2>
-      <label>Email</label>
-      <input type="email" placeholder="Masukkan email..."/>
-      <label>Password</label>
-      <input type="password" placeholder="Masukkan password..."/>
-      <button class="btn-primary">Login</button>
-      <button class="btn-warning">Logout</button>
+      <input type="text" id="loginEmail" placeholder="Email">
+      <input type="password" id="loginPassword" placeholder="Password">
+      <button onclick="login()">Login</button>
+      <button class="green" onclick="showRegister()">Daftar</button>
     </div>
 
-    <!-- Buat & Gabung Dusun -->
-    <div id="dusun" class="card">
-      <h2>Buat / Gabung Dusun</h2>
-      <button class="btn-success">Buat Dusun (Kepala Dusun)</button>
-      <label>Kode Unik Dusun</label>
-      <input type="text" placeholder="Masukkan kode dusun..."/>
-      <label>Nama Lengkap</label>
-      <input type="text" placeholder="Masukkan nama lengkap..."/>
-      <label>Upload Foto Wajah</label>
-      <input type="file" accept="image/*"/>
-      <button class="btn-primary">Gabung Dusun</button>
+    <!-- REGISTER -->
+    <div class="card" id="registerCard" style="display:none;">
+      <h2>Daftar Warga Baru</h2>
+      <input type="text" id="regName" placeholder="Nama Lengkap">
+      <input type="text" id="regDusunCode" placeholder="Kode Dusun">
+      <input type="file" id="regPhoto">
+      <input type="email" id="regEmail" placeholder="Email">
+      <input type="password" id="regPassword" placeholder="Password">
+      <button onclick="register()">Daftar</button>
+      <button class="green" onclick="showLogin()">Kembali ke Login</button>
     </div>
 
-    <!-- Data Warga -->
-    <div id="warga" class="card">
-      <h2>Data Warga & Keluarga</h2>
-      <table>
-        <tr><th>Kepala Keluarga</th><th>Istri</th><th>Anak</th><th>Blok</th><th>No. Rumah</th><th>Role</th></tr>
-        <tr><td>Pak Joko</td><td>Bu Siti</td><td>2</td><td>B</td><td>12</td><td>Warga</td></tr>
-        <tr><td>Pak Budi</td><td>Bu Lina</td><td>1</td><td>A</td><td>5</td><td>Petugas Ambulance</td></tr>
-      </table>
-      <button class="btn-warning">Verifikasi Anggota Baru</button>
-      <button class="btn-success">Ubah Role → Petugas Ambulance</button>
-    </div>
+    <!-- DASHBOARD -->
+    <div class="card" id="dashboard" style="display:none;">
+      <h1>Dashboard Dusun</h1>
+      <h3>Menu SOS</h3>
+      <div class="sos-buttons">
+        <button onclick="sendSOS('Kemalingan')">Kemalingan</button>
+        <button onclick="sendSOS('Kebakaran')">Kebakaran</button>
+        <button onclick="sendSOS('Medis')">Medis</button>
+        <button onclick="sendSOS('Ambulance (Urgent)')">Ambulance (Urgent)</button>
+      </div>
 
-    <!-- SOS -->
-    <div id="sos" class="card">
-      <h2>Panggilan Darurat (SOS)</h2>
-      <button class="btn-danger">Kemalingan</button>
-      <button class="btn-warning">Kebakaran</button>
-      <button class="btn-primary">Medis</button>
-      <button class="btn-success">Ambulance (Urgent)</button>
-      <h3>Daftar Warga yang Merespon</h3>
-      <table>
-        <tr><th>Nama</th><th>Respon</th></tr>
-        <tr><td>Pak Andi</td><td>Menuju Lokasi</td></tr>
-        <tr><td>Bu Siti</td><td>Menghubungi RT</td></tr>
-      </table>
-    </div>
+      <h3>Data Warga</h3>
+      <ul id="wargaList">
+        <!-- List warga -->
+      </ul>
 
-    <!-- RT / RW -->
-    <div id="rt-rw" class="card">
-      <h2>RT / RW</h2>
-      <table>
-        <tr><th>Dusun</th><th>RT</th><th>RW</th><th>Kepala Dusun</th></tr>
-        <tr><td>Dusun A</td><td>01</td><td>05</td><td>Pak Slamet</td></tr>
-      </table>
-    </div>
+      <h3>Respon Laporan</h3>
+      <ul id="responList">
+        <!-- List respon -->
+      </ul>
 
+      <button onclick="logout()">Logout</button>
+    </div>
   </div>
 
-  <footer>
-    <p>&copy; 2025 Sistem Keamanan Dusun - Semua Hak Dilindungi</p>
-  </footer>
+  <script>
+    // Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyA6GAeIc7ZesIed9MAelUf6x_sBFdp9E-Q",
+      authDomain: "dusun-super.firebaseapp.com",
+      projectId: "dusun-super",
+      storageBucket: "dusun-super.firebasestorage.app",
+      messagingSenderId: "1083284057385",
+      appId: "1:1083284057385:web:21cfe467b047bb5a241b38",
+      measurementId: "G-LJ6KP57Q9M"
+    };
+
+    // TODO: Init Firebase app, Firestore, Auth, Messaging
+    // const app = firebase.initializeApp(firebaseConfig);
+
+    // UI Logic
+    function showRegister() {
+      document.getElementById("loginCard").style.display = "none";
+      document.getElementById("registerCard").style.display = "block";
+    }
+    function showLogin() {
+      document.getElementById("loginCard").style.display = "block";
+      document.getElementById("registerCard").style.display = "none";
+    }
+
+    function login() {
+      document.getElementById("loginCard").style.display = "none";
+      document.getElementById("dashboard").style.display = "block";
+    }
+
+    function register() {
+      alert("Pendaftaran berhasil (dummy). Integrasi Firebase perlu ditambahkan.");
+      showLogin();
+    }
+
+    function logout() {
+      document.getElementById("dashboard").style.display = "none";
+      document.getElementById("loginCard").style.display = "block";
+    }
+
+    function sendSOS(type) {
+      const list = document.getElementById("responList");
+      const li = document.createElement("li");
+      li.textContent = "Laporan SOS: " + type + " (dummy)";
+      list.appendChild(li);
+      alert("SOS '" + type + "' terkirim!");
+    }
+  </script>
 </body>
 </html>
