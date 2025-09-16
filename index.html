@@ -2,234 +2,185 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Aplikasi Keamanan Dusun</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
-  <!-- Leaflet Map -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <!-- Tailwind -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem Keamanan Dusun</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #f0f4ff; font-family: 'Segoe UI', sans-serif; }
+    .card { border-radius: 16px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    .btn { border-radius: 12px; font-weight: 600; }
+    .form-control { border-radius: 12px; }
+    #map { width: 100%; height: 300px; border-radius: 16px; }
+  </style>
 </head>
-<body class="bg-gray-100">
+<body>
+<div class="container py-5">
 
-  <!-- Login/Register -->
-  <div id="auth-section" class="flex items-center justify-center min-h-screen">
-    <div class="bg-white p-6 rounded-2xl shadow-lg w-96">
-      <h1 class="text-2xl font-bold text-center mb-4">Keamanan Dusun</h1>
-
-      <select id="role" class="w-full border p-2 rounded mb-3">
-        <option value="">Pilih Role</option>
-        <option value="kepala_desa">Warga (Kepala Desa)</option>
-        <option value="kepala_dusun">Warga (Kepala Dusun)</option>
-        <option value="ketua_rt">Warga (Ketua RT)</option>
-        <option value="ketua_rw">Warga (Ketua RW)</option>
-        <option value="kepala_keluarga">Warga (Kepala Keluarga)</option>
-        <option value="istri">Warga (Istri)</option>
-        <option value="anak">Warga (Anak)</option>
-      </select>
-
-      <input type="email" id="email" placeholder="Email" class="w-full border p-2 rounded mb-2">
-      <input type="password" id="password" placeholder="Password" class="w-full border p-2 rounded mb-3">
-
-      <button onclick="login()" class="w-full bg-blue-500 text-white py-2 rounded mb-2">Login</button>
-      <button onclick="register()" class="w-full bg-green-500 text-white py-2 rounded">Register</button>
-
-      <hr class="my-3">
-      <button onclick="showDusunMenu()" class="w-full bg-purple-500 text-white py-2 rounded">Tambah Dusun / Gabung Dusun</button>
-    </div>
+  <!-- LOGIN / REGISTER -->
+  <div id="login-container" class="card p-4 mx-auto" style="max-width:420px;">
+    <h3 class="text-center mb-4">Login Warga Dusun</h3>
+    <input id="email" class="form-control mb-3" type="email" placeholder="Email">
+    <input id="password" class="form-control mb-3" type="password" placeholder="Password">
+    <button class="btn btn-primary w-100 mb-3" onclick="login()">Login</button>
+    <button class="btn btn-outline-primary w-100 mb-2" onclick="register()">Daftar</button>
+    <button class="btn btn-outline-success w-100" onclick="showAddJoinDusun()">Tambah / Gabung Dusun</button>
   </div>
 
-  <!-- Menu Tambah/Gabung Dusun -->
-  <div id="dusun-section" class="hidden flex items-center justify-center min-h-screen">
-    <div class="bg-white p-6 rounded-2xl shadow-lg w-96">
-      <h2 class="text-xl font-bold text-center mb-4">Dusun</h2>
-      <button onclick="tambahDusun()" class="w-full bg-blue-600 text-white py-2 rounded mb-2">Tambah Dusun</button>
-      <input type="text" id="joinCode" placeholder="Masukkan Kode Dusun" class="w-full border p-2 rounded mb-2">
-      <button onclick="gabungDusun()" class="w-full bg-green-600 text-white py-2 rounded">Gabung Dusun</button>
-      <button onclick="backToLogin()" class="w-full mt-3 bg-gray-400 text-white py-2 rounded">Kembali</button>
-    </div>
+  <!-- TAMBAH / GABUNG DUSUN -->
+  <div id="dusun-container" class="card p-4 mx-auto d-none" style="max-width:420px;">
+    <h4 class="mb-3">Dusun</h4>
+    <button class="btn btn-success w-100 mb-3" onclick="createDusun()">Tambah Dusun (Kepala Dusun)</button>
+    <input id="dusunCodeJoin" class="form-control mb-2" placeholder="Masukkan Kode Dusun">
+    <button class="btn btn-primary w-100" onclick="joinDusun()">Gabung Dusun</button>
+    <button class="btn btn-secondary w-100 mt-3" onclick="backToLogin()">Kembali</button>
   </div>
 
-  <!-- Dashboard -->
-  <div id="dashboard" class="hidden p-4">
-    <h1 class="text-2xl font-bold mb-4">Dashboard Keamanan Dusun</h1>
-
-    <!-- Pos Jaga -->
-    <div class="bg-white p-4 rounded-lg shadow mb-4">
-      <h2 class="text-lg font-bold mb-2">Tambah Pos Jaga</h2>
-      <input id="posName" placeholder='Nama Pos (cth: "POS RT 01")' class="border p-2 rounded w-full mb-2">
-      <button onclick="simpanPos()" class="bg-blue-500 text-white py-2 px-4 rounded">Simpan Pos</button>
+  <!-- DASHBOARD -->
+  <div id="dashboard-container" class="d-none">
+    <div class="d-flex justify-content-between mb-3">
+      <h3>Dashboard Dusun</h3>
+      <button class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
     </div>
 
-    <!-- Laporan -->
-    <div class="bg-white p-4 rounded-lg shadow mb-4">
-      <h2 class="text-lg font-bold mb-2">Laporan Kejadian</h2>
-      <select id="kejadian" class="border p-2 rounded w-full mb-2">
-        <option value="kebakaran">Kebakaran</option>
-        <option value="pencurian">Pencurian</option>
-        <option value="keributan">Keributan</option>
-        <option value="mencurigakan">Mencurigakan</option>
-      </select>
-
-      <select id="lokasiTipe" onchange="toggleDeskripsiLokasi()" class="border p-2 rounded w-full mb-2">
-        <option value="sendiri">Lokasi Saya</option>
-        <option value="lain">Tempat Lain</option>
-      </select>
-
-      <div id="deskripsiLokasiDiv" class="hidden">
-        <textarea id="deskripsiLokasi" placeholder="Deskripsi lokasi (rumah siapa, blok, RT/RW)" class="border p-2 rounded w-full mb-2"></textarea>
-      </div>
-
-      <button onclick="laporKejadian()" class="bg-red-500 text-white py-2 px-4 rounded">Kirim Laporan</button>
+    <div class="card p-3 mb-3">
+      <h5>Kode Dusun:</h5>
+      <p id="dusunCodeDisplay" class="fw-bold text-primary"></p>
     </div>
 
-    <!-- Peta -->
-    <div class="bg-white p-4 rounded-lg shadow mb-4">
-      <h2 class="text-lg font-bold mb-2">Peta Pos Dusun</h2>
-      <div id="map" style="height: 400px;"></div>
+    <!-- LAPORAN -->
+    <div class="card p-3 mb-3">
+      <h5>Buat Laporan SOS</h5>
+      <select id="kejadian" class="form-control mb-2">
+        <option>Kemalingan</option>
+        <option>Kebakaran</option>
+        <option>Medis</option>
+        <option>Ambulance</option>
+        <option>Mencurigakan</option>
+      </select>
+      <select id="lokasiOption" class="form-control mb-2" onchange="toggleLokasi()">
+        <option value="saat_ini">Lokasi Saat Ini</option>
+        <option value="lainnya">Lokasi Lain</option>
+      </select>
+      <textarea id="lokasiDeskripsi" class="form-control mb-2 d-none" placeholder="Rumah siapa / sekitar siapa / RT RW (opsional)"></textarea>
+      <button class="btn btn-danger w-100" onclick="lapor()">Kirim Laporan</button>
+    </div>
+
+    <!-- GRAFIK -->
+    <div class="card p-3 mb-3">
+      <h5>Statistik Kejadian</h5>
+      <canvas id="chartKejadian"></canvas>
+    </div>
+
+    <!-- POS JAGA -->
+    <div class="card p-3 mb-3">
+      <h5>Pos Jaga Dusun</h5>
+      <div id="map"></div>
+      <button class="btn btn-primary w-100 mt-3" onclick="tambahPos()">Tambah Pos RT</button>
+      <div id="listPos" class="mt-3"></div>
     </div>
   </div>
+</div>
 
 <script>
-  // Firebase Config
-  const firebaseConfig = {
-    apiKey: "AIzaSyA6GAeIc7ZesIed9MAelUf6x_sBFdp9E-Q",
-    authDomain: "dusun-super.firebaseapp.com",
-    projectId: "dusun-super",
-    storageBucket: "dusun-super.firebasestorage.app",
-    messagingSenderId: "1083284057385",
-    appId: "1:1083284057385:web:21cfe467b047bb5a241b38",
-    measurementId: "G-LJ6KP57Q9M"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+const firebaseConfig = {
+  apiKey: "AIzaSyA6GAeIc7ZesIed9MAelUf6x_sBFdp9E-Q",
+  authDomain: "dusun-super.firebaseapp.com",
+  projectId: "dusun-super",
+  storageBucket: "dusun-super.firebasestorage.app",
+  messagingSenderId: "1083284057385",
+  appId: "1:1083284057385:web:21cfe467b047bb5a241b38",
+  measurementId: "G-LJ6KP57Q9M"
+};
+const app = firebase.initializeApp(firebaseConfig);
+const auth = firebase.getAuth(app);
+const db = firebase.getFirestore(app);
 
-  // Login/Register
-  function login(){
-    const email = document.getElementById("email").value;
-    const pass = document.getElementById("password").value;
-    auth.signInWithEmailAndPassword(email, pass)
-      .then(()=> {
-        document.getElementById("auth-section").classList.add("hidden");
-        document.getElementById("dashboard").classList.remove("hidden");
-        initMap();
-      })
-      .catch(e=>alert(e.message));
+// === AUTO LOGIN ===
+auth.onAuthStateChanged(async (user) => {
+  if (user) {
+    loadDashboard();
+  } else {
+    show("login-container");
   }
+});
 
-  function register(){
-    const email = document.getElementById("email").value;
-    const pass = document.getElementById("password").value;
-    const role = document.getElementById("role").value;
-    if(!role) return alert("Pilih role dulu!");
+// === UI ===
+function show(id){
+  document.getElementById("login-container").classList.add("d-none");
+  document.getElementById("dusun-container").classList.add("d-none");
+  document.getElementById("dashboard-container").classList.add("d-none");
+  document.getElementById(id).classList.remove("d-none");
+}
+function showAddJoinDusun(){ show("dusun-container"); }
+function backToLogin(){ show("login-container"); }
+function toggleLokasi(){
+  const opt=document.getElementById("lokasiOption").value;
+  document.getElementById("lokasiDeskripsi").classList.toggle("d-none", opt!=="lainnya");
+}
 
-    // Pastikan role unik (hanya 1 orang untuk jabatan khusus)
-    db.collection("users").where("role","==",role).get().then(snapshot=>{
-      if(!snapshot.empty && ["kepala_desa","kepala_dusun","ketua_rt","ketua_rw"].includes(role)){
-        alert("Role ini sudah terdaftar!");
-      } else {
-        auth.createUserWithEmailAndPassword(email, pass).then(cred=>{
-          db.collection("users").doc(cred.user.uid).set({email, role});
-          alert("Registrasi berhasil!");
-        }).catch(e=>alert(e.message));
-      }
+// === AUTH ===
+async function login(){
+  const email=document.getElementById("email").value;
+  const pass=document.getElementById("password").value;
+  await firebase.signInWithEmailAndPassword(auth,email,pass);
+}
+async function register(){
+  const email=document.getElementById("email").value;
+  const pass=document.getElementById("password").value;
+  await firebase.createUserWithEmailAndPassword(auth,email,pass);
+}
+async function logout(){ await firebase.signOut(auth); }
+
+// === DUSUN ===
+async function createDusun(){
+  const user=auth.currentUser;
+  const kode="DUSUN-"+Math.random().toString(36).substring(2,8).toUpperCase();
+  await firebase.setDoc(firebase.doc(db,"dusun",kode),{
+    kode:kode, kepalaDusun:user.uid, createdAt:Date.now()
+  });
+  document.getElementById("dusunCodeDisplay").innerText=kode;
+  alert("Dusun berhasil dibuat!");
+  loadDashboard();
+}
+async function joinDusun(){
+  const kode=document.getElementById("dusunCodeJoin").value;
+  const user=auth.currentUser;
+  const ref=firebase.doc(db,"dusun",kode);
+  const snap=await firebase.getDoc(ref);
+  if(snap.exists()){
+    await firebase.setDoc(firebase.doc(db,"dusun",kode,"warga",user.uid),{
+      email:user.email, joinedAt:Date.now()
     });
+    alert("Gabung Dusun sukses!");
+    loadDashboard();
+  } else {
+    alert("Kode dusun salah");
   }
+}
 
-  // Tambah/Gabung Dusun
-  function showDusunMenu(){
-    document.getElementById("auth-section").classList.add("hidden");
-    document.getElementById("dusun-section").classList.remove("hidden");
-  }
-  function backToLogin(){
-    document.getElementById("dusun-section").classList.add("hidden");
-    document.getElementById("auth-section").classList.remove("hidden");
-  }
-
-  function tambahDusun(){
-    const code = Math.random().toString(36).substring(2,8).toUpperCase();
-    alert("Kode Dusun Anda: " + code + " (Simpan & bagikan untuk gabung)");
-    // Simpan ke profil kepala dusun
-    const user = auth.currentUser;
-    if(user){
-      db.collection("dusun").doc(code).set({owner: user.uid, created: Date.now()});
-      db.collection("users").doc(user.uid).update({dusunCode: code});
-    }
-  }
-
-  function gabungDusun(){
-    const code = document.getElementById("joinCode").value;
-    if(!code) return alert("Masukkan kode!");
-    const user = auth.currentUser;
-    if(user){
-      db.collection("dusun").doc(code).get().then(doc=>{
-        if(doc.exists){
-          db.collection("users").doc(user.uid).update({dusunCode: code});
-          alert("Berhasil gabung ke dusun!");
-        } else {
-          alert("Kode tidak valid!");
-        }
-      });
-    }
-  }
-
-  // Laporan
-  function toggleDeskripsiLokasi(){
-    const tipe = document.getElementById("lokasiTipe").value;
-    document.getElementById("deskripsiLokasiDiv").classList.toggle("hidden", tipe !== "lain");
-  }
-
-  function laporKejadian(){
-    const kejadian = document.getElementById("kejadian").value;
-    const tipe = document.getElementById("lokasiTipe").value;
-    let lokasi = "Lokasi saya";
-
-    if(tipe === "lain"){
-      lokasi = document.getElementById("deskripsiLokasi").value || "Tidak dijelaskan";
-    }
-
-    db.collection("laporan").add({
-      kejadian, lokasi, waktu: Date.now()
-    });
-    alert("Laporan terkirim!");
-  }
-
-  // Pos & Peta
-  let map;
-  function initMap(){
-    map = L.map('map').setView([-7.25, 112.75], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-    db.collection("pos").onSnapshot(snapshot=>{
-      snapshot.forEach(doc=>{
-        const pos = doc.data();
-        if(pos.lat && pos.lng){
-          L.marker([pos.lat, pos.lng]).addTo(map).bindPopup(pos.nama);
-        }
-      });
-    });
-  }
-
-  function simpanPos(){
-    const nama = document.getElementById("posName").value;
-    if(!nama) return alert("Nama pos wajib!");
-    if(navigator.geolocation){
-      navigator.geolocation.getCurrentPosition(pos=>{
-        db.collection("pos").doc(nama).set({
-          nama, lat: pos.coords.latitude, lng: pos.coords.longitude
-        });
-        alert("Pos tersimpan!");
-      });
-    } else {
-      alert("Geolocation tidak didukung!");
-    }
-  }
+// === DASHBOARD ===
+async function loadDashboard(){
+  show("dashboard-container");
+  // TODO: load grafik, pos, laporan
+}
+async function lapor(){
+  const user=auth.currentUser;
+  const kejadian=document.getElementById("kejadian").value;
+  const lokasiOpt=document.getElementById("lokasiOption").value;
+  const lokasiDes=lokasiOpt==="lainnya"?document.getElementById("lokasiDeskripsi").value:"Lokasi Saat Ini";
+  await firebase.addDoc(firebase.collection(db,"laporan"),{
+    uid:user.uid, kejadian, lokasi:lokasiDes, createdAt:Date.now()
+  });
+  alert("Laporan terkirim!");
+}
+function tambahPos(){
+  alert("Fitur tambah pos dengan map akan dihubungkan ke Google Maps API");
+}
 </script>
 </body>
 </html>
