@@ -4,224 +4,222 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sistem Keamanan Dusun</title>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js"></script>
+  <style>
+    body {
+      margin: 0; padding: 0;
+      font-family: sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(to bottom right, #dbeafe, #ffffff, #f0f9ff);
+      color: #111;
+    }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      max-width: 400px;
+      margin: 20px auto;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn-blue { background: #2563eb; color:#fff; }
+    .btn-red { background: #dc2626; color:#fff; }
+    .btn-green { background: #16a34a; color:#fff; }
+    .btn-yellow { background: #ca8a04; color:#fff; }
+    .hidden { display: none; }
+    h2 { text-align:center; color:#1e3a8a; }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    .list-item {
+      background:#f9fafb;
+      border:1px solid #e5e7eb;
+      border-radius:8px;
+      padding:10px;
+      margin:5px 0;
+    }
+  </style>
 </head>
-<body class="bg-gradient-to-br from-blue-100 via-white to-blue-200 text-gray-900 min-h-screen flex items-center justify-center">
+<body>
 
   <!-- LOGIN -->
-  <div id="loginPage" class="w-full max-w-sm bg-white p-6 rounded-2xl shadow-xl border border-gray-200">
-    <h2 class="text-2xl font-bold mb-4 text-center text-blue-700">Login Warga</h2>
-    <input id="email" type="email" placeholder="Email" class="w-full mb-3 p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400">
-    <input id="password" type="password" placeholder="Password" class="w-full mb-3 p-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400">
-    <button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold p-2 rounded-lg">Login</button>
-    <p class="text-sm mt-3 text-center text-gray-600">Belum punya akun? <a href="#" onclick="showRegister()" class="text-blue-600 font-semibold">Daftar</a></p>
+  <div id="loginPage" class="card">
+    <h2>Login Warga</h2>
+    <input id="email" type="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password">
+    <button class="btn btn-blue" onclick="login()">Login</button>
+    <p style="text-align:center;">Belum punya akun? <a href="#" onclick="showRegister()">Daftar</a></p>
   </div>
 
   <!-- REGISTER -->
-  <div id="registerPage" class="hidden w-full max-w-sm bg-white p-6 rounded-2xl shadow-xl border border-gray-200">
-    <h2 class="text-2xl font-bold mb-4 text-center text-green-700">Daftar Warga</h2>
-    <input id="regName" type="text" placeholder="Nama Lengkap" class="w-full mb-3 p-2 rounded-lg border border-gray-300">
-    <input id="regDusun" type="text" placeholder="Kode Dusun" class="w-full mb-3 p-2 rounded-lg border border-gray-300">
-    <input id="regRT" type="text" placeholder="RT" class="w-full mb-3 p-2 rounded-lg border border-gray-300">
-    <input id="regRW" type="text" placeholder="RW" class="w-full mb-3 p-2 rounded-lg border border-gray-300">
-    <input id="regHouse" type="text" placeholder="Nomor Rumah" class="w-full mb-3 p-2 rounded-lg border border-gray-300">
-    <input id="regEmail" type="email" placeholder="Email" class="w-full mb-3 p-2 rounded-lg border border-gray-300">
-    <input id="regPassword" type="password" placeholder="Password" class="w-full mb-3 p-2 rounded-lg border border-gray-300">
-    <input id="regPhoto" type="file" accept="image/*" class="w-full mb-3 text-sm">
-    <button onclick="register()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold p-2 rounded-lg">Daftar</button>
-    <p class="text-sm mt-3 text-center text-gray-600"><a href="#" onclick="showLogin()" class="text-blue-600 font-semibold">Sudah punya akun?</a></p>
+  <div id="registerPage" class="card hidden">
+    <h2>Daftar Warga</h2>
+    <input id="regEmail" type="email" placeholder="Email">
+    <input id="regPassword" type="password" placeholder="Password">
+    <input id="regName" type="text" placeholder="Nama Lengkap">
+    <input id="regRT" type="text" placeholder="RT">
+    <input id="regRW" type="text" placeholder="RW">
+    <input id="regBlock" type="text" placeholder="Blok / Nomor Rumah">
+    <input id="regDusunCode" type="text" placeholder="Kode Dusun">
+    <input id="regPhoto" type="file" accept="image/*">
+    <button class="btn btn-green" onclick="register()">Daftar</button>
+    <p style="text-align:center;"><a href="#" onclick="showLogin()">Sudah punya akun? Login</a></p>
   </div>
 
   <!-- DASHBOARD -->
-  <div id="dashboard" class="hidden w-full max-w-4xl bg-white p-6 rounded-2xl shadow-2xl border border-gray-200">
-    <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">🚨 Sistem Keamanan Dusun</h2>
-    
-    <!-- SOS -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      <button onclick="sendSOS('Kemalingan')" class="bg-red-600 hover:bg-red-700 text-white p-6 rounded-xl font-bold text-lg shadow-lg">🚨 Kemalingan</button>
-      <button onclick="sendSOS('Kebakaran')" class="bg-yellow-500 hover:bg-yellow-600 text-white p-6 rounded-xl font-bold text-lg shadow-lg">🔥 Kebakaran</button>
-      <button onclick="sendSOS('Medis')" class="bg-green-600 hover:bg-green-700 text-white p-6 rounded-xl font-bold text-lg shadow-lg">🩺 Medis</button>
-      <button onclick="sendSOS('Ambulance')" class="bg-blue-600 hover:bg-blue-700 text-white p-6 rounded-xl font-bold text-lg shadow-lg">🚑 Ambulance</button>
-    </div>
-
-    <!-- Laporan -->
-    <h3 class="text-lg font-semibold mb-2 text-gray-800">📋 Laporan Terkini:</h3>
-    <ul id="sosList" class="space-y-3 max-h-60 overflow-y-auto text-sm"></ul>
-
-    <!-- Admin Menu -->
-    <div id="adminPanel" class="hidden mt-6">
-      <h3 class="text-lg font-semibold mb-2 text-gray-800">⚙️ Panel Kepala Dusun</h3>
-      <ul id="wargaList" class="space-y-3 max-h-60 overflow-y-auto text-sm"></ul>
-    </div>
-
-    <div class="mt-6 text-center">
-      <button onclick="logout()" class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg">Logout</button>
-    </div>
+  <div id="dashboard" class="card hidden">
+    <h2>Dashboard Dusun</h2>
+    <p id="welcome"></p>
+    <button class="btn btn-red" onclick="sendSOS('Kemalingan')">🚨 Kemalingan</button>
+    <button class="btn btn-yellow" onclick="sendSOS('Kebakaran')">🔥 Kebakaran</button>
+    <button class="btn btn-green" onclick="sendSOS('Medis')">💊 Medis</button>
+    <button class="btn btn-blue" onclick="sendSOS('Ambulance')">🚑 Ambulance</button>
+    <h3>Laporan Masuk</h3>
+    <div id="sosList"></div>
+    <button class="btn btn-blue" onclick="logout()">Logout</button>
   </div>
 
-<script>
-  // Firebase Config
-  const firebaseConfig = {
-    apiKey: "AIzaSyA6GAeIc7ZesIed9MAelUf6x_sBFdp9E-Q",
-    authDomain: "dusun-super.firebaseapp.com",
-    projectId: "dusun-super",
-    storageBucket: "dusun-super.appspot.com",
-    messagingSenderId: "1083284057385",
-    appId: "1:1083284057385:web:21cfe467b047bb5a241b38",
-    measurementId: "G-LJ6KP57Q9M"
-  };
-  const app = firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
-  const storage = firebase.storage();
+  <script>
+    // Firebase config (jangan dirubah tanpa perintahmu)
+    const firebaseConfig = {
+      apiKey: "AIzaSyA6GAeIc7ZesIed9MAelUf6x_sBFdp9E-Q",
+      authDomain: "dusun-super.firebaseapp.com",
+      projectId: "dusun-super",
+      storageBucket: "dusun-super.firebasestorage.app",
+      messagingSenderId: "1083284057385",
+      appId: "1:1083284057385:web:21cfe467b047bb5a241b38",
+      measurementId: "G-LJ6KP57Q9M"
+    };
 
-  // Show / Hide Pages
-  function showRegister() {
-    document.getElementById("loginPage").classList.add("hidden");
-    document.getElementById("registerPage").classList.remove("hidden");
-  }
-  function showLogin() {
-    document.getElementById("registerPage").classList.add("hidden");
-    document.getElementById("loginPage").classList.remove("hidden");
-  }
+    const app = firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-  // Register
-  async function register() {
-    const name = document.getElementById("regName").value;
-    const dusun = document.getElementById("regDusun").value;
-    const rt = document.getElementById("regRT").value;
-    const rw = document.getElementById("regRW").value;
-    const house = document.getElementById("regHouse").value;
-    const email = document.getElementById("regEmail").value;
-    const password = document.getElementById("regPassword").value;
-    const photoFile = document.getElementById("regPhoto").files[0];
-
-    try {
-      const userCred = await auth.createUserWithEmailAndPassword(email, password);
-      let photoURL = "";
-      if (photoFile) {
-        const storageRef = storage.ref("warga/" + userCred.user.uid + ".jpg");
-        await storageRef.put(photoFile);
-        photoURL = await storageRef.getDownloadURL();
-      }
-      await db.collection("warga").doc(userCred.user.uid).set({
-        uid: userCred.user.uid, name, dusun, rt, rw, house,
-        email, role: "warga", photo: photoURL, verified: false
-      });
-      alert("Pendaftaran berhasil, tunggu verifikasi kepala dusun!");
-      showLogin();
-    } catch (err) {
-      alert("Error: " + err.message);
-    }
-  }
-
-  // Login
-  async function login() {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    try {
-      await auth.signInWithEmailAndPassword(email, password);
+    // NAVIGATION
+    function showRegister() {
       document.getElementById("loginPage").classList.add("hidden");
-      document.getElementById("registerPage").classList.add("hidden");
-      document.getElementById("dashboard").classList.remove("hidden");
-      loadSOS();
-      loadAdmin();
-    } catch (err) {
-      alert("Login gagal: " + err.message);
+      document.getElementById("registerPage").classList.remove("hidden");
     }
-  }
+    function showLogin() {
+      document.getElementById("registerPage").classList.add("hidden");
+      document.getElementById("loginPage").classList.remove("hidden");
+    }
 
-  // Logout
-  function logout() {
-    auth.signOut();
-    document.getElementById("dashboard").classList.add("hidden");
-    document.getElementById("loginPage").classList.remove("hidden");
-  }
+    // REGISTER
+    async function register() {
+      const email = document.getElementById("regEmail").value;
+      const password = document.getElementById("regPassword").value;
+      const name = document.getElementById("regName").value;
+      const rt = document.getElementById("regRT").value;
+      const rw = document.getElementById("regRW").value;
+      const block = document.getElementById("regBlock").value;
+      const dusunCode = document.getElementById("regDusunCode").value;
 
-  // SOS
-  async function sendSOS(type) {
-    const user = auth.currentUser;
-    if (!user) return;
-    const wargaDoc = await db.collection("warga").doc(user.uid).get();
-    const data = wargaDoc.data();
-    await db.collection("sos").add({
-      uid: user.uid,
-      name: data.name,
-      dusun: data.dusun,
-      rt: data.rt,
-      rw: data.rw,
-      house: data.house,
-      type,
-      responders: [],
-      time: new Date()
-    });
-  }
-
-  // Respon
-  async function respondSOS(id) {
-    const user = auth.currentUser;
-    const wargaDoc = await db.collection("warga").doc(user.uid).get();
-    const data = wargaDoc.data();
-    await db.collection("sos").doc(id).update({
-      responders: firebase.firestore.FieldValue.arrayUnion(data.name)
-    });
-  }
-
-  // Load SOS Realtime
-  function loadSOS() {
-    db.collection("sos").orderBy("time","desc").limit(10).onSnapshot(snapshot => {
-      const sosList = document.getElementById("sosList");
-      sosList.innerHTML = "";
-      snapshot.forEach(doc => {
-        const d = doc.data();
-        const li = document.createElement("li");
-        li.className = "p-3 bg-gray-100 rounded-lg border border-gray-300";
-        li.innerHTML = `<b class="text-red-600">${d.type}</b> oleh <b>${d.name}</b> (RT ${d.rt}/RW ${d.rw} - ${d.house}) 
-          <br><small class="text-gray-600">Respon: ${d.responders.join(", ") || "Belum ada"}</small>
-          <br><button onclick="respondSOS('${doc.id}')" class="mt-2 bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs">Respon</button>`;
-        sosList.appendChild(li);
-      });
-    });
-  }
-
-  // Load Admin Panel
-  function loadAdmin() {
-    const user = auth.currentUser;
-    db.collection("warga").doc(user.uid).get().then(doc => {
-      const data = doc.data();
-      if (data.role === "kepala") {
-        document.getElementById("adminPanel").classList.remove("hidden");
-        db.collection("warga").where("dusun","==",data.dusun).onSnapshot(snapshot => {
-          const wargaList = document.getElementById("wargaList");
-          wargaList.innerHTML = "";
-          snapshot.forEach(w => {
-            const wd = w.data();
-            const li = document.createElement("li");
-            li.className = "p-3 bg-gray-100 rounded-lg border border-gray-300";
-            li.innerHTML = `${wd.name} - RT ${wd.rt}/RW ${wd.rw} - ${wd.house} (${wd.role})
-              <button onclick="makeAmbulance('${wd.uid}')" class="ml-2 bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs">Jadikan Ambulance</button>
-              <button onclick="verify('${wd.uid}')" class="ml-2 bg-yellow-600 hover:bg-yellow-700 text-white px-2 py-1 rounded text-xs">Verifikasi</button>`;
-            wargaList.appendChild(li);
-          });
+      try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const uid = userCredential.user.uid;
+        await db.collection("warga").doc(uid).set({
+          email, name, rt, rw, block, dusunCode, role: "warga", verified: false, createdAt: new Date()
         });
+        alert("Registrasi berhasil, menunggu verifikasi kepala keluarga.");
+        showLogin();
+      } catch (error) {
+        alert(error.message);
       }
-    });
-  }
+    }
 
-  // Kepala Dusun ubah role jadi petugas ambulance
-  async function makeAmbulance(uid) {
-    await db.collection("warga").doc(uid).update({role: "ambulance"});
-  }
+    // LOGIN
+    async function login() {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      try {
+        await auth.signInWithEmailAndPassword(email, password);
+        document.getElementById("loginPage").classList.add("hidden");
+        document.getElementById("dashboard").classList.remove("hidden");
+        const user = auth.currentUser;
+        document.getElementById("welcome").innerText = "Selamat datang, " + user.email;
+        listenSOS();
+      } catch (error) {
+        alert(error.message);
+      }
+    }
 
-  // Kepala Dusun verifikasi anggota
-  async function verify(uid) {
-    await db.collection("warga").doc(uid).update({verified: true});
-  }
-</script>
+    // LOGOUT
+    async function logout() {
+      await auth.signOut();
+      document.getElementById("dashboard").classList.add("hidden");
+      document.getElementById("loginPage").classList.remove("hidden");
+    }
 
+    // SEND SOS
+    async function sendSOS(type) {
+      const user = auth.currentUser;
+      if (!user) return;
+      const wargaDoc = await db.collection("warga").doc(user.uid).get();
+      const data = wargaDoc.data();
+      await db.collection("sos").add({
+        uid: user.uid,
+        name: data.name,
+        rt: data.rt,
+        rw: data.rw,
+        dusunCode: data.dusunCode,
+        type,
+        responders: [],
+        status: "open",
+        createdAt: new Date()
+      });
+      alert("SOS terkirim: " + type);
+    }
+
+    // LISTEN SOS
+    function listenSOS() {
+      const user = auth.currentUser;
+      if (!user) return;
+      db.collection("sos").orderBy("createdAt", "desc").onSnapshot(snapshot => {
+        const sosList = document.getElementById("sosList");
+        sosList.innerHTML = "";
+        snapshot.forEach(doc => {
+          const data = doc.data();
+          const div = document.createElement("div");
+          div.className = "list-item";
+          div.innerHTML = `<b>${data.type}</b> oleh ${data.name} (RT ${data.rt}/RW ${data.rw})<br>
+                           Status: ${data.status}<br>
+                           Respon: ${(data.responders || []).join(", ")}<br>
+                           <button onclick="respondSOS('${doc.id}')">Respon</button>`;
+          sosList.appendChild(div);
+        });
+      });
+    }
+
+    // RESPOND SOS
+    async function respondSOS(id) {
+      const user = auth.currentUser;
+      const docRef = db.collection("sos").doc(id);
+      const docSnap = await docRef.get();
+      const data = docSnap.data();
+      const responders = data.responders || [];
+      if (!responders.includes(user.email)) {
+        responders.push(user.email);
+        await docRef.update({ responders });
+      }
+    }
+  </script>
 </body>
 </html>
