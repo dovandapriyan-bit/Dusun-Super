@@ -3,95 +3,133 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Keamanan Dusun</title>
+<title>Sistem Keamanan Dusun</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-body{font-family:Arial,sans-serif;background:#f0f2f5;margin:0;padding:0}
-.container{max-width:480px;margin:20px auto;padding:20px;background:#fff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.1)}
-h2,h3{text-align:center}
-input, button, select{width:100%;padding:10px;margin:5px 0;border-radius:6px;border:1px solid #ccc}
-button{background:#007bff;color:white;border:none;cursor:pointer}
-button:hover{background:#0056b3}
-.hidden{display:none}
-#dashboard{display:none;padding:10px}
-#charts{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;margin-top:20px}
-canvas{background:#fff;padding:10px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1);width:200px !important;height:200px !important}
-#map{width:100%;height:350px;margin-top:20px;border-radius:10px}
-#profileInfo{text-align:center;margin-top:10px;font-weight:bold}
+body{background:#f0f4ff;font-family:'Segoe UI',sans-serif;}
+.card{border-radius:16px;box-shadow:0 4px 8px rgba(0,0,0,0.1);}
+.btn{border-radius:12px;font-weight:600;}
+.form-control{border-radius:12px;}
+#map{width:100%;height:300px;border-radius:16px;}
+.hidden{display:none;}
 </style>
 </head>
 <body>
+<div class="container py-5">
 
-<div class="container" id="mainContainer">
-  <h2>Aplikasi Keamanan Dusun</h2>
+<!-- LOGIN / DAFTAR / BUAT DUSUN -->
+<div id="main-container" class="card p-4 mx-auto" style="max-width:480px;">
+<h3 class="text-center mb-4">Sistem Keamanan Dusun</h3>
 
-  <!-- Buat Dusun / Desa -->
-  <div id="buatDusunDiv">
-    <h3>Buat Dusun (Kepala Dusun)</h3>
-    <input id="namaDusun" placeholder="Nama Dusun">
-    <input id="desa" placeholder="Desa">
-    <input id="kota" placeholder="Kota">
-    <input id="kabupaten" placeholder="Kabupaten">
-    <input id="kecamatan" placeholder="Kecamatan">
-    <button id="generateBtn" onclick="generateKode()">Generate Kode</button>
-    <div id="kodeContainer" class="hidden">
-      <p>Kode Dusun: <b id="kodeDusunText"></b></p>
-      <p>Sisa waktu pergantian kode: <span id="countdownTimer"></span></p>
-    </div>
-  </div>
-
-  <hr>
-
-  <!-- Daftar Warga -->
-  <div id="daftarDiv">
-    <h3>Daftar Warga</h3>
-    <input id="namaWarga" placeholder="Nama">
-    <input id="noHpDaftar" placeholder="No HP">
-    <input id="alamat" placeholder="Alamat">
-    <input id="blok" placeholder="Blok (opsional)">
-    <input id="nomor" placeholder="Nomor (opsional)">
-    <input id="rt" placeholder="RT">
-    <input id="rw" placeholder="RW">
-    <input id="passwordDaftar" type="password" placeholder="Password">
-    <select id="roleWarga">
-      <option value="kepala_desa">Kepala Desa</option>
-      <option value="kepala_dusun">Kepala Dusun</option>
-      <option value="ketua_rt">Ketua RT</option>
-      <option value="ketua_rw">Ketua RW</option>
-      <option value="kepala_keluarga">Kepala Keluarga</option>
-      <option value="istri">Istri</option>
-      <option value="anak">Anak</option>
-      <option value="lainnya">Lainnya</option>
-    </select>
-    <button onclick="daftar()">Daftar</button>
-  </div>
-
-  <hr>
-
-  <!-- Login -->
-  <div id="loginDiv">
-    <h3>Login</h3>
-    <input id="noHpLogin" placeholder="No HP">
-    <input id="passwordLogin" type="password" placeholder="Password">
-    <button onclick="login()">Login</button>
-  </div>
+<!-- Buat Dusun -->
+<div id="buatDusunDiv">
+<h5>Buat Dusun (Kepala Dusun)</h5>
+<input id="namaDusun" class="form-control mb-2" placeholder="Nama Dusun">
+<input id="desa" class="form-control mb-2" placeholder="Desa">
+<input id="kota" class="form-control mb-2" placeholder="Kota">
+<input id="kabupaten" class="form-control mb-2" placeholder="Kabupaten">
+<input id="kecamatan" class="form-control mb-2" placeholder="Kecamatan">
+<button id="generateBtn" class="btn btn-primary w-100 mb-2" onclick="generateKode()">Generate Kode</button>
+<div id="kodeContainer" class="hidden mb-2">
+<p>Kode Dusun: <b id="kodeDusunText"></b></p>
+<p>Sisa waktu pergantian kode: <span id="countdownTimer"></span></p>
+</div>
 </div>
 
-<!-- Dashboard -->
-<div id="dashboard">
-  <h2>Dashboard Dusun</h2>
-  <p>Selamat datang, <span id="userName"></span>!</p>
-  <div id="profileInfo">
-    <span id="currentDateTime"></span>
-  </div>
-  <div id="charts">
-    <canvas id="kejadianChart"></canvas>
-    <canvas id="keamananChart"></canvas>
-  </div>
-  <div id="map"></div>
-  <button onclick="logout()" style="margin-top:20px;">Logout</button>
+<hr>
+
+<!-- Daftar Warga -->
+<div id="daftarDiv">
+<h5>Daftar Warga</h5>
+<input id="namaWarga" class="form-control mb-2" placeholder="Nama">
+<input id="noHpDaftar" class="form-control mb-2" placeholder="No HP">
+<input id="alamat" class="form-control mb-2" placeholder="Alamat">
+<input id="blok" class="form-control mb-2" placeholder="Blok (opsional)">
+<input id="nomor" class="form-control mb-2" placeholder="Nomor (opsional)">
+<input id="rt" class="form-control mb-2" placeholder="RT">
+<input id="rw" class="form-control mb-2" placeholder="RW">
+<input id="passwordDaftar" type="password" class="form-control mb-2" placeholder="Password">
+<select id="roleWarga" class="form-control mb-2">
+<option value="kepala_desa">Kepala Desa</option>
+<option value="kepala_dusun">Kepala Dusun</option>
+<option value="ketua_rt">Ketua RT</option>
+<option value="ketua_rw">Ketua RW</option>
+<option value="kepala_keluarga">Kepala Keluarga</option>
+<option value="istri">Istri</option>
+<option value="anak">Anak</option>
+<option value="lainnya">Lainnya</option>
+</select>
+<input id="kodeDusunInput" class="form-control mb-2" placeholder="Kode Dusun">
+<button class="btn btn-success w-100 mb-2" onclick="daftar()">Daftar</button>
+</div>
+
+<hr>
+
+<!-- Login -->
+<div id="loginDiv">
+<h5>Login</h5>
+<input id="noHpLogin" class="form-control mb-2" placeholder="No HP">
+<input id="passwordLogin" type="password" class="form-control mb-2" placeholder="Password">
+<button class="btn btn-primary w-100" onclick="login()">Login</button>
+</div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="hidden">
+<div class="d-flex justify-content-between mb-3">
+<h3>Dashboard Dusun</h3>
+<button class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
+</div>
+<div id="dashboardContent">
+
+<!-- Profil & Kode Dusun Kepala Dusun -->
+<div id="kodeDashboardDiv" class="card p-3 mb-3 hidden">
+<p>Kode Dusun: <b id="profileKodeDusun"></b></p>
+<p>Sisa waktu kode: <span id="profileCountdown"></span></p>
+</div>
+
+<!-- Profil -->
+<div class="card p-3 mb-3">
+<p>Selamat datang, <b id="userName"></b></p>
+<p>Tanggal & Jam: <span id="realtimeClock"></span></p>
+</div>
+
+<!-- Laporan SOS -->
+<div class="card p-3 mb-3">
+<h5>Buat Laporan SOS</h5>
+<select id="kejadian" class="form-control mb-2">
+<option>Kemalingan</option>
+<option>Kebakaran</option>
+<option>Medis</option>
+<option>Ambulance</option>
+<option>Mencurigakan</option>
+</select>
+<select id="lokasiOption" class="form-control mb-2" onchange="toggleLokasi()">
+<option value="saat_ini">Lokasi Saat Ini</option>
+<option value="lainnya">Lokasi Lain</option>
+</select>
+<textarea id="lokasiDeskripsi" class="form-control mb-2 hidden" placeholder="Rumah siapa / sekitar siapa / RT RW (opsional)"></textarea>
+<button class="btn btn-danger w-100" onclick="lapor()">Kirim Laporan</button>
+</div>
+
+<!-- Statistik Kejadian -->
+<div class="card p-3 mb-3">
+<h5>Statistik Kejadian</h5>
+<canvas id="chartKejadian"></canvas>
+</div>
+
+<!-- Pos Jaga -->
+<div class="card p-3 mb-3">
+<h5>Pos Jaga Dusun</h5>
+<div id="map"></div>
+<button class="btn btn-primary w-100 mt-3" onclick="tambahPos()">Tambah Pos RT</button>
+<div id="listPos" class="mt-3"></div>
+</div>
+
+</div>
 </div>
 
 <script>
@@ -104,8 +142,8 @@ messagingSenderId:"1083284057385",
 appId:"1:1083284057385:web:21cfe467b047bb5a241b38",
 measurementId:"G-LJ6KP57Q9M"
 };
-const app=firebase.initializeApp(firebaseConfig);
-const db=firebase.firestore();
+const app = firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
 let currentUser=null;
 let generatedCode="";
@@ -121,7 +159,6 @@ function generateKode(){
   btn.onclick=simpanDusun;
 }
 
-// Simpan data dusun + auto refresh kode tiap 1 jam
 async function simpanDusun(){
   const nama=document.getElementById("namaDusun").value;
   const desa=document.getElementById("desa").value;
@@ -135,18 +172,13 @@ async function simpanDusun(){
     code:generatedCode,
     createdAt:Date.now()
   });
-
   alert("Dusun berhasil dibuat! Kode: "+generatedCode);
-  sessionStorage.setItem("kodeDusun",generatedCode);
-  sessionStorage.setItem("dusunId",docRef.id);
-  document.getElementById("buatDusunDiv").classList.add("hidden");
-
+  document.getElementById("kodeDusunInput").value=generatedCode;
   startKodeTimer(docRef.id);
 }
 
-// ===== Timer & Auto Refresh Kode =====
 function startKodeTimer(dusunId){
-  let duration=3600; 
+  let duration=3600;
   if(countdownInterval) clearInterval(countdownInterval);
   countdownInterval=setInterval(async ()=>{
     duration--;
@@ -154,12 +186,14 @@ function startKodeTimer(dusunId){
     const menit=Math.floor((duration%3600)/60);
     const detik=duration%60;
     document.getElementById("countdownTimer").innerText=`${jam}h ${menit}m ${detik}s`;
+    document.getElementById("profileCountdown").innerText=`${jam}h ${menit}m ${detik}s`;
     if(duration<=0){
       const newCode="DSN"+Math.random().toString(36).substr(2,6).toUpperCase();
       await db.collection("dusun").doc(dusunId).update({code:newCode});
       generatedCode=newCode;
-      sessionStorage.setItem("kodeDusun",newCode);
       document.getElementById("kodeDusunText").innerText=newCode;
+      document.getElementById("kodeDusunInput").value=newCode;
+      document.getElementById("profileKodeDusun").innerText=newCode;
       duration=3600;
     }
   },1000);
@@ -179,14 +213,13 @@ async function daftar(){
     role:document.getElementById("roleWarga").value,
     createdAt:Date.now()
   };
-  if(!data.noHp||!data.password) return alert("Isi data wajib");
+  if(!data.noHp || !data.password || !data.nama) return alert("Isi data wajib");
 
-  const kodeDusun=sessionStorage.getItem("kodeDusun");
-  if(!kodeDusun) return alert("Minta kode dari Kepala Dusun");
-
-  const q=await db.collection("dusun").where("code","==",kodeDusun).get();
-  if(q.empty) return alert("Kode dusun tidak valid!");
-  data.dusunId=q.docs[0].id;
+  const kodeDusun = document.getElementById("kodeDusunInput").value.trim();
+  if(!kodeDusun) return alert("Isi Kode Dusun!");
+  const q = await db.collection("dusun").where("code","==",kodeDusun).get();
+  if(q.empty) return alert("Kode Dusun tidak valid!");
+  data.dusunId = q.docs[0].id;
 
   await db.collection("users").doc(data.noHp).set(data);
   alert("Daftar berhasil! Silakan login.");
@@ -196,49 +229,58 @@ async function daftar(){
 async function login(){
   const noHp=document.getElementById("noHpLogin").value;
   const password=document.getElementById("passwordLogin").value;
-
   const docSnap=await db.collection("users").doc(noHp).get();
   if(!docSnap.exists) return alert("User tidak ditemukan!");
   const user=docSnap.data();
   if(user.password!==password) return alert("Password salah!");
 
   currentUser=user;
-  document.getElementById("mainContainer").classList.add("hidden");
-  document.getElementById("dashboard").style.display="block";
+  document.getElementById("main-container").classList.add("hidden");
+  document.getElementById("dashboard").classList.remove("hidden");
   document.getElementById("userName").innerText=user.nama;
 
-  setInterval(()=> {
-    const now=new Date();
-    document.getElementById("currentDateTime").innerText=now.toLocaleString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  },1000);
+  if(user.role==="kepala_dusun"){
+    document.getElementById("kodeDashboardDiv").classList.remove("hidden");
+    document.getElementById("profileKodeDusun").innerText=document.getElementById("kodeDusunInput").value || generatedCode;
+  } else {
+    document.getElementById("kodeDashboardDiv").classList.add("hidden");
+  }
 
-  loadDashboard(user.dusunId);
+  startClock();
+}
+
+// ===== Realtime Clock =====
+function startClock(){
+  setInterval(()=>{
+    const now=new Date();
+    document.getElementById("realtimeClock").innerText=now.toLocaleString();
+  },1000);
+}
+
+// ===== Laporan SOS =====
+function toggleLokasi(){
+  const opt=document.getElementById("lokasiOption").value;
+  document.getElementById("lokasiDeskripsi").classList.toggle("hidden", opt!=="lainnya");
+}
+
+function lapor(){
+  const uid=currentUser.noHp;
+  const kejadian=document.getElementById("kejadian").value;
+  const lokasiOpt=document.getElementById("lokasiOption").value;
+  const lokasiDes=lokasiOpt==="lainnya"?document.getElementById("lokasiDeskripsi").value:"Lokasi Saat Ini";
+  db.collection("laporan").add({uid,kejadian,lokasi:lokasiDes,createdAt:Date.now()});
+  alert("Laporan terkirim!");
+}
+
+// ===== Pos Jaga =====
+function tambahPos(){
+  alert("Fitur pos jaga (map) bisa ditambahkan di sini");
 }
 
 // ===== Logout =====
 function logout(){
-  sessionStorage.clear();
-  currentUser=null;
-  document.getElementById("dashboard").style.display="none";
-  document.getElementById("mainContainer").classList.remove("hidden");
-}
-
-// ===== Dashboard =====
-async function loadDashboard(dusunId){
-  const laporanData={"Pencurian":5,"Kebakaran":2,"Keributan":3};
-  const ctx1=document.getElementById('kejadianChart').getContext('2d');
-  new Chart(ctx1,{type:'bar',data:{
-    labels:Object.keys(laporanData),
-    datasets:[{label:'Jumlah Kejadian',data:Object.values(laporanData),backgroundColor:['#ff6384','#36a2eb','#ffce56']}]
-  }});
-
-  const total=Object.values(laporanData).reduce((a,b)=>a+b,0);
-  const aman=Math.max(0,100-total*5);
-  const ctx2=document.getElementById('keamananChart').getContext('2d');
-  new Chart(ctx2,{type:'doughnut',data:{
-    labels:['Aman','Bahaya'],
-    datasets:[{data:[aman,100-aman],backgroundColor:['#36a2eb','#ff6384'] }]
-  }});
+  document.getElementById("dashboard").classList.add("hidden");
+  document.getElementById("main-container").classList.remove("hidden");
 }
 </script>
 </body>
