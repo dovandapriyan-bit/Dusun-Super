@@ -66,6 +66,21 @@
         <input id="reg_nama" class="form-control mb-2" placeholder="NAMA LENGKAP">
         <input id="reg_hp" class="form-control mb-2" placeholder="NOMOR HP (contoh: 0812... atau +62812...)" oninput="formatPhoneTyping(this)">
         <input id="reg_password" type="password" class="form-control mb-2" placeholder="PASSWORD (min 6)">
+
+        <!-- ADDED: Role dropdown (user requested) -->
+        <select id="reg_role" class="form-control mb-2">
+          <option value="warga">WARGA</option>
+          <option value="kepala_desa">KEPALA DESA</option>
+          <option value="kepala_dusun">KEPALA DUSUN</option>
+          <option value="ketua_rt">KETUA RT</option>
+          <option value="ketua_rw">KETUA RW</option>
+          <option value="kepala_keluarga">KEPALA KELUARGA</option>
+          <option value="istri">ISTRI</option>
+          <option value="anak">ANAK</option>
+          <option value="lainnya">LAINNYA</option>
+        </select>
+        <!-- END ADDED -->
+
         <!-- Dropdown alamat pendaftaran -->
         <select id="reg_prov_select" class="form-control mb-2"><option value="">Pilih Provinsi</option></select>
         <select id="reg_kab_select" class="form-control mb-2"><option value="">Pilih Kabupaten/Kota</option></select>
@@ -353,6 +368,7 @@ async function onRegister(){
   const nama=$('reg_nama').value.trim();
   const hp=$('reg_hp').value.trim();
   const password=$('reg_password').value;
+  const selectedRole = ($('reg_role') && $('reg_role').value) ? $('reg_role').value : 'warga';
   const kodeDusun = ($('reg_kode').value || '').trim().toUpperCase();
   const prov = $('reg_prov_select').value ? $('reg_prov_select').selectedOptions[0].text : '';
   const kab = $('reg_kab_select').value ? $('reg_kab_select').selectedOptions[0].text : '';
@@ -388,7 +404,7 @@ async function onRegister(){
     const uid = userCred.user.uid;
 
     await db.collection('Warga').doc(uid).set({
-      nama, phone: norm, role: 'warga', status: 'pending',
+      nama, phone: norm, role: selectedRole, status: 'pending',
       kodeDusun: kodeDusun,
       provinsi: prov, kabupaten: kab, kecamatan: kec, desa: des,
       rt, rw, alamat: alamatFull, blok, no,
@@ -403,7 +419,7 @@ async function onRegister(){
 }
 
 function clearRegister(){
-  ['reg_nama','reg_hp','reg_password','reg_prov_select','reg_kab_select','reg_kec_select','reg_des_select','reg_rt','reg_rw','reg_alamat_lengkap','reg_blok','reg_no','reg_kode'].forEach(id=>{
+  ['reg_nama','reg_hp','reg_password','reg_role','reg_prov_select','reg_kab_select','reg_kec_select','reg_des_select','reg_rt','reg_rw','reg_alamat_lengkap','reg_blok','reg_no','reg_kode'].forEach(id=>{
     const el=$(id); if(el) el.value='';
   });
 }
