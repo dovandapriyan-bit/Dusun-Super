@@ -2,8 +2,8 @@
 <html lang="id">
 <head>
   <meta charset="utf-8" />
-  <title>Sistem Keamanan Dusun — Full (Terbaru)</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sistem Keamanan Dusun — Final Full</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Firebase compat -->
@@ -20,77 +20,61 @@
       --card-radius:12px;
       --muted:#6b7280;
       --accent:#ef4444;
+      --safe:#16a34a;
+      --caution:#f59e0b;
+      --danger:#ef4444;
     }
-    body{
-      background:#f4f7ff;
-      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      padding:18px;
-    }
+    body{ background:#f4f7ff; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial; padding:18px; }
     .card{ border-radius:var(--card-radius); box-shadow:0 6px 18px rgba(20,30,60,0.06); }
     .form-control, .btn{ border-radius:8px; }
     input.upper{ text-transform:uppercase; }
     .muted{ color:var(--muted); font-size:0.92rem; }
     .small{ font-size:0.85rem; color:#374151; }
+    #map{ width:100%; height:300px; border-radius:8px; background:#eef; }
     .hidden{ display:none!important; }
     .topbar{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
-    #map{ width:100%; height:300px; border-radius:8px; background:#eef; display:block; }
-    @media(max-width:768px){ #map{ height:220px; } }
-
-    /* SOS center button (bulat di tengah bawah) */
-    .sos-center {
-      position: fixed;
-      left: 50%;
-      transform: translateX(-50%);
-      bottom: 18px;
-      width: 96px;
-      height: 96px;
-      border-radius:50%;
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      font-weight:700;
-      font-size:18px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      box-shadow: 0 12px 34px rgba(239,68,68,0.25);
-      z-index:9999;
-    }
-    @media(min-width:992px){
-      .sos-center{ width:120px; height:120px; font-size:20px; bottom:28px; }
-    }
-
-    /* small helper tables */
-    table.table-sm td, table.table-sm th{ padding:.4rem .6rem; }
-
+    .sos-btn{ width:96px; height:96px; border-radius:50%; background:var(--accent); color:#fff; border:none; font-weight:700; font-size:18px; display:flex; align-items:center; justify-content:center; margin:0 auto; box-shadow:0 10px 30px rgba(239,68,68,0.25); }
+    @media(min-width:992px){ .sos-btn{ width:110px; height:110px; font-size:20px; } }
+    table.table-sm td, table.table-sm th{ padding:.45rem .6rem; }
+    .progress-sm{ height:12px; }
   </style>
 </head>
 <body>
   <div class="container" style="max-width:1200px;">
-    <h3 class="text-center mb-4">Sistem Keamanan Dusun</h3>
+    <h3 class="text-center mb-4">Sistem Keamanan Dusun — Final</h3>
 
     <!-- AUTH -->
     <div id="authCard" class="card p-3 mb-4">
       <div class="row g-3">
         <div class="col-12 col-md-6">
-          <h5 class="mb-3">Daftar Warga</h5>
+          <h5>Daftar Warga</h5>
           <div class="row g-2">
             <div class="col-12"><input id="reg_nama" class="form-control" placeholder="NAMA LENGKAP"></div>
             <div class="col-12"><input id="reg_hp" class="form-control" placeholder="NOMOR HP (0812... atau +628...)" oninput="formatPhoneTyping(this)"></div>
             <div class="col-12"><input id="reg_password" type="password" class="form-control" placeholder="PASSWORD (min 6)"></div>
             <div class="col-12">
+              <label class="form-label small">Pilih Subrole</label>
               <select id="reg_role" class="form-control">
-                <option value="warga">WARGA</option>
-                <option value="kepala_dusun">KEPALA DUSUN</option>
-                <option value="kepala_keluarga">KEPALA KELUARGA</option>
-                <option value="istri">ISTRI</option>
-                <option value="ketua_rt">KETUA RT</option>
-                <option value="ketua_rw">KETUA RW</option>
-                <option value="lainnya">LAINNYA</option>
+                <optgroup label="Kepala Keluarga">
+                  <option value="kepala_desa">Kepala Desa</option>
+                  <option value="kepala_dusun">Kepala Dusun</option>
+                  <option value="ketua_rt_rw">Ketua RT / RW</option>
+                  <option value="kepala_keluarga">Kepala Keluarga</option>
+                </optgroup>
+                <optgroup label="Istri">
+                  <option value="istri">Istri</option>
+                  <option value="istri_kepala_dusun">Istri / Kepala Dusun</option>
+                </optgroup>
+                <optgroup label="Anak">
+                  <option value="anak">Anak</option>
+                </optgroup>
+                <optgroup label="Lainnya">
+                  <option value="warga">Warga</option>
+                  <option value="lainnya">Lainnya</option>
+                </optgroup>
               </select>
             </div>
 
-            <!-- region dropdowns -->
             <div class="col-12 col-sm-6"><select id="reg_prov_select" class="form-control"><option value="">Pilih Provinsi</option></select></div>
             <div class="col-12 col-sm-6"><select id="reg_kab_select" class="form-control"><option value="">Pilih Kabupaten/Kota</option></select></div>
             <div class="col-12 col-sm-6"><select id="reg_kec_select" class="form-control"><option value="">Pilih Kecamatan</option></select></div>
@@ -103,32 +87,24 @@
             <div class="col-6"><input id="reg_blok" class="form-control" placeholder="BLOK (opsional)"></div>
             <div class="col-6"><input id="reg_no" class="form-control" placeholder="NO RUMAH (opsional)"></div>
 
-            <div class="col-12 d-grid">
-              <button class="btn btn-success" onclick="onRegister()">Daftar</button>
-            </div>
-            <div class="col-12">
-              <button class="btn btn-link p-0" onclick="clearRegister()">Reset form</button>
-            </div>
+            <div class="col-12 d-grid"><button class="btn btn-success" onclick="onRegister()">Daftar</button></div>
+            <div class="col-12"><button class="btn btn-link p-0" onclick="clearRegister()">Reset form</button></div>
           </div>
         </div>
 
         <div class="col-12 col-md-6">
-          <h5 class="mb-3">Login</h5>
+          <h5>Login</h5>
           <div class="row g-2">
             <div class="col-12"><input id="login_hp" class="form-control" placeholder="NOMOR HP (0812... atau +628...)" oninput="formatPhoneTyping(this)"></div>
             <div class="col-12"><input id="login_pass" type="password" class="form-control" placeholder="PASSWORD"></div>
-            <div class="col-12 d-grid">
-              <button class="btn btn-primary" onclick="onLogin()">Login</button>
-            </div>
-            <div class="col-12">
-              <div class="muted">Semua pendaftaran tanpa KODE DUSUN. Masukkan KODE setelah login jika ingin bergabung ke dusun.</div>
-            </div>
+            <div class="col-12 d-grid"><button class="btn btn-primary" onclick="onLogin()">Login</button></div>
+            <div class="col-12"><div class="muted">Pendaftaran tidak otomatis login. Silakan login setelah mendaftar.</div></div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- DASHBOARD -->
+    <!-- Dashboard -->
     <div id="dashboardCard" class="card p-3 hidden">
       <div class="topbar mb-3">
         <div>
@@ -136,46 +112,34 @@
           <div class="muted">Selamat datang, <b id="display_name"></b> · <span id="display_role"></span></div>
           <div class="small">Waktu: <span id="clock"></span></div>
         </div>
-        <div class="text-end">
-          <button id="btnLogout" class="btn btn-danger btn-sm" onclick="onLogout()">Logout</button>
-        </div>
+        <div><button id="btnLogout" class="btn btn-danger btn-sm" onclick="onLogout()">Logout</button></div>
       </div>
 
-      <!-- join dusun panel (warga) -->
+      <!-- Join Dusun Panel (for users without kodeDusun) -->
       <div id="joinDusunPanel" class="card p-3 mb-3 d-none">
         <h6>Gabung Dusun</h6>
         <div class="row g-2">
-          <div class="col-12">
-            <div class="muted">Masukkan kode dusun yang diberikan Kepala Dusun atau pilih dusun dari daftar di bawah lalu masukkan kode.</div>
-          </div>
-          <div class="col-9"><input id="joinKodeDusun" class="form-control upper" placeholder="KODE DUSUN"></div>
-          <div class="col-3 d-grid"><button class="btn btn-primary" onclick="joinDusun()">Gabung</button></div>
-
-          <div class="col-12 mt-2">
-            <h6 class="mb-2">Daftar Dusun (coba gabung)</h6>
-            <div id="tableAvailableDusun"></div>
-          </div>
+          <div class="col-8"><input id="joinKodeDusun" class="form-control upper" placeholder="KODE DUSUN"></div>
+          <div class="col-4 d-grid"><button class="btn btn-primary" onclick="joinDusun()">Gabung</button></div>
+          <div class="col-12 mt-2"><h6 class="mb-2">Daftar Dusun</h6><div id="tableAvailableDusun"></div></div>
         </div>
       </div>
 
-      <!-- buat dusun panel untuk kepala_dusun -->
+      <!-- Create Dusun (only visible for kepala_dusun) -->
       <div id="buatDusunPanel" class="card p-3 mb-3 d-none">
-        <h6>Kelola Dusun (Kepala Dusun)</h6>
+        <h6>Buat / Kelola Dusun (Kepala Dusun)</h6>
         <div class="row g-2">
           <div class="col-12 col-md-6"><input id="dusun_nama" class="form-control upper" placeholder="NAMA DUSUN"></div>
           <div class="col-12 col-md-6"><button class="btn btn-primary w-100" onclick="onGenerateCode()">Generate Kode</button></div>
 
           <div id="kode_group" class="input-group mb-2 hidden">
             <input id="dusun_code" class="form-control" readonly placeholder="KODE DUSUN">
-            <button id="copy_code_btn" class="btn btn-outline-secondary" type="button" onclick="copyDusunCode()">COPY</button>
+            <button class="btn btn-outline-secondary" onclick="copyDusunCode()">COPY</button>
           </div>
 
           <div class="col-12 d-grid"><button id="save_dusun_btn" class="btn btn-success hidden" onclick="onSaveDusun()">Simpan Dusun</button></div>
 
-          <div class="col-12 mt-3">
-            <h6 class="mb-2">Daftar Dusun Anda</h6>
-            <div id="tableDusunOwner"></div>
-          </div>
+          <div class="col-12 mt-3"><h6 class="mb-2">Dusun yang Anda Miliki</h6><div id="tableDusunOwner"></div></div>
         </div>
       </div>
 
@@ -185,24 +149,30 @@
         <div id="kepalaDusunDetail" class="muted">Memuat data...</div>
       </div>
 
-      <!-- Family members & verification -->
+      <!-- Family members -->
       <div class="card p-3 mb-3">
         <div class="d-flex justify-content-between align-items-center">
-          <h6 class="mb-0">Anggota Keluarga (Satu alamat)</h6>
-          <div class="muted small">Tampilkan warga dengan alamat/RT-RW sama</div>
+          <h6 class="mb-0">Anggota Keluarga (satu alamat)</h6>
+          <div class="muted small">Tampilkan warga dengan alamat / RT-RW sama</div>
         </div>
-        <div id="tableFamilyMembers" class="mt-2"></div>
+        <div id="tableFamilyMembers" class="mt-2">Memuat...</div>
+
+        <!-- SOS button inline under family members (center) -->
+        <div class="mt-3 text-center">
+          <button id="btnSOS" class="sos-btn" onclick="openSOSModal()">SOS</button>
+        </div>
       </div>
 
       <div class="row g-3">
         <div class="col-lg-5">
           <div class="card p-3 mb-3">
-            <h6 class="mb-2">Statistik & Persentase Keamanan Dusun</h6>
+            <h6>Statistik Kejadian (30 hari terakhir)</h6>
             <div id="securityPercentTable">Memuat...</div>
+            <div id="securityCategorySummary" class="mt-2"></div>
           </div>
 
           <div class="card p-3 mb-3">
-            <h6 class="mb-2">Daftar Laporan Terbaru</h6>
+            <h6>Daftar Laporan Terbaru</h6>
             <div id="listReports" class="muted">Memuat...</div>
           </div>
         </div>
@@ -219,558 +189,453 @@
           </div>
         </div>
       </div>
+
     </div>
 
-    <div class="mt-3 muted small">Catatan: ganti konfigurasi Firebase di <code>firebaseConfig</code> bila belum diisi. Jika Firestore menolak akses -> sesuaikan Rules seperti pembahasan sebelumnya.</div>
+    <div class="mt-3 muted small">Catatan: ganti konfigurasi Firebase bila perlu. Jika Firestore menolak akses -> sesuaikan Rules.</div>
   </div>
 
-  <!-- SOS button center (bulat) -->
-  <button class="sos-center" id="btnSOS" title="SOS" onclick="openSOSModal()">SOS</button>
+<script>
+/* ================= CONFIG ================= */
+/* Firebase config - isi sesuai projectmu jika perlu */
+const firebaseConfig = {
+  apiKey: "AIzaSyA6GAeIc7ZesIed9MAelUf6x_sBFdp9E-Q",
+  authDomain: "dusun-super.firebaseapp.com",
+  projectId: "dusun-super",
+  storageBucket: "dusun-super.appspot.com",
+  messagingSenderId: "1083284057385",
+  appId: "1:1083284057385:web:21cfe467b047bb5a241b38",
+  measurementId: "G-LJ6KP57Q9M"
+};
+/* ================================================= */
 
-  <!-- scripts -->
-  <script>
-  /******************************
-   * FIREBASE CONFIG - ISI DENGAN PROJECTMU
-   ******************************/
-  const firebaseConfig = {
-    apiKey: "AIzaSyA6GAeIc7ZesIed9MAelUf6x_sBFdp9E-Q",
-    authDomain: "dusun-super.firebaseapp.com",
-    projectId: "dusun-super",
-    storageBucket: "dusun-super.appspot.com",
-    messagingSenderId: "1083284057385",
-    appId: "1:1083284057385:web:21cfe467b047bb5a241b38",
-    measurementId: "G-LJ6KP57Q9M"
-  };
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-  // initialize firebase
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.firestore();
+/* Ensure persistence so user doesn't logout on refresh */
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e=>console.warn("setPersistence:",e));
 
-  // ensure persistence so user doesn't logout on refresh
-  auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e=>console.warn("setPersistence:",e));
+/* ================= State ================= */
+let currentUser = null;
+let currentWargaDoc = null;
+let currentDusunDoc = null;
+let laporanChart = null;
+let laporanUnsub = null;
 
-  // state
-  let currentUser = null;
-  let currentWargaDoc = null;
-  let currentDusunDoc = null;
-  let laporanChart = null;
+/* ================= Helpers ================= */
+const $ = id => document.getElementById(id);
+const show = id => { const el=$(id); if(el) el.classList.remove('hidden','d-none'); };
+const hide = id => { const el=$(id); if(el) el.classList.add('hidden','d-none'); };
+const Toast = (title, icon='success') => Swal.fire({ title, icon, toast:true, position:'top-end', showConfirmButton:false, timer:2000 });
+const Err = (t) => Swal.fire("Error", t, "error");
 
-  // helper $
-  const $ = id => document.getElementById(id);
-  const show = id => { const el = $(id); if(el) el.classList.remove('hidden'); };
-  const hide = id => { const el = $(id); if(el) el.classList.add('hidden'); };
-  const Toast = (title, icon='success') => Swal.fire({ title, icon, toast:true, position:'top-end', showConfirmButton:false, timer:2000 });
-  const Err = (t) => Swal.fire("Error", t, "error");
+/* Phone normalization */
+function normalizePhoneForKey(v){
+  let s = (v||"").replace(/\s+/g,"").replace(/\D/g,"");
+  if(s.startsWith("0")) s = "62"+s.substring(1);
+  if(!s.startsWith("62")) s = "62"+s;
+  return s;
+}
+function formatPhoneTyping(el){
+  let raw = el.value.replace(/[^\d\+]/g,"");
+  if(raw.startsWith("+")){ let digits = raw.replace(/\D/g,""); el.value = "+" + digits; } else el.value = raw;
+}
+function padRT(el){ el.value = (el.value||"").replace(/\D/g,"").padStart(3,"0"); }
+function padRW(el){ el.value = (el.value||"").replace(/\D/g,"").padStart(3,"0"); }
 
-  function normalizePhoneForKey(v){
-    let s = (v||"").replace(/\s+/g,"").replace(/\D/g,"");
-    if(s.startsWith("0")) s = "62"+s.substring(1);
-    if(!s.startsWith("62")) s = "62"+s;
-    return s;
-  }
-  function formatPhoneTyping(el){
-    let raw = el.value.replace(/[^\d\+]/g,"");
-    if(raw.startsWith("+")){ let digits = raw.replace(/\D/g,""); el.value = "+" + digits; } else el.value = raw;
-  }
-  function padRT(el){ el.value = (el.value||"").replace(/\D/g,"").padStart(3,"0"); }
-  function padRW(el){ el.value = (el.value||"").replace(/\D/g,"").padStart(3,"0"); }
+/* Clock */
+function updateClock(){ const now = new Date(); $('clock') && ($('clock').innerText = now.toLocaleString()); setTimeout(updateClock,1000); }
 
-  function updateClock(){ const now = new Date(); $('clock').innerText = now.toLocaleString(); setTimeout(updateClock,1000); }
-
-  function initChart(){
-    const ctx = document.getElementById('chartKejadian')?.getContext('2d');
-    if(!ctx) return;
-    laporanChart = new Chart(ctx, {
-      type: 'bar',
-      data: { labels: ['Kebakaran','Kemalingan','Medis','Ambulance','Mencurigakan'], datasets: [{ label:'Jumlah', data:[0,0,0,0,0] }]},
-      options: { responsive:true, maintainAspectRatio:false }
-    });
-  }
-
-  /* ================== REGION DROPDOWNS ================== */
-  const API_REG = "https://www.emsifa.com/api-wilayah-indonesia/api/";
-  async function loadRegionDropdowns(){
-    try{
-      const resProv = await fetch(API_REG + 'provinces.json');
-      const provs = await resProv.json();
-      const regProv = $('reg_prov_select');
-      provs.forEach(p => regProv && (regProv.innerHTML += `<option value="${p.id}">${p.name}</option>`));
-    }catch(e){ console.warn("Gagal muat provinsi", e); }
-    // handlers for reg selects (we only need reg_prov_select -> reg_kab...)
-    $('reg_prov_select')?.addEventListener('change', async function(){
-      $('reg_kab_select').innerHTML = '<option value="">Pilih Kabupaten/Kota</option>';
-      $('reg_kec_select').innerHTML = '<option value="">Pilih Kecamatan</option>';
-      $('reg_des_select').innerHTML = '<option value="">Pilih Desa/Kelurahan</option>';
-      if(this.value){
-        const r = await fetch(API_REG + 'regencies/' + this.value + '.json');
-        const ks = await r.json();
-        ks.forEach(k => reg_kab_select.innerHTML += `<option value="${k.id}">${k.name}</option>`);
-      }
-    });
-    $('reg_kab_select')?.addEventListener('change', async function(){
-      $('reg_kec_select').innerHTML = '<option value="">Pilih Kecamatan</option>';
-      $('reg_des_select').innerHTML = '<option value="">Pilih Desa/Kelurahan</option>';
-      if(this.value){
-        const r = await fetch(API_REG + 'districts/' + this.value + '.json');
-        const ks = await r.json(); ks.forEach(k => reg_kec_select.innerHTML += `<option value="${k.id}">${k.name}</option>`);
-      }
-    });
-    $('reg_kec_select')?.addEventListener('change', async function(){
-      $('reg_des_select').innerHTML = '<option value="">Pilih Desa/Kelurahan</option>';
-      if(this.value){
-        const r = await fetch(API_REG + 'villages/' + this.value + '.json');
-        const ks = await r.json(); ks.forEach(k => reg_des_select.innerHTML += `<option value="${k.id}">${k.name}</option>`);
-      }
-    });
-  }
-
-  /* ================== REGISTER (no auto-login) ================== */
-  async function onRegister(){
-    if(!auth || !db) return Err("Firebase belum dikonfigurasi.");
-    const nama = $('reg_nama').value.trim();
-    const hp = $('reg_hp').value.trim();
-    const pass = $('reg_password').value;
-    const role = $('reg_role').value || 'warga';
-    const prov = $('reg_prov_select').selectedOptions[0]?.text || '';
-    const kab = $('reg_kab_select').selectedOptions[0]?.text || '';
-    const kec = $('reg_kec_select').selectedOptions[0]?.text || '';
-    const des = $('reg_des_select').selectedOptions[0]?.text || '';
-    const rt = $('reg_rt').value.trim(); const rw = $('reg_rw').value.trim();
-    const alamatFull = $('reg_alamat_lengkap').value.trim(); const blok = $('reg_blok').value.trim(); const no = $('reg_no').value.trim();
-
-    if(!nama||!hp||!pass) return Err("Lengkapi: Nama, HP, Password");
-    if(pass.length < 6) return Err("Password minimal 6 karakter");
-    try{
-      const norm = normalizePhoneForKey(hp);
-      const dup = await db.collection('Warga').where('phone','==',norm).limit(1).get();
-      if(!dup.empty) return Err("Nomor HP sudah terdaftar");
-
-      const fakeEmail = norm + "@dusun.fake";
-      // create user (this will sign them in)
-      const userCred = await auth.createUserWithEmailAndPassword(fakeEmail, pass);
-      const uid = userCred.user.uid;
-      // create warga doc
-      await db.collection('Warga').doc(uid).set({
-        nama, phone: norm, role, status: 'pending', kodeDusun: null,
-        provinsi: prov, kabupaten: kab, kecamatan: kec, desa: des,
-        rt, rw, alamat: alamatFull, blok, no,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      // sign out immediately to require manual login
-      await auth.signOut();
-      Swal.fire({ title:"Pendaftaran Berhasil", html:"Akun berhasil dibuat. Silakan login untuk melanjutkan.", icon:"success" });
-      clearRegister();
-    }catch(err){ Err(err.message || String(err)); }
-  }
-  function clearRegister(){
-    ['reg_nama','reg_hp','reg_password','reg_role','reg_rt','reg_rw','reg_alamat_lengkap','reg_blok','reg_no','reg_prov_select','reg_kab_select','reg_kec_select','reg_des_select'].forEach(id=>{ const e = $(id); if(e) e.value=''; });
-  }
-
-  /* ================== LOGIN ================== */
-  async function onLogin(){
-    if(!auth) return Err("Firebase belum dikonfigurasi.");
-    const hp = $('login_hp').value.trim(); const pass = $('login_pass').value;
-    if(!hp||!pass) return Err("Nomor HP & password wajib");
-    try{
-      const norm = normalizePhoneForKey(hp);
-      const fakeEmail = norm + "@dusun.fake";
-      await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-      const cred = await auth.signInWithEmailAndPassword(fakeEmail, pass);
-      currentUser = cred.user;
-      await loadUserProfile();
-      Toast("Login berhasil");
-      showDashboard();
-    }catch(err){ Err(err.message || String(err)); }
-  }
-
-  async function loadUserProfile(){
-    if(!auth.currentUser) return;
-    const uid = auth.currentUser.uid;
-    const doc = await db.collection('Warga').doc(uid).get();
-    if(doc.exists){
-      currentWargaDoc = { id: doc.id, data: doc.data() };
-      if(currentWargaDoc.data.kodeDusun){
-        const q = await db.collection('Dusun').where('kode','==', currentWargaDoc.data.kodeDusun).limit(1).get();
-        if(!q.empty) currentDusunDoc = { id: q.docs[0].id, data: q.docs[0].data() };
-        else currentDusunDoc = null;
-      } else currentDusunDoc = null;
-    } else { currentWargaDoc = null; currentDusunDoc = null; }
-  }
-
-  auth.onAuthStateChanged(async (u)=>{
-    if(u){
-      currentUser = u;
-      await loadUserProfile();
-      showDashboard();
-    } else {
-      currentUser = null; currentWargaDoc = null; currentDusunDoc = null;
-      showAuth();
-    }
+/* Chart init (optional) */
+function initChart(){
+  const ctx = document.getElementById('chartKejadian')?.getContext('2d');
+  if(!ctx) return;
+  laporanChart = new Chart(ctx, {
+    type: 'bar',
+    data: { labels: ['Kebakaran','Kemalingan','Medis','Ambulance','Mencurigakan'], datasets: [{ label:'Jumlah', data:[0,0,0,0,0] }] },
+    options: { responsive:true, maintainAspectRatio:false }
   });
+}
 
-  function showAuth(){ show('authCard'); hide('dashboardCard'); }
-  function showDashboard(){ hide('authCard'); show('dashboardCard'); updateClock(); renderRoleUI(); }
+/* ================ Register ================ */
+async function onRegister(){
+  if(!auth || !db){ Err("Firebase belum dikonfigurasi."); return; }
+  const nama = $('reg_nama').value.trim();
+  const hp = $('reg_hp').value.trim();
+  const password = $('reg_password').value;
+  const role = $('reg_role').value || 'warga';
+  const prov = $('reg_prov_select')?.selectedOptions[0]?.text || '';
+  const kab = $('reg_kab_select')?.selectedOptions[0]?.text || '';
+  const kec = $('reg_kec_select')?.selectedOptions[0]?.text || '';
+  const des = $('reg_des_select')?.selectedOptions[0]?.text || '';
+  const rt = $('reg_rt').value.trim();
+  const rw = $('reg_rw').value.trim();
+  const alamatFull = $('reg_alamat_lengkap').value.trim();
+  const blok = $('reg_blok').value.trim();
+  const no = $('reg_no').value.trim();
 
-  /* ================== RENDER UI ================== */
-  function renderRoleUI(){
-    $('display_name').innerText = currentWargaDoc?.data?.nama || 'Pengguna';
-    $('display_role').innerText = (currentWargaDoc?.data?.role || 'warga').toUpperCase();
-    const role = currentWargaDoc?.data?.role || 'warga';
+  if(!nama || !hp || !password){ Err("Lengkapi: Nama, HP, Password"); return; }
+  if(password.length < 6){ Err("Password minimal 6 karakter"); return; }
 
-    // not joined yet => show join panel + available dusun table, hide rest
-    if(!currentWargaDoc?.data?.kodeDusun){
-      show('joinDusunPanel');
-      hide('kepalaDusunInfo');
-      hide('buatDusunPanel');
-      $('listReports').innerHTML = '<div class="muted">Belum terhubung ke dusun. Masukkan kode pada panel "Gabung Dusun".</div>';
-      loadAvailableDusuns();
-      loadFamilyMembers(); // still show members at same address if any
-      renderSecurityPercentTable(); // empty/default
-      return;
-    }
+  try{
+    const norm = normalizePhoneForKey(hp);
+    const dup = await db.collection('Warga').where('phone','==',norm).limit(1).get();
+    if(!dup.empty){ Err("Nomor HP sudah terdaftar"); return; }
 
-    // joined
-    hide('joinDusunPanel');
-    loadAvailableDusuns(); // still useful
-    // if kepala_dusun -> show create/manage dusun panel and load owner table
-    if(role === 'kepala_dusun'){
-      show('buatDusunPanel');
-      loadDusunOwnerTable();
-    } else {
-      hide('buatDusunPanel');
-    }
+    const fakeEmail = norm + "@dusun.fake";
+    const userCred = await auth.createUserWithEmailAndPassword(fakeEmail, password);
+    const uid = userCred.user.uid;
 
-    // load family members, dusun info, reports, pos, security
-    loadFamilyMembers();
-    if(currentDusunDoc && currentDusunDoc.data){
-      if(currentDusunDoc.data.kepalaId) loadKepalaDusunInfo(currentDusunDoc.data.kepalaId);
-      subscribeReportsForDusun(currentDusunDoc.data.kode);
-      loadPos();
-      loadSecurityPercentTable(); // compute and render
-    } else {
-      // try to fetch by kode if missing
-      (async ()=>{
-        try{
-          const k = currentWargaDoc.data.kodeDusun;
-          const q = await db.collection('Dusun').where('kode','==',k).limit(1).get();
-          if(!q.empty) currentDusunDoc = { id: q.docs[0].id, data: q.docs[0].data() };
-          if(currentDusunDoc?.data?.kepalaId) loadKepalaDusunInfo(currentDusunDoc.data.kepalaId);
-        }catch(e){ console.warn(e); }
-      })();
-    }
-  }
-
-  /* ================== AVAILABLE DUSUN (warga) ================== */
-  async function loadAvailableDusuns(){
-    if(!db) return;
-    try{
-      const snap = await db.collection('Dusun').orderBy('nama').limit(50).get();
-      const container = $('tableAvailableDusun');
-      if(snap.empty){ container.innerHTML = '<div class="muted">Belum ada data dusun publik.</div>'; return; }
-      let html = `<table class="table table-sm"><thead><tr><th>Nama</th><th>Wilayah</th><th>Aksi</th></tr></thead><tbody>`;
-      snap.forEach(doc=>{
-        const d = doc.data();
-        const wilayah = `${d.desa||''} ${d.kecamatan||''} ${d.kabupaten||''} ${d.provinsi||''}`;
-        html += `<tr><td>${d.nama||''}</td><td>${wilayah}</td><td><button class="btn btn-sm btn-primary" onclick="promptJoinSpecific('${doc.id}')">Gabung</button></td></tr>`;
-      });
-      html += `</tbody></table>`;
-      container.innerHTML = html;
-    }catch(e){ console.warn(e); }
-  }
-
-  async function promptJoinSpecific(dusunDocId){
-    // open modal asking for kode; validate against doc
-    const { value: kode } = await Swal.fire({
-      title: 'Masukkan Kode Dusun',
-      input: 'text',
-      inputLabel: 'Masukkan kode dusun untuk bergabung',
-      inputPlaceholder: 'KODE DUSUN',
-      showCancelButton: true
+    await db.collection('Warga').doc(uid).set({
+      nama,
+      phone: norm,
+      role,
+      status: 'pending',
+      kodeDusun: null,
+      provinsi: prov, kabupaten: kab, kecamatan: kec, desa: des,
+      rt, rw, alamat: alamatFull, blok, no,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    if(!kode) return;
-    try{
-      const doc = await db.collection('Dusun').doc(dusunDocId).get();
-      if(!doc.exists) return Err("Dusun tidak ditemukan");
-      const d = doc.data();
-      if(d.kode !== kode.trim().toUpperCase()) return Err("Kode tidak cocok");
-      // update warga
-      await db.collection('Warga').doc(currentWargaDoc.id).update({ kodeDusun: d.kode });
-      currentWargaDoc.data.kodeDusun = d.kode;
-      currentDusunDoc = { id: doc.id, data: d };
-      Toast("Berhasil bergabung ke dusun");
-      renderRoleUI();
-    }catch(e){ Err(e.message || String(e)); }
-  }
 
-  /* ================== DUSUN OWNER TABLE (kepala dusun) ================== */
-  async function loadDusunOwnerTable(){
-    if(!db || !currentUser) return;
-    try{
-      const snap = await db.collection('Dusun').where('kepalaId','==', currentUser.uid).get();
-      const container = $('tableDusunOwner');
-      if(snap.empty){ container.innerHTML = '<div class="muted">Belum ada dusun yang Anda miliki.</div>'; return; }
-      let html = `<table class="table table-sm"><thead><tr><th>Nama</th><th>Wilayah</th><th>Kode</th><th>Aksi</th></tr></thead><tbody>`;
-      snap.forEach(doc=>{
-        const d = doc.data();
-        const wilayah = `${d.desa||''} ${d.kecamatan||''} ${d.kabupaten||''} ${d.provinsi||''}`;
-        html += `<tr><td>${d.nama||''}</td><td>${wilayah}</td><td>${d.kode||''}</td>
-          <td>
-            <button class="btn btn-sm btn-outline-primary" onclick="regenerateCode('${doc.id}')">Regenerate</button>
-            <button class="btn btn-sm btn-outline-danger" onclick="expireCodeNow('${doc.id}')">Expire</button>
-          </td></tr>`;
-      });
-      html += `</tbody></table>`;
-      container.innerHTML = html;
-    }catch(e){ console.warn(e); }
+    // sign out immediately to require manual login
+    await auth.signOut();
+    Swal.fire({ title:"Pendaftaran Berhasil", html:"Akun berhasil dibuat. Silakan login untuk melanjutkan.", icon:"success" });
+    clearRegister();
+  }catch(err){
+    Err(err.message || String(err));
   }
+}
+function clearRegister(){
+  ['reg_nama','reg_hp','reg_password','reg_rt','reg_rw','reg_alamat_lengkap','reg_blok','reg_no','reg_prov_select','reg_kab_select','reg_kec_select','reg_des_select'].forEach(id=>{ const e=$(id); if(e) e.value=''; });
+}
 
-  async function regenerateCode(dusunId){
-    if(!db) return;
-    const newCode = Math.random().toString(36).substring(2,9).toUpperCase();
-    try{
-      await db.collection('Dusun').doc(dusunId).update({ kode: newCode });
-      Toast("Kode di-regenerate");
-      loadDusunOwnerTable();
-    }catch(e){ Err(e.message || String(e)); }
+/* ================ Login ================ */
+async function onLogin(){
+  if(!auth) return Err("Firebase belum dikonfigurasi.");
+  const hp = $('login_hp').value.trim();
+  const pass = $('login_pass').value;
+  if(!hp || !pass){ Err("Nomor HP & password wajib"); return; }
+  try{
+    const norm = normalizePhoneForKey(hp);
+    const fakeEmail = norm + "@dusun.fake";
+    await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    const userCred = await auth.signInWithEmailAndPassword(fakeEmail, pass);
+    currentUser = userCred.user;
+    await loadUserProfile();
+    Toast("Login berhasil");
+    showDashboard();
+  }catch(err){
+    Err(err.message || String(err));
   }
-  async function expireCodeNow(dusunId){
-    if(!db) return;
-    try{
-      await db.collection('Dusun').doc(dusunId).update({ kodeExpiresAt: firebase.firestore.Timestamx.fromMillis(Date.now()-1000) });
-      Toast("Kode di-expire");
-      loadDusunOwnerTable();
-    }catch(e){ Err(e.message || String(e)); }
-  }
+}
 
-  /* ================== FAMILY MEMBERS (same address) ================== */
-  async function loadFamilyMembers(){
-    if(!db || !currentWargaDoc) return;
-    try{
-      const kode = currentWargaDoc.data.kodeDusun || null;
-      const rt = currentWargaDoc.data.rt || null;
-      const rw = currentWargaDoc.data.rw || null;
-      const desa = currentWargaDoc.data.desa || null;
-      if(!kode || !rt || !rw) { $('tableFamilyMembers').innerHTML = '<div class="muted">Lengkapi RT/RW & gabung dusun untuk melihat anggota keluarga.</div>'; return; }
-      const snap = await db.collection('Warga').where('kodeDusun','==',kode).where('rt','==',rt).where('rw','==',rw).where('desa','==',desa).get();
-      if(snap.empty){ $('tableFamilyMembers').innerHTML = '<div class="muted">Tidak ada warga lain di alamat yang sama.</div>'; return; }
-      let html = `<table class="table table-sm"><thead><tr><th>Nama</th><th>Role</th><th>Status</th><th>Aksi</th></tr></thead><tbody>`;
-      snap.forEach(doc=>{
-        const d = doc.data();
-        const uid = doc.id;
-        if(uid === currentWargaDoc.id){
-          // show but no action for self
-          html += `<tr><td><strong>${d.nama}</strong> (Anda)</td><td>${d.role||''}</td><td>${d.status||'-'}</td><td></td></tr>`;
-        } else {
-          const verifyBtn = (currentWargaDoc.data.role === 'kepala_dusun' || currentWargaDoc.data.role === 'kepala_keluarga') && d.status !== 'aktif'
-            ? `<button class="btn btn-sm btn-success" onclick="verifyMember('${uid}')">Verifikasi</button>` : '';
-          html += `<tr><td>${d.nama||''}</td><td>${d.role||''}</td><td>${d.status||'-'}</td><td>${verifyBtn}</td></tr>`;
-        }
-      });
-      html += `</tbody></table>`;
-      $('tableFamilyMembers').innerHTML = html;
-    }catch(e){ console.warn(e); }
+/* ================ Load user profile ================ */
+async function loadUserProfile(){
+  if(!auth.currentUser) return;
+  const uid = auth.currentUser.uid;
+  const doc = await db.collection('Warga').doc(uid).get();
+  if(doc.exists){
+    currentWargaDoc = { id: doc.id, data: doc.data() };
+    if(currentWargaDoc.data.kodeDusun){
+      const q = await db.collection('Dusun').where('kode','==', currentWargaDoc.data.kodeDusun).limit(1).get();
+      if(!q.empty) currentDusunDoc = { id: q.docs[0].id, data: q.docs[0].data() };
+      else currentDusunDoc = null;
+    } else currentDusunDoc = null;
+  } else {
+    currentWargaDoc = null; currentDusunDoc = null;
   }
+}
 
-  async function verifyMember(uid){
-    if(!db) return;
-    try{
-      await db.collection('Warga').doc(uid).update({ status: 'aktif', verifiedBy: currentWargaDoc.id, verifiedAt: firebase.firestore.FieldValue.serverTimestamp() });
-      Toast("Anggota keluarga diverifikasi");
-      loadFamilyMembers();
-    }catch(e){ Err(e.message || String(e)); }
+/* ================ Auth state listener ================ */
+auth.onAuthStateChanged(async (u)=>{
+  if(u){
+    currentUser = u;
+    await loadUserProfile();
+    showDashboard();
+  } else {
+    currentUser = null; currentWargaDoc = null; currentDusunDoc = null;
+    showAuth();
   }
+});
 
-  /* ================== SECURITY PERCENT TABLE ================== */
-  async function loadSecurityPercentTable(){
-    if(!db || !currentDusunDoc) { renderSecurityPercentTable(); return; }
-    try{
-      const kode = currentDusunDoc.data.kode;
-      const snap = await db.collection('Laporan').where('dusunCode','==',kode).get();
-      const counts = {};
-      let total = 0;
-      snap.forEach(doc=>{
-        const d = doc.data();
-        counts[d.jenis] = (counts[d.jenis]||0) + 1; total++;
-      });
-      renderSecurityPercentTable(counts, total);
-    }catch(e){ console.warn(e); renderSecurityPercentTable(); }
-  }
-  function renderSecurityPercentTable(counts={}, total=0){
-    const labels = ['Kebakaran','Kemalingan','Medis','Ambulance','Mencurigakan'];
-    let html = `<table class="table table-sm"><thead><tr><th>Jenis</th><th>Jumlah</th><th>Persentase</th></tr></thead><tbody>`;
-    labels.forEach(l=>{
-      const c = counts[l] || 0;
-      const pct = total ? Math.round((c/total)*100) : 0;
-      html += `<tr><td>${l}</td><td>${c}</td><td style="width:50%"><div class="progress" style="height:12px"><div class="progress-bar" role="progressbar" style="width:${pct}%" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100">${pct}%</div></div></td></tr>`;
-    });
-    html += `</tbody></table>`;
-    $('securityPercentTable').innerHTML = html;
-  }
+/* ================ Show/hide UI ================ */
+function showAuth(){ show('authCard'); hide('dashboardCard'); }
+function showDashboard(){ hide('authCard'); show('dashboardCard'); updateClock(); renderRoleUI(); }
 
-  /* ================== REPORTS subscribe & render ================== */
-  let laporanUnsub = null;
-  function subscribeReportsForDusun(kodeDusun){
-    if(laporanUnsub) laporanUnsub();
-    if(!kodeDusun) { renderReports([]); updateChartCounts({}); return; }
-    laporanUnsub = db.collection('Laporan').where('dusunCode','==',kodeDusun).orderBy('createdAt','desc').onSnapshot(snapshot=>{
-      const arr = []; snapshot.forEach(doc=> arr.push({ id: doc.id, data: doc.data() }));
-      renderReports(arr);
-      const counts = {}; arr.forEach(r => counts[r.data.jenis] = (counts[r.data.jenis]||0) + 1);
-      updateChartCounts(counts);
-      renderSecurityPercentTable(counts, arr.length);
-    });
-  }
+/* ================ Render UI based on role and state ================ */
+function renderRoleUI(){
+  $('display_name').innerText = currentWargaDoc?.data?.nama || 'Pengguna';
+  $('display_role').innerText = (currentWargaDoc?.data?.role || 'warga').toUpperCase();
+  const role = currentWargaDoc?.data?.role || 'warga';
 
-  function renderReports(arr){
-    const container = $('listReports'); container.innerHTML = '';
-    if(!arr.length){ container.innerHTML = '<div class="muted">Belum ada laporan.</div>'; return; }
-    arr.forEach(r=>{
-      const d = r.data; const time = d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleString() : '-';
-      const el = document.createElement('div'); el.className = 'mb-2 p-2 border rounded';
-      el.innerHTML = `<div><strong>${d.jenis}</strong> <span class="muted small">· ${time}</span></div><div class="muted small">${d.lokasiDeskripsi || ''}${d.lat ? `<br>Lat:${d.lat.toFixed(5)} Lng:${d.lng.toFixed(5)}` : ''}</div>`;
-      container.appendChild(el);
-    });
-  }
-
-  function updateChartCounts(counts){
-    const labels = ['Kebakaran','Kemalingan','Medis','Ambulance','Mencurigakan'];
-    const data = labels.map(l => counts[l] || 0);
-    if(laporanChart){ laporanChart.data.datasets[0].data = data; laporanChart.update(); }
-  }
-
-  /* ================== POS JAGA (Set lokasi via GPS) ================== */
-  async function prepareSetPos(){
-    if(!currentWargaDoc) return Err("Login terlebih dahulu");
-    const role = currentWargaDoc.data.role;
-    if(role !== 'kepala_dusun' && role !== 'kepala_keluarga' && role !== 'ketua_rt' && role !== 'ketua_rw'){
-      return Err("Hanya Kepala Dusun / Kepala Keluarga / Ketua RT/RW yang dapat menambahkan pos");
-    }
-    const { value: nama } = await Swal.fire({ title:'Nama Pos Jaga', input:'text', inputPlaceholder:'Contoh: Pos RT 01', showCancelButton:true });
-    if(!nama) return;
-    Swal.fire({ title:'Mengambil lokasi... beri izin GPS jika diminta', allowOutsideClick:false, didOpen: ()=>Swal.showLoading() });
-    try{
-      const pos = await new Promise((res,rej)=> navigator.geolocation.getCurrentPosition(res,rej,{ timeout:15000 }));
-      Swal.close();
-      const lat = pos.coords.latitude; const lng = pos.coords.longitude;
-      await db.collection('PosDusun').add({ nama, lat, lng, dusunCode: currentDusunDoc.data.kode, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-      Toast("Pos tersimpan");
-      loadPos();
-    }catch(e){
-      Swal.close();
-      Err("Gagal mendapatkan lokasi. Pastikan GPS/izin aktif.");
-    }
-  }
-
-  async function loadPos(){
-    if(!currentDusunDoc || !currentDusunDoc.data){ $('listPos').innerHTML = '<div class="muted">Belum ada pos.</div>'; return; }
-    const snap = await db.collection('PosDusun').where('dusunCode','==', currentDusunDoc.data.kode).get();
-    const list = $('listPos'); list.innerHTML = '';
-    snap.forEach(doc=>{
-      const d = doc.data();
-      const el = document.createElement('div'); el.className = 'p-2 border rounded mb-2';
-      el.innerHTML = `<div><strong>${d.nama}</strong></div><div class="muted small">${d.lat||'-'}, ${d.lng||'-'}</div>`;
-      list.appendChild(el);
-    });
-  }
-
-  /* ================== SOS modal (center button) ================== */
-  async function openSOSModal(){
-    // Show a modal with jenis selection and location choices
-    const { value: formValues } = await Swal.fire({
-      title: 'Kirim SOS / Laporan Darurat',
-      html:
-        `<select id="swal-jenis" class="swal2-input"><option>Kebakaran</option><option>Kemalingan</option><option>Medis</option><option>Ambulance</option><option>SOS</option></select>` +
-        `<select id="swal-loc-choice" class="swal2-input"><option value="rumah">Di Rumah</option><option value="lainnya">Di Tempat Lain</option></select>` +
-        `<input id="swal-loc-desc" class="swal2-input hidden" placeholder="Deskripsi lokasi (contoh: Jalan, patokan)"/>` +
-        `<div style="font-size:0.85rem;color:#666;margin-top:6px">Jika pilih 'Di Rumah' sistem coba gunakan alamat &/atau GPS (jika diizinkan).</div>`,
-      focusConfirm:false,
-      showCancelButton:true,
-      preConfirm: ()=> {
-        return {
-          jenis: document.getElementById('swal-jenis').value,
-          locChoice: document.getElementById('swal-loc-choice').value,
-          locDesc: document.getElementById('swal-loc-desc').value
-        }
-      },
-      didOpen: ()=>{
-        const locChoice = document.getElementById('swal-loc-choice');
-        const locDesc = document.getElementById('swal-loc-desc');
-        locChoice.addEventListener('change', ()=> {
-          if(locChoice.value === 'lainnya') locDesc.classList.remove('hidden'); else locDesc.classList.add('hidden');
-        });
-      }
-    });
-    if(!formValues) return;
-    // create report
-    const jenis = formValues.jenis;
-    const locChoice = formValues.locChoice;
-    const locDesc = formValues.locDesc && formValues.locDesc.trim() ? formValues.locDesc.trim() : null;
-    if(!currentWargaDoc) return Err("Login terlebih dahulu");
-    if(!currentWargaDoc.data.kodeDusun) return Err("Gabung ke dusun dulu");
-    let lat = null, lng = null;
-    if(locChoice === 'rumah'){
-      // try to use GPS if available (best effort)
-      try{
-        const pos = await new Promise((res,rej)=> navigator.geolocation.getCurrentPosition(res,rej,{ timeout:8000 }));
-        lat = pos.coords.latitude; lng = pos.coords.longitude;
-      }catch(e){ /* ignore */ }
-    } else {
-      // tempat lain: no GPS automatically (user provided description)
-    }
-    try{
-      await db.collection('Laporan').add({
-        jenis,
-        lokasiDeskripsi: locDesc || null,
-        lat, lng,
-        dusunCode: currentWargaDoc.data.kodeDusun,
-        userId: currentWargaDoc.id,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        status: 'open'
-      });
-      Toast("Laporan/SOS terkirim");
-    }catch(e){ Err(e.message || String(e)); }
-  }
-
-  /* ================== DUSUN create/save (kepala dusun) ================== */
-  function onGenerateCode(){
-    const code = Math.random().toString(36).substring(2,9).toUpperCase();
-    $('dusun_code').value = code; $('kode_group').classList.remove('hidden'); $('save_dusun_btn').classList.remove('hidden');
-  }
-  function copyDusunCode(){ const v = $('dusun_code').value || ''; if(!v) return; navigator.clipboard.writeText(v).then(()=>Toast("Kode disalin")); }
-
-  async function onSaveDusun(){
-    if(!db || !currentUser) return Err("Firebase belum dikonfigurasi.");
-    const nama = $('dusun_nama').value.trim();
-    const code = $('dusun_code').value.trim();
-    if(!nama || !code) return Err("Nama & kode dusun wajib");
-    try{
-      const q = await db.collection('Dusun').where('kode','==',code).get();
-      if(!q.empty) return Err("Kode sudah terpakai");
-      const docRef = await db.collection('Dusun').add({
-        nama, kode: code, kepalaId: currentUser.uid,
-        provinsi: '', kabupaten:'', kecamatan:'', desa:'',
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        active: true
-      });
-      // update user's kodeDusun
-      await db.collection('Warga').doc(currentWargaDoc.id).update({ kodeDusun: code });
-      currentWargaDoc.data.kodeDusun = code;
-      currentDusunDoc = { id: docRef.id, data: { nama, kode: code, kepalaId: currentUser.uid } };
-      Toast("Dusun dibuat & Anda menjadi Kepala Dusun");
-      renderRoleUI();
-    }catch(e){ Err(e.message || String(e)); }
-  }
-
-  /* ================== MISC INIT ================== */
-  window.addEventListener('load', async ()=>{
-    updateClock();
-    initChart();
-    await loadRegionDropdowns();
-    // initial load available dusuns (for join)
+  if(!currentWargaDoc?.data?.kodeDusun){
+    show('joinDusunPanel');
+    hide('kepalaDusunInfo'); hide('buatDusunPanel');
+    $('listReports').innerHTML = '<div class="muted">Belum terhubung ke dusun. Masukkan kode pada panel "Gabung Dusun".</div>';
     loadAvailableDusuns();
-  });
+    loadFamilyMembers();
+    renderSecurityPercentTable({},0);
+    return;
+  }
 
-  </script>
+  hide('joinDusunPanel');
+
+  if(role === 'kepala_dusun' || role === 'istri_kepala_dusun' || role === 'kepala_desa'){
+    show('buatDusunPanel');
+    loadDusunOwnerTable();
+  } else hide('buatDusunPanel');
+
+  if(currentDusunDoc && currentDusunDoc.data){
+    if(currentDusunDoc.data.kepalaId) loadKepalaDusunInfo(currentDusunDoc.data.kepalaId);
+    subscribeReportsForDusun(currentDusunDoc.data.kode);
+    loadPos();
+    loadSecurityPercentTable();
+  } else {
+    (async ()=>{
+      try{
+        const k = currentWargaDoc.data.kodeDusun;
+        const q = await db.collection('Dusun').where('kode','==',k).limit(1).get();
+        if(!q.empty) currentDusunDoc = { id: q.docs[0].id, data: q.docs[0].data() };
+        if(currentDusunDoc?.data?.kepalaId) loadKepalaDusunInfo(currentDusunDoc.data.kepalaId);
+        subscribeReportsForDusun(currentDusunDoc?.data?.kode || null);
+        loadPos();
+        loadSecurityPercentTable();
+      }catch(e){ console.warn(e); }
+    })();
+  }
+
+  loadFamilyMembers();
+}
+
+/* ================ Join Dusun ================ */
+async function joinDusun(){
+  if(!db) return Err("Firebase belum dikonfigurasi.");
+  const kode = $('joinKodeDusun').value.trim().toUpperCase();
+  if(!kode) return Err("Masukkan kode dusun");
+  try{
+    const snap = await db.collection('Dusun').where('kode','==',kode).limit(1).get();
+    if(snap.empty) return Err("Kode dusun tidak ditemukan");
+    const dusun = snap.docs[0].data();
+    await db.collection('Warga').doc(currentWargaDoc.id).update({ kodeDusun: kode });
+    currentWargaDoc.data.kodeDusun = kode;
+    currentDusunDoc = { id: snap.docs[0].id, data: dusun };
+    Toast("Berhasil bergabung ke dusun");
+    renderRoleUI();
+  }catch(e){ Err(e.message || String(e)); }
+}
+
+/* ================ Available Dusun list ================ */
+async function loadAvailableDusuns(){
+  if(!db) return;
+  try{
+    const snap = await db.collection('Dusun').orderBy('nama').limit(100).get();
+    const container = $('tableAvailableDusun'); if(!container) return;
+    if(snap.empty){ container.innerHTML = '<div class="muted">Belum ada data dusun publik.</div>'; return; }
+    let html = `<table class="table table-sm"><thead><tr><th>Nama</th><th>Wilayah</th><th>Aksi</th></tr></thead><tbody>`;
+    snap.forEach(doc=>{ const d = doc.data(); const wilayah = `${d.desa||''} ${d.kecamatan||''} ${d.kabupaten||''} ${d.provinsi||''}`; html += `<tr><td>${d.nama||''}</td><td>${wilayah}</td><td><button class="btn btn-sm btn-primary" onclick="promptJoinSpecific('${doc.id}')">Pilih & Gabung</button></td></tr>`; });
+    html += `</tbody></table>`; container.innerHTML = html;
+  }catch(e){ console.warn(e); }
+}
+async function promptJoinSpecific(dusunDocId){
+  const { value: kode } = await Swal.fire({ title:'Masukkan Kode Dusun', input:'text', inputPlaceholder:'KODE DUSUN', showCancelButton:true });
+  if(!kode) return;
+  try{
+    const doc = await db.collection('Dusun').doc(dusunDocId).get();
+    if(!doc.exists) return Err("Dusun tidak ditemukan");
+    const d = doc.data();
+    if(d.kode !== kode.trim().toUpperCase()) return Err("Kode tidak cocok");
+    await db.collection('Warga').doc(currentWargaDoc.id).update({ kodeDusun: d.kode });
+    currentWargaDoc.data.kodeDusun = d.kode;
+    currentDusunDoc = { id: doc.id, data: d };
+    Toast("Berhasil bergabung ke dusun");
+    renderRoleUI();
+  }catch(e){ Err(e.message || String(e)); }
+}
+
+/* ================ Dusun create/save ================ */
+function onGenerateCode(){ const c = Math.random().toString(36).substring(2,9).toUpperCase(); $('dusun_code').value = c; $('kode_group').classList.remove('hidden'); $('save_dusun_btn').classList.remove('hidden'); }
+function copyDusunCode(){ const v=$('dusun_code').value||''; if(v) navigator.clipboard.writeText(v).then(()=>Toast("Kode disalin")); }
+async function onSaveDusun(){
+  if(!db || !currentUser) return Err("Firebase belum dikonfigurasi.");
+  const nama = $('dusun_nama').value.trim();
+  const code = $('dusun_code').value.trim();
+  if(!nama || !code) return Err("Nama & kode dusun wajib");
+  try{
+    const q = await db.collection('Dusun').where('kode','==',code).get();
+    if(!q.empty) return Err("Kode sudah terpakai");
+    const docRef = await db.collection('Dusun').add({ nama, kode: code, kepalaId: currentUser.uid, provinsi:'', kabupaten:'', kecamatan:'', desa:'', createdAt: firebase.firestore.FieldValue.serverTimestamp(), active:true });
+    await db.collection('Warga').doc(currentWargaDoc.id).update({ kodeDusun: code });
+    currentWargaDoc.data.kodeDusun = code;
+    currentDusunDoc = { id: docRef.id, data: { nama, kode: code, kepalaId: currentUser.uid } };
+    Toast("Dusun dibuat & Anda menjadi Kepala Dusun");
+    renderRoleUI();
+  }catch(e){ Err(e.message || String(e)); }
+}
+async function loadDusunOwnerTable(){
+  if(!db || !currentUser) return;
+  try{
+    const snap = await db.collection('Dusun').where('kepalaId','==', currentUser.uid).get();
+    const container = $('tableDusunOwner'); if(!container) return;
+    if(snap.empty){ container.innerHTML = '<div class="muted">Belum ada dusun yang Anda miliki.</div>'; return; }
+    let html = `<table class="table table-sm"><thead><tr><th>Nama</th><th>Wilayah</th><th>Kode</th><th>Aksi</th></tr></thead><tbody>`;
+    snap.forEach(doc=>{ const d = doc.data(); const wilayah = `${d.desa||''} ${d.kecamatan||''} ${d.kabupaten||''} ${d.provinsi||''}`; html += `<tr><td>${d.nama||''}</td><td>${wilayah}</td><td>${d.kode||''}</td><td><button class="btn btn-sm btn-outline-primary" onclick="regenerateCode('${doc.id}')">Regenerate</button> <button class="btn btn-sm btn-outline-danger" onclick="expireCodeNow('${doc.id}')">Expire</button></td></tr>`; });
+    html += `</tbody></table>`; container.innerHTML = html;
+  }catch(e){ console.warn(e); }
+}
+async function regenerateCode(dusunId){ if(!db) return; const newCode = Math.random().toString(36).substring(2,9).toUpperCase(); try{ await db.collection('Dusun').doc(dusunId).update({ kode: newCode }); Toast("Kode di-regenerate"); loadDusunOwnerTable(); }catch(e){ Err(e.message||String(e)); } }
+async function expireCodeNow(dusunId){ if(!db) return; try{ await db.collection('Dusun').doc(dusunId).update({ kodeExpiresAt: firebase.firestore.Timestamp.fromMillis(Date.now()-1000) }); Toast("Kode di-expire"); loadDusunOwnerTable(); }catch(e){ Err(e.message||String(e)); } }
+
+/* ================ Family members & verification ================ */
+async function loadFamilyMembers(){
+  if(!db || !currentWargaDoc) return;
+  try{
+    const kode = currentWargaDoc.data.kodeDusun || null;
+    const rt = currentWargaDoc.data.rt || null;
+    const rw = currentWargaDoc.data.rw || null;
+    const desa = currentWargaDoc.data.desa || null;
+    const container = $('tableFamilyMembers');
+    if(!kode || !rt || !rw){ container.innerHTML = '<div class="muted">Lengkapi RT/RW & gabung dusun untuk melihat anggota keluarga.</div>'; return; }
+    const snap = await db.collection('Warga').where('kodeDusun','==',kode).where('rt','==',rt).where('rw','==',rw).where('desa','==',desa).get();
+    if(snap.empty){ container.innerHTML = '<div class="muted">Tidak ada warga lain di alamat yang sama.</div>'; return; }
+    let html = `<table class="table table-sm"><thead><tr><th>Nama</th><th>Role</th><th>Status</th><th>Aksi</th></tr></thead><tbody>`;
+    snap.forEach(doc=>{ const d = doc.data(); const uid = doc.id;
+      if(uid === currentWargaDoc.id){ html += `<tr><td><strong>${d.nama}</strong> (Anda)</td><td>${d.role||''}</td><td>${d.status||'-'}</td><td></td></tr>`; }
+      else {
+        const kepalaKeluargaRoles = ['kepala_desa','kepala_dusun','ketua_rt_rw','kepala_keluarga'];
+        const canVerify = kepalaKeluargaRoles.includes(currentWargaDoc.data.role);
+        const verifyBtn = canVerify && d.status !== 'aktif' ? `<button class="btn btn-sm btn-success" onclick="verifyMember('${uid}')">Verifikasi</button>` : '';
+        html += `<tr><td>${d.nama||''}</td><td>${d.role||''}</td><td>${d.status||'-'}</td><td>${verifyBtn}</td></tr>`;
+      }
+    });
+    html += `</tbody></table>`; container.innerHTML = html;
+  }catch(e){ console.warn(e); }
+}
+async function verifyMember(uid){
+  if(!db) return;
+  try{ await db.collection('Warga').doc(uid).update({ status: 'aktif', verifiedBy: currentWargaDoc.id, verifiedAt: firebase.firestore.FieldValue.serverTimestamp() }); Toast("Anggota diverifikasi"); loadFamilyMembers(); }catch(e){ Err(e.message||String(e)); }
+  
+/* ================ Security percent (30 days) ================ */
+async function loadSecurityPercentTable(){
+  if(!db || !currentDusunDoc){ renderSecurityPercentTable({},0); return; }
+  try{
+    const kode = currentDusunDoc.data.kode;
+    const since = new Date(Date.now() - (30*24*60*60*1000));
+    const snap = await db.collection('Laporan').where('dusunCode','==',kode).where('createdAt','>=', firebase.firestore.Timestamp.fromDate(since)).get();
+    const counts = {}; let total=0;
+    snap.forEach(doc=>{ const d = doc.data(); counts[d.jenis] = (counts[d.jenis]||0)+1; total++; });
+    renderSecurityPercentTable(counts, total);
+  }catch(e){ console.warn(e); renderSecurityPercentTable({},0); }
+}
+function renderSecurityPercentTable(counts={}, total=0){
+  const labels = ['Kebakaran','Kemalingan','Medis','Ambulance','Mencurigakan'];
+  let html = `<table class="table table-sm"><thead><tr><th>Jenis</th><th>Jumlah</th><th>Persentase</th></tr></thead><tbody>`;
+  labels.forEach(l=>{ const c = counts[l]||0; const pct = total ? Math.round((c/total)*100) : 0; html += `<tr><td>${l}</td><td>${c}</td><td style="width:50%"><div class="progress progress-sm"><div class="progress-bar" role="progressbar" style="width:${pct}%">${pct}%</div></div></td></tr>`; });
+  html += `</tbody></table>`; $('securityPercentTable').innerHTML = html;
+  const baseline = 20;
+  const incidentPct = Math.min(100, Math.round((total / baseline) * 100));
+  let category='AMAN', color='var(--safe)';
+  if(incidentPct > 70){ category='RAWAN'; color='var(--danger)'; }
+  else if(incidentPct >= 30){ category='WASPADA'; color='var(--caution)'; }
+  $('securityCategorySummary').innerHTML = `<div><strong>Total laporan 30 hari:</strong> ${total} — <strong style="color:${color}">${category}</strong> (${incidentPct}%)</div>`;
+}
+
+/* ================ Reports realtime ================ */
+function subscribeReportsForDusun(kodeDusun){
+  if(laporanUnsub) laporanUnsub();
+  if(!kodeDusun){ renderReports([]); updateChartCounts({}); renderSecurityPercentTable({},0); return; }
+  laporanUnsub = db.collection('Laporan').where('dusunCode','==',kodeDusun).orderBy('createdAt','desc').onSnapshot(snapshot=>{
+    const arr = []; snapshot.forEach(doc=> arr.push({ id:doc.id, data: doc.data() }));
+    renderReports(arr);
+    const counts = {}; arr.forEach(r=> counts[r.data.jenis] = (counts[r.data.jenis]||0)+1);
+    updateChartCounts(counts);
+    loadSecurityPercentTable();
+  });
+}
+function renderReports(arr){
+  const container = $('listReports'); container.innerHTML = '';
+  if(!arr.length){ container.innerHTML = '<div class="muted">Belum ada laporan.</div>'; return; }
+  arr.forEach(r=>{ const d = r.data; const time = d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleString() : '-'; const el = document.createElement('div'); el.className='mb-2 p-2 border rounded'; el.innerHTML = `<div><strong>${d.jenis}</strong> <span class="muted small">· ${time}</span></div><div class="muted small">${d.lokasiDeskripsi||''}${d.lat?`<br>Lat:${d.lat.toFixed(5)} Lng:${d.lng.toFixed(5)}`:''}</div>`; container.appendChild(el); });
+}
+function updateChartCounts(counts){
+  const labels=['Kebakaran','Kemalingan','Medis','Ambulance','Mencurigakan'];
+  const data = labels.map(l=> counts[l]||0);
+  if(laporanChart){ laporanChart.data.datasets[0].data = data; laporanChart.update(); }
+}
+
+/* ================ Pos Jaga (Set lokasi via GPS) ================ */
+async function prepareSetPos(){
+  if(!currentWargaDoc) return Err("Login terlebih dahulu");
+  const role = currentWargaDoc.data.role;
+  if(!['kepala_dusun','kepala_keluarga','ketua_rt_rw','kepala_desa','istri_kepala_dusun'].includes(role)){
+    return Err("Hanya subrole Kepala Keluarga / Kepala Dusun / Ketua RT/RW yang dapat menambah pos");
+  }
+  const { value: nama } = await Swal.fire({ title:'Nama Pos Jaga', input:'text', inputPlaceholder:'Contoh: Pos RT 01', showCancelButton:true });
+  if(!nama) return;
+  Swal.fire({ title:'Mengambil lokasi... beri izin GPS jika diminta', allowOutsideClick:false, didOpen: ()=>Swal.showLoading() });
+  try{
+    const pos = await new Promise((res,rej)=> navigator.geolocation.getCurrentPosition(res,rej,{ timeout:15000 }));
+    Swal.close();
+    const lat = pos.coords.latitude, lng = pos.coords.longitude;
+    await db.collection('PosDusun').add({ nama, lat, lng, dusunCode: currentDusunDoc.data.kode, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    Toast("Pos tersimpan");
+    loadPos();
+  }catch(e){ Swal.close(); Err("Gagal mendapatkan lokasi. Pastikan GPS/izin aktif."); }
+}
+async function loadPos(){
+  if(!currentDusunDoc || !currentDusunDoc.data){ $('listPos').innerHTML = '<div class="muted">Belum ada pos.</div>'; return; }
+  const snap = await db.collection('PosDusun').where('dusunCode','==', currentDusunDoc.data.kode).get();
+  const list = $('listPos'); list.innerHTML = '';
+  snap.forEach(doc=>{ const d = doc.data(); const el = document.createElement('div'); el.className='p-2 border rounded mb-2'; el.innerHTML = `<div><strong>${d.nama}</strong></div><div class="muted small">${d.lat||'-'}, ${d.lng||'-'}</div>`; list.appendChild(el); });
+}
+
+/* ================ SOS modal (center) ================ */
+async function openSOSModal(){
+  const { value: formValues } = await Swal.fire({
+    title: 'Kirim SOS / Laporan Darurat',
+    html:
+      `<select id="swal-jenis" class="swal2-input"><option>Kebakaran</option><option>Kemalingan</option><option>Medis</option><option>Ambulance</option><option>SOS</option></select>` +
+      `<select id="swal-loc-choice" class="swal2-input"><option value="rumah">Di Rumah</option><option value="lainnya">Di Tempat Lain</option></select>` +
+      `<input id="swal-loc-desc" class="swal2-input hidden" placeholder="Deskripsi lokasi (contoh: Jalan, patokan)"/>`,
+    focusConfirm:false,
+    showCancelButton:true,
+    preConfirm: ()=> ({ jenis: document.getElementById('swal-jenis').value, locChoice: document.getElementById('swal-loc-choice').value, locDesc: document.getElementById('swal-loc-desc').value }),
+    didOpen: ()=> { const locChoice = document.getElementById('swal-loc-choice'); const locDesc = document.getElementById('swal-loc-desc'); locChoice.addEventListener('change', ()=> locChoice.value==='lainnya' ? locDesc.classList.remove('hidden') : locDesc.classList.add('hidden') ); }
+  });
+  if(!formValues) return;
+  const jenis = formValues.jenis; const locChoice = formValues.locChoice; const locDesc = formValues.locDesc && formValues.locDesc.trim() ? formValues.locDesc.trim() : null;
+  if(!currentWargaDoc) return Err("Login dulu");
+  if(!currentWargaDoc.data.kodeDusun) return Err("Gabung ke dusun untuk mengirim SOS");
+  let lat=null,lng=null;
+  if(locChoice==='rumah'){
+    try{ const pos = await new Promise((res,rej)=> navigator.geolocation.getCurrentPosition(res,rej,{ timeout:8000 })); lat=pos.coords.latitude; lng=pos.coords.longitude; }catch(e){}
+  }
+  try{
+    await db.collection('Laporan').add({ jenis, lokasiDeskripsi: locDesc || null, lat, lng, dusunCode: currentWargaDoc.data.kodeDusun, userId: currentWargaDoc.id, createdAt: firebase.firestore.FieldValue.serverTimestamp(), status:'open' });
+    Toast("Laporan/SOS terkirim");
+  }catch(e){ Err(e.message || String(e)); }
+}
+
+/* ================ Region dropdowns (EMSIFA) ================ */
+const API_REG = "https://www.emsifa.com/api-wilayah-indonesia/api/";
+async function loadRegionDropdowns(){
+  try{
+    const resProv = await fetch(API_REG + 'provinces.json'); const provs = await resProv.json();
+    const regProv = $('reg_prov_select'); const dusProv = $('dusun_prov_select');
+    provs.forEach(p => { if(regProv) regProv.innerHTML += `<option value="${p.id}">${p.name}</option>`; if(dusProv) dusProv.innerHTML += `<option value="${p.id}">${p.name}</option>`; });
+  }catch(e){ console.warn('Gagal muat provinsi',e); }
+  $('reg_prov_select')?.addEventListener('change', async function(){ $('reg_kab_select').innerHTML='<option value="">Pilih Kabupaten/Kota</option>'; $('reg_kec_select').innerHTML='<option value="">Pilih Kecamatan</option>'; $('reg_des_select').innerHTML='<option value="">Pilih Desa/Kelurahan</option>'; if(this.value){ const r=await fetch(API_REG + 'regencies/' + this.value + '.json'); const ks=await r.json(); ks.forEach(k=> reg_kab_select.innerHTML += `<option value="${k.id}">${k.name}</option>`); }});
+  $('reg_kab_select')?.addEventListener('change', async function(){ $('reg_kec_select').innerHTML='<option value="">Pilih Kecamatan</option>'; $('reg_des_select').innerHTML='<option value="">Pilih Desa/Kelurahan</option>'; if(this.value){ const r=await fetch(API_REG + 'districts/' + this.value + '.json'); const ks=await r.json(); ks.forEach(k=> reg_kec_select.innerHTML += `<option value="${k.id}">${k.name}</option>`); }});
+  $('reg_kec_select')?.addEventListener('change', async function(){ $('reg_des_select').innerHTML='<option value="">Pilih Desa/Kelurahan</option>'; if(this.value){ const r=await fetch(API_REG + 'villages/' + this.value + '.json'); const ks=await r.json(); ks.forEach(k=> reg_des_select.innerHTML += `<option value="${k.id}">${k.name}</option>`); }});
+}
+
+/* ================ Misc init & logout ================ */
+async function onLogout(){ if(auth) await auth.signOut(); currentUser=null; currentWargaDoc=null; currentDusunDoc=null; Toast("Logout berhasil"); showAuth(); }
+
+window.addEventListener('load', async ()=>{
+  updateClock(); initChart(); await loadRegionDropdowns(); loadAvailableDusuns();
+});
+
+</script>
 </body>
 </html>
