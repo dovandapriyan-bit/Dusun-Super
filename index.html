@@ -174,11 +174,10 @@
 
 </div>
 
-<!-- Google Maps: ganti key ini -->
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY"></script>
 
 <script>
-/* ================= Firebase init (compat) ================= */
+/* ================= Firebase init ================= */
 const firebaseConfig = {
   apiKey: "AIzaSyA6GAeIc7ZesIed9MAelUf6x_sBFdp9E-Q",
   authDomain: "dusun-super.firebaseapp.com",
@@ -192,440 +191,187 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-/* ================= State ================= */
-let currentUser = null;     // object user after login
-let currentDusunId = null;  // doc id of dusun
-let map = null;
-let markers = [];
-let laporanChart = null;
-let kodeUnsub = null;
-let kodeInterval = null;
-
 /* ================= Helpers ================= */
 const $ = id => document.getElementById(id);
 const show = id => { const el=$(id); if(el) el.classList.remove('hidden'); };
 const hide = id => { const el=$(id); if(el) el.classList.add('hidden'); };
 const SwalToast = (title, icon='success', timer=2000) => { return Swal.fire({ title, icon, toast:true, position:'top-end', showConfirmButton:false, timer }); };
 const SwalAlert = (title, html, icon='info') => { return Swal.fire({ title, html, icon }); };
+function normalizePhoneForKey(v){ let s = (v||"").replace(/\s+/g,"").replace(/\D/g,""); if(s.startsWith("0")) s = "62"+s.substring(1); if(!s.startsWith("62")) s = "62"+s; return s; }
+function formatPhoneTyping(el){ let raw = el.value.replace(/[^\d\+]/g,""); if(raw.startsWith("+")) { let digits = raw.replace(/\D/g,""); el.value = "+" + digits; } else { el.value = raw; } }
+function padRT(el){ let v=(el.value||"").replace(/\D/g,"").padStart(3,"0"); el.value=v; }
+function padRW(el){ let v=(el.value||"").replace(/\D/g,"").padStart(3,"0"); el.value=v; }
 
-/* Auto-uppercase for inputs with class "upper" */
-document.addEventListener('input', e=>{
-  if(e.target && e.target.classList && e.target.classList.contains('upper')){
-    e.target.value = e.target.value.toUpperCase();
-  }
-});
-
-/* ================ Phone formatting & RT/RW padding ================ */
-function normalizePhoneForKey(v){
-  let s = (v||"").replace(/\s+/g,"").replace(/\D/g,"");
-  if(s.startsWith("0")) s = "62"+s.substring(1);
-  if(!s.startsWith("62")) s = "62"+s;
-  return s; // e.g. "62812..."
-}
-function formatPhoneTyping(el){
-  let raw = el.value.replace(/[^\d\+]/g,"");
-  if(raw.startsWith("+")) {
-    let digits = raw.replace(/\D/g,"");
-    el.value = "+" + digits;
-  } else {
-    el.value = raw;
-  }
-}
-function formatPhoneOnBlur(el){
-  const key = normalizePhoneForKey(el.value);
-  if(!key) { el.value=""; return; }
-  el.value = "+" + key;
-}
-function padRT(el){
-  let v = (el.value||"").replace(/\D/g,"");
-  v = v.padStart(3,"0");
-  el.value = v;
-}
-function padRW(el){
-  let v = (el.value||"").replace(/\D/g,"");
-  v = v.padStart(3,"0");
-  el.value = v;
-}
-/* bind blur events for phone inputs */
-['reg_hp','login_hp'].forEach(id=>{
-  const el = $(id);
-  if(el) { el.addEventListener('blur', ()=>formatPhoneOnBlur(el)); }
-});
-
-/* ================ Auth state listener ================ */
-auth.onAuthStateChanged(async (u) => {
+/* ================= Auth State Listener ================= */
+auth.onAuthStateChanged(async u=>{
   if(u){
-    // fetch profile doc if exists
     try{
-      const userDoc = await db.collection('Warga').doc(u.uid).get();
-      if(userDoc.exists){
-        currentUser = { id: u.uid, ...userDoc.data() };
-      } else {
-        // maybe kepalaDusun hasn't created profile; still set minimal
-        currentUser = { id: u.uid, phone: u.phoneNumber || null };
-      }
+      const doc = await db.collection('Warga').doc(u.uid).get();
+      if(doc.exists) currentUser = { id:u.uid, ...doc.data() };
+      else currentUser = { id:u.uid, phone: u.phoneNumber||null };
     }catch(e){ console.error(e); }
-  } else {
-    currentUser = null;
-  }
+  }else currentUser=null;
 });
 
-/* ================ Create Dusun: generate & save ================ */
+/* ================= Create Dusun ================= */
 function onGenerateDusun(){
-  const code = "DSN" + Math.random().toString(36).substring(2,8).toUpperCase();
+  const code = "DSN"+Math.random().toString(36).substring(2,8).toUpperCase();
   $('dusun_code').value = code;
-  show('kode_group');
-  hide('generate_btn');
-  show('save_dusun_btn');
+  show('kode_group'); hide('generate_btn'); show('save_dusun_btn');
 }
-$('copy_code_btn')?.addEventListener('click', ()=>{
-  const v = $('dusun_code').value;
-  if(!v){ SwalToast("Belum ada kode untuk disalin","error"); return; }
-  navigator.clipboard?.writeText(v).then(()=> SwalToast("Kode disalin ke clipboard"));
-});
+$('copy_code_btn')?.addEventListener('click',()=>{ navigator.clipboard.writeText($('dusun_code').value).then(()=>SwalToast("Kode disalin")); });
 
 async function onSaveDusun(){
-  // must be authenticated
   const user = auth.currentUser;
   if(!user){
-    const res = await Swal.fire({
-      title: 'Login diperlukan',
-      html: 'Untuk menyimpan Dusun, Anda harus login sebagai Kepala Dusun.<br>Ingin login sekarang?',
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonText: 'Login',
-      cancelButtonText: 'Batal'
-    });
-    if(res.isConfirmed){
-      // scroll to login inputs
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    const res = await Swal.fire({ title:'Login diperlukan', html:'Login sebagai Kepala Dusun', icon:'question', showCancelButton:true, confirmButtonText:'Login', cancelButtonText:'Batal' });
+    if(res.isConfirmed) window.scrollTo({top:0,behavior:'smooth'});
     return;
   }
+  const nama=$('dusun_nama').value.trim().toUpperCase();
+  const desa=$('dusun_desa').value.trim().toUpperCase();
+  const kec=$('dusun_kecamatan').value.trim().toUpperCase();
+  const kab=$('dusun_kab').value.trim().toUpperCase();
+  const kota=$('dusun_kota').value.trim().toUpperCase();
+  const code=$('dusun_code').value.trim().toUpperCase();
+  if(!nama||!desa||!kec||!kab||!kota||!code){ SwalToast("Lengkapi semua field", "error"); return; }
 
-  const nama = $('dusun_nama').value.trim().toUpperCase();
-  const desa = $('dusun_desa').value.trim().toUpperCase();
-  const kec = $('dusun_kecamatan').value.trim().toUpperCase();
-  const kab = $('dusun_kab').value.trim().toUpperCase();
-  const kota = $('dusun_kota').value.trim().toUpperCase();
-  const code = $('dusun_code').value.trim().toUpperCase();
-  if(!nama||!desa||!kec||!kab||!kota||!code){
-    SwalAlert("Error","Lengkapi data dusun dan generate kode terlebih dahulu","error");
-    return;
-  }
-
-  // set expiry 1 hour from now
-  const expires = Date.now() + 3600*1000;
   try{
-    // store dusun doc with doc id = code (so easy lookup)
-    const docRef = await db.collection('Dusun').doc(code).set({
-      nama, desa, kecamatan: kec, kabupaten: kab, kota, code, codeExpiresAt: expires, createdAt: Date.now(),
-      kepalaDusunID: auth.currentUser.uid
-    });
-    await SwalAlert("Berhasil", `Dusun tersimpan.<br><b>Kode:</b> ${code}`, "success");
-    SwalToast("Dusun tersimpan");
-    hide('save_dusun_btn'); show('generate_btn');
-    // Keep code visible for copy
-  }catch(e){
-    console.error(e);
-    SwalAlert("Gagal", "Gagal menyimpan dusun: " + (e.message||e), "error");
-  }
+    await db.collection('Dusun').doc(code).set({ nama, desa, kecamatan:kec, kabupaten:kab, kota, kode:code, createdBy:user.uid, createdAt:firebase.firestore.FieldValue.serverTimestamp() });
+    SwalToast("Dusun berhasil dibuat");
+    hide('save_dusun_btn'); show('generate_btn'); $('dusun_code').value="";
+  }catch(e){ console.error(e); SwalToast("Gagal menyimpan", "error"); }
 }
 
-/* ================ Register: create auth user + profile ================ */
+/* ================= Register ================= */
 async function onRegister(){
-  const nama = $('reg_nama').value.trim().toUpperCase();
-  const hpDisplay = $('reg_hp').value.trim();
-  const password = $('reg_password').value;
-  const alamat = $('reg_alamat').value.trim().toUpperCase();
-  const blok = $('reg_blok').value.trim().toUpperCase();
-  const no = $('reg_no').value.trim().toUpperCase();
-  const rt = ($('reg_rt').value||"").trim().padStart(3,'0');
-  const rw = ($('reg_rw').value||"").trim().padStart(3,'0');
-  const role = $('reg_role').value;
-  const kodeDusun = $('reg_kode').value.trim().toUpperCase();
+  const nama=$('reg_nama').value.trim().toUpperCase();
+  const hp=normalizePhoneForKey($('reg_hp').value);
+  const pass=$('reg_password').value;
+  const alamat=$('reg_alamat').value.trim().toUpperCase();
+  const blok=$('reg_blok').value.trim().toUpperCase();
+  const no=$('reg_no').value.trim();
+  const rt=$('reg_rt').value.trim();
+  const rw=$('reg_rw').value.trim();
+  const role=$('reg_role').value;
+  const kode=$('reg_kode').value.trim().toUpperCase();
 
-  if(!nama || !hpDisplay || !password || !alamat || !rt || !rw || !role || !kodeDusun){
-    SwalAlert("Error","Nama, No HP, Password, Alamat, RT, RW, Role, dan Kode Dusun wajib diisi.","error");
-    return;
+  if(!nama||!hp||!pass||!role||!kode){ SwalToast("Lengkapi semua field penting!", "error"); return; }
+
+  // cek kode dusun
+  const dusunSnap = await db.collection('Dusun').doc(kode).get();
+  if(!dusunSnap.exists){ SwalToast("Kode dusun tidak valid", "error"); return; }
+
+  // cek role unik
+  if(['kepala_dusun','kepala_keluarga','ketua_rt','ketua_rw'].includes(role)){
+    const q = await db.collection('Warga').where('role','==',role).where('kodeDusun','==',kode).get();
+    if(!q.empty){ SwalToast("Role "+role+" sudah terdaftar di dusun ini", "error"); return; }
   }
 
-  const phoneKey = normalizePhoneForKey(hpDisplay); // e.g. 62812...
-  // check duplicate user (by phone)
-  const dupQuery = await db.collection('Warga').where('phoneKey','==',phoneKey).get();
-  if(!dupQuery.empty){
-    SwalAlert("Error","Nomor HP ini sudah terdaftar — 1 nomor hanya bisa untuk 1 user/dusun.","error");
-    return;
-  }
-
-  // validate Dusun code exists
-  const dusunSnap = await db.collection('Dusun').doc(kodeDusun).get();
-  if(!dusunSnap.exists){
-    SwalAlert("Error","Kode Dusun tidak valid. Minta kode terbaru dari Kepala Dusun.","error");
-    return;
-  }
-  const dusunId = kodeDusun; // doc id = code
-
-  // Create auth user using email alias built from phone (so we avoid phone verification)
-  const emailAlias = phoneKey + "@dusun.local";
   try{
-    // If email already exists, sign in and error accordingly
-    const methods = await auth.fetchSignInMethodsForEmail(emailAlias);
-    if(methods.length > 0){
-      SwalAlert("Error","Nomor HP ini sudah terdaftar pada sistem autentikasi. Silakan login atau gunakan nomor lain.","error");
-      return;
-    }
-    // create auth user
-    const userCred = await auth.createUserWithEmailAndPassword(emailAlias, password);
-    const uid = userCred.user.uid;
-    // save profile in Warga collection with doc id = uid
-    await db.collection('Warga').doc(uid).set({
-      nama, phoneDisplay: "+"+phoneKey, phoneKey, alamat, blok, no, rt, rw, role, dusunId,
-      createdAt: Date.now()
-    });
-    await SwalAlert("Sukses","Pendaftaran berhasil. Anda otomatis login sekarang.","success");
-    // set currentUser and redirect to dashboard
-    currentUser = { id: uid, nama, phoneDisplay:"+"+phoneKey, role, dusunId };
-    currentDusunId = dusunId;
-    afterLoginSetup();
+    const u = await auth.createUserWithEmailAndPassword(hp+"@dusun.local", pass);
+    await db.collection('Warga').doc(u.user.uid).set({ nama, hp, alamat, blok, no, rt, rw, role, kodeDusun:kode, createdAt:firebase.firestore.FieldValue.serverTimestamp() });
+    SwalToast("Pendaftaran berhasil");
+    clearRegister();
   }catch(e){
     console.error(e);
-    SwalAlert("Gagal", "Registrasi gagal: "+(e.message||e), "error");
+    SwalToast("Gagal mendaftar: "+(e.message||e), "error");
   }
 }
-function clearRegister(){
-  ['reg_nama','reg_hp','reg_password','reg_alamat','reg_blok','reg_no','reg_rt','reg_rw','reg_kode'].forEach(id=>{
-    const el = $(id); if(el) el.value='';
-  });
-  $('reg_role').selectedIndex=0;
-}
+function clearRegister(){ ['reg_nama','reg_hp','reg_password','reg_alamat','reg_blok','reg_no','reg_rt','reg_rw','reg_role','reg_kode'].forEach(id=>$(id).value=""); }
 
-/* ================ Login: signIn with email alias ================ */
+/* ================= Login ================= */
 async function onLogin(){
-  const hp = $('login_hp').value.trim();
-  const pass = $('login_pass').value;
-  if(!hp || !pass) { SwalToast("Masukkan No HP dan Password","error"); return; }
-  const key = normalizePhoneForKey(hp);
-  const emailAlias = key + "@dusun.local";
+  const hp=normalizePhoneForKey($('login_hp').value);
+  const pass=$('login_pass').value;
+  if(!hp||!pass){ SwalToast("Isi HP & Password", "error"); return; }
   try{
-    const cred = await auth.signInWithEmailAndPassword(emailAlias, pass);
-    const uid = cred.user.uid;
-    // fetch profile
-    const userDoc = await db.collection('Warga').doc(uid).get();
-    if(!userDoc.exists){
-      // create minimal profile if missing
-      SwalAlert("Peringatan","Akun autentikasi ditemukan tapi profil warga belum dibuat.","warning");
-      currentUser = { id: uid, phoneKey: key };
-    } else {
-      currentUser = { id: uid, ...userDoc.data() };
-      currentDusunId = currentUser.dusunId || null;
-    }
-    await SwalToast("Login berhasil","success");
-    afterLoginSetup();
-  }catch(e){
-    console.error(e);
-    SwalAlert("Login gagal","Periksa nomor HP dan password. ("+(e.message||e)+")","error");
-  }
+    await auth.signInWithEmailAndPassword(hp+"@dusun.local", pass);
+    SwalToast("Login berhasil");
+    $('login_hp').value=''; $('login_pass').value='';
+    hide('authCard'); show('dashboardCard'); loadDashboard();
+  }catch(e){ console.error(e); SwalToast("Login gagal: "+(e.message||e), "error"); }
 }
 
-/* After login: show dashboard and initialize watchers */
-function afterLoginSetup(){
-  hide('authCard'); show('dashboardCard');
-  $('display_name').innerText = currentUser.nama || currentUser.phoneDisplay || currentUser.id;
-  $('display_role').innerText = (currentUser.role||'').toUpperCase();
-  startClock();
-  // if kepala dusun: show kode and watcher
-  if((currentUser.role||'').toLowerCase() === 'kepala_dusun'){
-    if(currentDusunId){
-      show('kodeDashboard');
-      startDusunWatcher(currentDusunId, true);
-    } else {
-      SwalAlert("Info","Anda kepala dusun tetapi belum terkait Dusun. Pastikan mendaftar menggunakan kode dusun yang dibuat.","info");
-    }
-  } else {
-    hide('kodeDashboard');
-  }
-  initMapWhenReady();
+/* ================= Logout ================= */
+function onLogout(){ auth.signOut(); hide('dashboardCard'); show('authCard'); SwalToast("Logout berhasil"); }
+
+/* ================= Dashboard Load ================= */
+let currentUser=null;
+async function loadDashboard(){
+  if(!currentUser) return;
+
+  $('display_name').innerText = currentUser.nama||currentUser.phone||"User";
+  $('display_role').innerText = currentUser.role||"";
+  if(currentUser.role=="kepala_dusun") show('kodeDashboard');
+  initClock();
+  loadKejadianChart();
   loadPos();
-  loadReportsAndChart();
-  if(currentDusunId){
-    db.collection('laporan').where('dusunId','==',currentDusunId).onSnapshot(()=> loadReportsAndChart());
-  }
+  loadReports();
 }
 
-/* ================ Logout ================ */
-function onLogout(){
-  auth.signOut();
-  currentUser = null; currentDusunId = null;
-  if(kodeUnsub){ kodeUnsub(); kodeUnsub=null; }
-  if(kodeInterval){ clearInterval(kodeInterval); kodeInterval=null; }
-  show('authCard'); hide('dashboardCard');
-  SwalToast("Logout berhasil","info");
-}
+/* ================= Clock ================= */
+function initClock(){ setInterval(()=>{ const d=new Date(); $('clock').innerText = d.toLocaleString(); },1000); }
 
-/* ================ Clock ================ */
-let clockInterval = null;
-function startClock(){
-  if(clockInterval) clearInterval(clockInterval);
-  function tick(){ const el=$('clock'); if(el) el.innerText = new Date().toLocaleString('id-ID',{ weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' }); }
-  tick();
-  clockInterval = setInterval(tick,1000);
-}
-
-/* ================ Reports ================ */
-function toggleLokasiInput(){
-  const v = $('lap_loc_opt').value;
-  if(v === 'lainnya') show('lap_lokasi'); else hide('lap_lokasi');
-}
+/* ================= Reports ================= */
 async function sendReport(){
-  if(!currentUser) return SwalAlert("Error","Login dulu untuk mengirim laporan.","error");
-  if(!currentDusunId) return SwalAlert("Error","User belum terikat Dusun.","error");
-  const jenis = $('lap_jenis').value;
-  const lokasiOpt = $('lap_loc_opt').value;
-  const lokasi = lokasiOpt === 'lainnya' ? $('lap_lokasi').value.trim() : 'Lokasi Saat Ini';
-  if(!jenis) return SwalAlert("Error","Pilih jenis laporan.","error");
-  try{
-    await db.collection('laporan').add({
-      dusunId: currentDusunId, uid: currentUser.id, jenis, lokasi, createdAt: Date.now()
-    });
-    SwalToast("Laporan terkirim","success");
-    $('lap_lokasi').value = '';
-    loadReportsAndChart();
-  }catch(e){ console.error(e); SwalAlert("Gagal","Gagal kirim laporan: "+(e.message||e),"error"); }
+  if(!currentUser) return;
+  const jenis=$('lap_jenis').value;
+  const lokasiOpt=$('lap_loc_opt').value;
+  let lokasi = lokasiOpt=="saat_ini"?"Lokasi saat ini":$('lap_lokasi').value.trim();
+  await db.collection('Reports').add({ jenis, lokasi, reporter:currentUser.nama, role:currentUser.role, timestamp:firebase.firestore.FieldValue.serverTimestamp() });
+  SwalToast("Laporan terkirim");
+  loadReports();
+}
+async function loadReports(){
+  const list=$('listReports'); list.innerHTML="";
+  const snaps = await db.collection('Reports').orderBy('timestamp','desc').limit(10).get();
+  snaps.forEach(doc=>{
+    const d=doc.data();
+    const html=`<div class="border p-2 mb-1 rounded"><b>${d.jenis}</b> · ${d.lokasi}<br><small>${d.reporter} · ${new Date(d.timestamp?.seconds*1000).toLocaleString()}</small></div>`;
+    list.innerHTML+=html;
+  });
 }
 
-/* ================ Reports list & Chart ================ */
-async function loadReportsAndChart(){
-  if(!currentDusunId) return;
-  const snap = await db.collection('laporan').where('dusunId','==',currentDusunId).orderBy('createdAt','desc').limit(200).get();
-  const rows = snap.docs.map(d=>({id:d.id,...d.data()}));
-  // list
-  const list = $('listReports'); if(list) list.innerHTML = '';
-  if(rows.length === 0 && list) list.innerHTML = '<div class="muted">Belum ada laporan.</div>';
-  rows.slice(0,30).forEach(r=>{
-    const t = new Date(r.createdAt).toLocaleString();
-    const el = document.createElement('div'); el.className='mb-2';
-    el.innerHTML = `<div><b>${r.jenis}</b> — ${r.lokasi||''}</div><div class="muted">${t}</div>`;
-    list.appendChild(el);
-  });
-  // chart
-  const counts = {};
-  rows.forEach(r => counts[r.jenis] = (counts[r.jenis]||0)+1);
-  const labels = Object.keys(counts).length ? Object.keys(counts) : ['Tidak ada'];
-  const data = labels.map(l => counts[l] || 0);
-  if(laporanChart) laporanChart.destroy();
-  const canvas = document.getElementById('chartKejadian');
-  if(canvas){
-    const ctx = canvas.getContext('2d');
-    laporanChart = new Chart(ctx, {
-      type:'bar', data:{ labels, datasets:[{label:'Jumlah', data, backgroundColor: labels.map((_,i)=>['#36a2eb','#ff6384','#ffce56','#4caf50','#9c27b0'][i%5]) }] },
-      options:{ responsive:true, plugins:{ legend:{ display:false } } }
-    });
-  }
+/* ================= Kejadian Chart ================= */
+async function loadKejadianChart(){
+  const snaps = await db.collection('Reports').get();
+  const counts={};
+  snaps.forEach(d=>{ const j=d.data().jenis; counts[j]=(counts[j]||0)+1; });
+  const ctx=$('chartKejadian').getContext('2d');
+  new Chart(ctx,{type:'bar',data:{labels:Object.keys(counts), datasets:[{label:'Jumlah',data:Object.values(counts),backgroundColor:'#3498db'}]}});
 }
 
-/* ================ Google Maps & Pos Jaga ================ */
-function initMapWhenReady(){
-  if(window.google && window.google.maps && !map){
-    map = new google.maps.Map(document.getElementById('map'), { center:{lat:-6.200000, lng:106.816666}, zoom:12 });
-  } else if(!window.google || !window.google.maps){
-    setTimeout(initMapWhenReady, 500);
-  }
+/* ================= Map & Pos ================= */
+let map, markers=[];
+function initMap(){
+  map = new google.maps.Map($('map'),{ center:{lat:-6.2,lng:106.8}, zoom:12 });
 }
-async function loadPos(){
-  initMapWhenReady();
-  markers.forEach(m=>m.setMap(null)); markers=[];
-  const listPosEl = $('listPos'); if(listPosEl) listPosEl.innerHTML = '';
-  if(!currentDusunId) return;
-  const snap = await db.collection('Dusun').doc(currentDusunId).collection('posJaga').get();
-  if(snap.empty){ if(listPosEl) listPosEl.innerHTML = '<div class="muted">Belum ada pos jaga.</div>'; return; }
-  const bounds = new google.maps.LatLngBounds();
-  snap.forEach(doc=>{
-    const p = doc.data();
-    const el = document.createElement('div'); el.className='mb-2'; el.innerText = `${p.nama} — Lat:${p.lat}, Lng:${p.lng}`;
-    listPosEl.appendChild(el);
-    if(map && p.lat && p.lng){
-      const marker = new google.maps.Marker({ position:{lat:p.lat, lng:p.lng}, map, title:p.nama });
-      markers.push(marker);
-      bounds.extend(marker.getPosition());
-    }
-  });
-  if(markers.length) map.fitBounds(bounds);
-}
+window.initMap = initMap;
+
 async function promptAddPos(){
-  if(!currentUser) return SwalAlert("Error","Login dulu.","error");
-  if(!currentDusunId) return SwalAlert("Error","User belum terikat Dusun.","error");
-
-  const { value: formValues } = await Swal.fire({
-    title: 'Tambah Pos Jaga',
-    html:
-      '<input id="swal-pos-name" class="swal2-input" placeholder="Nama pos (contoh: Pos RT 01)">' +
-      '<input id="swal-pos-lat" class="swal2-input" placeholder="Latitude (contoh -6.200)">' +
-      '<input id="swal-pos-lng" class="swal2-input" placeholder="Longitude (contoh 106.816)">',
-    focusConfirm: false,
-    preConfirm: () => {
-      const name = document.getElementById('swal-pos-name').value;
-      const lat = parseFloat(document.getElementById('swal-pos-lat').value);
-      const lng = parseFloat(document.getElementById('swal-pos-lng').value);
-      if(!name) Swal.showValidationMessage('Nama pos wajib diisi');
-      if(Number.isNaN(lat) || Number.isNaN(lng)) Swal.showValidationMessage('Koordinat tidak valid');
-      return { name, lat, lng };
-    },
-    showCancelButton: true
-  });
-
-  if(formValues){
-    try{
-      await db.collection('Dusun').doc(currentDusunId).collection('posJaga').add({
-        nama: formValues.name, lat: formValues.lat, lng: formValues.lng, createdAt: Date.now()
-      });
-      SwalToast('Pos tersimpan','success');
-      loadPos();
-    }catch(e){ console.error(e); SwalAlert('Gagal','Gagal simpan pos: '+(e.message||e),'error'); }
-  }
+  const { value: nama } = await Swal.fire({ title:'Nama Pos RT', input:'text', showCancelButton:true });
+  if(!nama) return;
+  const pos = { nama, lat: map.getCenter().lat(), lng: map.getCenter().lng(), createdAt:firebase.firestore.FieldValue.serverTimestamp() };
+  await db.collection('Pos').add(pos);
+  SwalToast("Pos berhasil ditambahkan");
+  loadPos();
 }
 
-/* ================ Dusun code watcher & auto-rotate ================ */
-function startDusunWatcher(dusunId, autoRotate){
-  if(kodeUnsub){ kodeUnsub(); kodeUnsub = null; }
-  const ref = db.collection('Dusun').doc(dusunId);
-  kodeUnsub = ref.onSnapshot(async snap=>{
-    if(!snap.exists) return;
-    const data = snap.data();
-    const code = data.code || dusunId;
-    const expires = data.codeExpiresAt || 0;
-    $('display_code').innerText = code;
-    if(code){ $('dusun_code').value = code; show('kode_group'); }
-    if(kodeInterval) clearInterval(kodeInterval);
-    kodeInterval = setInterval(async ()=>{
-      const now = Date.now();
-      const remain = Math.max(0, Math.floor((expires - now)/1000));
-      const hh = Math.floor(remain/3600);
-      const mm = Math.floor((remain%3600)/60);
-      const ss = remain%60;
-      $('display_countdown').innerText = `${hh}h ${mm}m ${ss}s`;
-      if(remain <= 0){
-        if(autoRotate && currentUser && (currentUser.role||'').toLowerCase() === 'kepala_dusun'){
-          const newCode = "DSN" + Math.random().toString(36).substring(2,8).toUpperCase();
-          const newExpires = Date.now() + 3600*1000;
-          try{
-            await ref.update({ code: newCode, codeExpiresAt: newExpires });
-            SwalToast('Kode dusun diperbarui','info');
-          }catch(e){ console.error("Gagal update code:", e); }
-        }
-      }
-    }, 1000);
+async function loadPos(){
+  if(!map) initMap();
+  markers.forEach(m=>m.setMap(null));
+  markers=[];
+  const snaps = await db.collection('Pos').get();
+  snaps.forEach(doc=>{
+    const p=doc.data();
+    const m = new google.maps.Marker({ position:{lat:p.lat,lng:p.lng}, map, title:p.nama });
+    markers.push(m);
   });
 }
 
-/* ================ On load init handlers ================ */
-window.addEventListener('load', ()=>{
-  ['reg_hp','login_hp'].forEach(id=>{
-    const el = $(id);
-    if(el) el.addEventListener('blur', ()=>{ const key = normalizePhoneForKey(el.value); if(key) el.value = "+"+key; });
-  });
-});
-
+/* ================= Lain-lain ================= */
+function toggleLokasiInput(){ $('lap_lokasi').classList.toggle('hidden', $('lap_loc_opt').value=='saat_ini'); }
 </script>
 </body>
 </html>
