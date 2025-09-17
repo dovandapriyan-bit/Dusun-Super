@@ -174,11 +174,11 @@
 
 </div>
 
-<!-- Google Maps: ganti key ini -->
+<!-- Google Maps -->
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY"></script>
 
 <script>
-/* ================= Firebase init ================= */
+/* ================= Firebase init (compat) ================= */
 const firebaseConfig = {
   apiKey: "AIzaSyA6GAeIc7ZesIed9MAelUf6x_sBFdp9E-Q",
   authDomain: "dusun-super.firebaseapp.com",
@@ -198,6 +198,7 @@ let currentDusunId = null;
 let map = null;
 let markers = [];
 let laporanChart = null;
+let kodeUnsub = null;
 let kodeInterval = null;
 
 /* ================= Helpers ================= */
@@ -206,90 +207,232 @@ const show = id => { const el=$(id); if(el) el.classList.remove('hidden'); };
 const hide = id => { const el=$(id); if(el) el.classList.add('hidden'); };
 const SwalToast = (title, icon='success', timer=2000) => { return Swal.fire({ title, icon, toast:true, position:'top-end', showConfirmButton:false, timer }); };
 const SwalAlert = (title, html, icon='info') => { return Swal.fire({ title, html, icon }); };
-document.addEventListener('input', e=>{ if(e.target && e.target.classList && e.target.classList.contains('upper')) e.target.value=e.target.value.toUpperCase(); });
 
-/* ================= Phone & RT/RW ================= */
-function normalizePhoneForKey(v){ let s=(v||"").replace(/\s+/g,"").replace(/\D/g,""); if(s.startsWith("0")) s="62"+s.substring(1); if(!s.startsWith("62")) s="62"+s; return s; }
-function formatPhoneTyping(el){ let raw=el.value.replace(/[^\d\+]/g,""); if(raw.startsWith("+")) el.value="+"+raw.replace(/\D/g,""); else el.value=raw; }
-function padRT(el){ let v=(el.value||"").replace(/\D/g,""); el.value=v.padStart(3,"0"); }
-function padRW(el){ let v=(el.value||"").replace(/\D/g,""); el.value=v.padStart(3,"0"); }
-
-/* ================= Register ================= */
-async function onRegister(){
-  const nama=$('reg_nama').value.trim().toUpperCase();
-  const hp=normalizePhoneForKey($('reg_hp').value);
-  const pass=$('reg_password').value;
-  const alamat=$('reg_alamat').value.trim().toUpperCase();
-  const blok=$('reg_blok').value.trim().toUpperCase();
-  const no=$('reg_no').value.trim();
-  const rt=$('reg_rt').value.trim();
-  const rw=$('reg_rw').value.trim();
-  const role=$('reg_role').value;
-  const kode=$('reg_kode').value.trim().toUpperCase();
-
-  if(!nama||!hp||!pass||!role||!kode){ SwalToast("Lengkapi semua field penting!", "error"); return; }
-
-  const dusunSnap = await db.collection('Dusun').doc(kode).get();
-  if(!dusunSnap.exists){ SwalToast("Kode dusun tidak valid", "error"); return; }
-
-  if(['kepala_dusun','kepala_keluarga','ketua_rt','ketua_rw'].includes(role)){
-    const q = await db.collection('Warga').where('role','==',role).where('kodeDusun','==',kode).get();
-    if(!q.empty){ SwalToast("Role "+role+" sudah terdaftar di dusun ini", "error"); return; }
+/* Auto-uppercase */
+document.addEventListener('input', e=>{
+  if(e.target && e.target.classList && e.target.classList.contains('upper')){
+    e.target.value = e.target.value.toUpperCase();
   }
+});
 
-  try{
-    const u = await auth.createUserWithEmailAndPassword(hp+"@dusun.local", pass);
-    await db.collection('Warga').doc(u.user.uid).set({ nama,hp,alamat,blok,no,rt,rw,role,kodeDusun:kode, createdAt:firebase.firestore.FieldValue.serverTimestamp() });
-    SwalToast("Pendaftaran berhasil");
-    await auth.signInWithEmailAndPassword(hp+"@dusun.local", pass);
+/* ================= Phone formatting & RT/RW ================= */
+function normalizePhoneForKey(v){
+  let s = (v||"").trim();
+  if(s.startsWith('0')) s = '+62'+s.substr(1);
+  return s.replace(/\s+/g,'');
+}
+function formatPhoneTyping(el){
+  el.value = el.value.replace(/\D/g,'');
+}
+function padRT(el){ if(el.value.length<3) el.value=('000'+el.value).slice(-3); }
+function padRW(el){ if(el.value.length<3) el.value=('000'+el.value).slice(-3); }
 
-    clearRegister();
-    hide('authCard'); show('dashboardCard'); 
-    currentUser = { id:u.user.uid, nama, role, kodeDusun:kode };
-    loadDashboard();
-  }catch(e){ console.error(e); SwalToast("Gagal mendaftar: "+(e.message||e), "error"); }
+/* ================= Generate Dusun ================= */
+function generateRandomCode(len=6){
+  const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code='';
+  for(let i=0;i<len;i++) code+=chars.charAt(Math.floor(Math.random()*chars.length));
+  return code;
+}
+function onGenerateDusun(){
+  const code = generateRandomCode();
+  $('dusun_code').value = code;
+  show('kode_group');
+  show('save_dusun_btn');
+  SwalToast('Kode Dusun berhasil digenerate');
+}
+function onSaveDusun(){
+  const data={
+    nama:$('dusun_nama').value.trim(),
+    desa:$('dusun_desa').value.trim(),
+    kecamatan:$('dusun_kecamatan').value.trim(),
+    kabupaten:$('dusun_kab').value.trim(),
+    kota:$('dusun_kota').value.trim(),
+    code:$('dusun_code').value.trim(),
+    createdAt:firebase.firestore.FieldValue.serverTimestamp()
+  };
+  db.collection('dusun').add(data).then(doc=>{
+    currentDusunId = doc.id;
+    SwalToast('Dusun berhasil disimpan!');
+  }).catch(e=>SwalAlert('Error', e.message,'error'));
+}
+
+/* ================= COPY kode ================= */
+$('copy_code_btn').addEventListener('click',()=>{
+  const val=$('dusun_code').value;
+  if(!val)return;
+  navigator.clipboard.writeText(val).then(()=>SwalToast('Kode disalin ke clipboard'));
+});
+
+/* ================= REGISTER ================= */
+function onRegister(){
+  const hp = normalizePhoneForKey($('reg_hp').value);
+  const pw = $('reg_password').value;
+  const nama = $('reg_nama').value.trim();
+  const kodeDusun = $('reg_kode').value.trim().toUpperCase();
+  if(!hp||!pw||!nama||!kodeDusun) { SwalToast('Lengkapi data!', 'error'); return; }
+
+  // cek kode dusun
+  db.collection('dusun').where('code','==',kodeDusun).get().then(snap=>{
+    if(snap.empty){ SwalToast('Kode Dusun salah!', 'error'); return; }
+    const dusunId = snap.docs[0].id;
+
+    // cek nomor HP
+    db.collection('users').where('hp','==',hp).get().then(snap2=>{
+      if(!snap2.empty){ SwalToast('Nomor HP sudah terdaftar', 'error'); return; }
+      db.collection('users').add({
+        nama, hp, password:pw,
+        alamat:$('reg_alamat').value.trim(),
+        blok:$('reg_blok').value.trim(),
+        no:$('reg_no').value.trim(),
+        rt:$('reg_rt').value.trim(),
+        rw:$('reg_rw').value.trim(),
+        role:$('reg_role').value,
+        dusunId,
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      }).then(()=>SwalToast('Registrasi berhasil! Silakan login'))
+      .catch(e=>SwalAlert('Error',e.message,'error'));
+    });
+  });
 }
 function clearRegister(){
-  $('reg_nama').value=''; $('reg_hp').value=''; $('reg_password').value=''; $('reg_alamat').value=''; $('reg_blok').value=''; $('reg_no').value='';
-  $('reg_rt').value=''; $('reg_rw').value=''; $('reg_role').value=''; $('reg_kode').value='';
+  ['reg_nama','reg_hp','reg_password','reg_alamat','reg_blok','reg_no','reg_rt','reg_rw','reg_kode'].forEach(id=>$(id).value='');
+  $('reg_role').value='';
 }
 
-/* ================= Login ================= */
-async function onLogin(){
-  const hp=normalizePhoneForKey($('login_hp').value);
-  const pass=$('login_pass').value;
-  if(!hp||!pass){ SwalToast("Isi HP & Password", "error"); return; }
-  try{
-    const result = await auth.signInWithEmailAndPassword(hp+"@dusun.local", pass);
-    const u=result.user;
-    const doc = await db.collection('Warga').doc(u.uid).get();
-    if(!doc.exists){ SwalToast("Data warga tidak ditemukan", "error"); return; }
-    currentUser = { id:u.uid, ...doc.data() };
-
-    SwalToast("Login berhasil");
-    $('login_hp').value=''; $('login_pass').value='';
-    hide('authCard'); show('dashboardCard');
-    loadDashboard();
-  }catch(e){ console.error(e); SwalToast("Login gagal: "+(e.message||e), "error"); }
+/* ================= LOGIN ================= */
+function onLogin(){
+  const hp = normalizePhoneForKey($('login_hp').value);
+  const pw = $('login_pass').value;
+  if(!hp||!pw){ SwalToast('Lengkapi data login!', 'error'); return; }
+  db.collection('users').where('hp','==',hp).where('password','==',pw).get().then(snap=>{
+    if(snap.empty){ SwalToast('HP atau Password salah!', 'error'); return; }
+    const u = snap.docs[0].data();
+    currentUser = {...u, id:snap.docs[0].id};
+    currentDusunId = u.dusunId;
+    setupDashboard();
+  });
 }
 
-/* ================= Logout ================= */
-async function onLogout(){ await auth.signOut(); currentUser=null; hide('dashboardCard'); show('authCard'); }
-
-/* ================= Laporan / Dusun / Dashboard dummy ================= */
-function toggleLokasiInput(){ $('lap_loc_opt').value==='lainnya'?show('lap_lokasi'):hide('lap_lokasi'); }
-function loadDashboard(){
-  $('display_name').innerText=currentUser.nama||'';
-  $('display_role').innerText=currentUser.role||'';
-  if(currentUser.role==='kepala_dusun'){ show('kodeDashboard'); $('display_code').innerText=currentUser.kodeDusun; }
-  else hide('kodeDashboard');
+/* ================= LOGOUT ================= */
+function onLogout(){
+  currentUser = null;
+  currentDusunId = null;
+  hide('dashboardCard');
+  show('authCard');
 }
-function onGenerateDusun(){ SwalToast("Kode dusun generated (dummy)"); show('kode_group'); $('dusun_code').value=Math.random().toString(36).substr(2,6).toUpperCase(); show('save_dusun_btn'); }
-function onSaveDusun(){ SwalToast("Dusun disimpan (dummy)"); }
-function sendReport(){ SwalToast("Laporan terkirim (dummy)"); }
-function promptAddPos(){ SwalToast("Tambah pos (dummy)"); }
-function loadPos(){ SwalToast("Muat ulang pos (dummy)"); }
 
+/* ================= Dashboard ================= */
+function setupDashboard(){
+  hide('authCard');
+  show('dashboardCard');
+  $('display_name').innerText = currentUser.nama;
+  $('display_role').innerText = currentUser.role;
+
+  if(currentUser.role==='kepala_dusun'){
+    $('kodeDashboard').classList.remove('d-none');
+    db.collection('dusun').doc(currentDusunId).get().then(d=>{
+      $('display_code').innerText = d.data().code;
+      startKodeCountdown(3600); // 1 jam
+    });
+  }
+
+  startClock();
+  initMap();
+  loadPos();
+  loadReports();
+}
+
+/* ================= Clock ================= */
+function startClock(){
+  setInterval(()=>{$('clock').innerText=new Date().toLocaleString()},1000);
+}
+
+/* ================= Kode Dusun countdown ================= */
+function startKodeCountdown(seconds){
+  clearInterval(kodeInterval);
+  let s=seconds;
+  kodeInterval=setInterval(()=>{
+    let m=Math.floor(s/60); let sec=s%60;
+    $('display_countdown').innerText=m+':'+(sec<10?'0'+sec:sec);
+    if(s--<=0){ clearInterval(kodeInterval); $('display_countdown').innerText='Kadaluarsa'; }
+  },1000);
+}
+
+/* ================= Laporan ================= */
+function toggleLokasiInput(){
+  const val=$('lap_loc_opt').value;
+  if(val==='lainnya') $('lap_lokasi').classList.remove('hidden');
+  else $('lap_lokasi').classList.add('hidden');
+}
+function sendReport(){
+  const jenis=$('lap_jenis').value;
+  let lokasi='Saat Ini';
+  if($('lap_loc_opt').value==='lainnya') lokasi=$('lap_lokasi').value.trim()||'Lokasi lain';
+  db.collection('reports').add({
+    jenis, lokasi, uid:currentUser.id,
+    timestamp:firebase.firestore.FieldValue.serverTimestamp(),
+    dusunId:currentDusunId
+  }).then(()=>SwalToast('Laporan terkirim')).catch(e=>SwalAlert('Error',e.message,'error'));
+}
+function loadReports(){
+  db.collection('reports').where('dusunId','==',currentDusunId).orderBy('timestamp','desc').limit(10).get().then(snap=>{
+    const container=$('listReports');
+    container.innerHTML='';
+    snap.forEach(doc=>{
+      const d=doc.data();
+      const t = d.timestamp?.toDate().toLocaleString()||'';
+      container.innerHTML+=`<div class="mb-1">${d.jenis} — ${d.lokasi} <span class="muted">${t}</span></div>`;
+    });
+    updateChart(snap.docs.map(d=>d.data()));
+  });
+}
+function updateChart(data){
+  const ctx=$('chartKejadian').getContext('2d');
+  const counts={Kemalingan:0,Kebakaran:0,Medis:0,Ambulance:0,Mencurigakan:0};
+  data.forEach(d=>{ if(counts[d.jenis]!==undefined) counts[d.jenis]++; });
+  if(laporanChart) laporanChart.destroy();
+  laporanChart = new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels:Object.keys(counts),
+      datasets:[{label:'Jumlah Kejadian',data:Object.values(counts),backgroundColor:'#4e73df'}]
+    },
+    options:{responsive:true,plugins:{legend:{display:false}}}
+  });
+}
+
+/* ================= Map & Pos ================= */
+function initMap(){
+  map=new google.maps.Map($('map'),{center:{lat:-6.2,lng:106.816},zoom:15});
+}
+function loadPos(){
+  if(!map) return;
+  markers.forEach(m=>m.setMap(null));
+  markers=[];
+  db.collection('pos').where('dusunId','==',currentDusunId).get().then(snap=>{
+    snap.forEach(doc=>{
+      const d=doc.data();
+      const marker=new google.maps.Marker({position:{lat:d.lat,lng:d.lng},map,title:d.nama});
+      markers.push(marker);
+    });
+  });
+}
+function promptAddPos(){
+  Swal.fire({
+    title:'Tambah Pos',
+    html:'<input id="swal_pos_name" class="swal2-input" placeholder="Nama Pos (RT)">'+
+         '<input id="swal_pos_lat" class="swal2-input" placeholder="Latitude">'+
+         '<input id="swal_pos_lng" class="swal2-input" placeholder="Longitude">',
+    confirmButtonText:'Simpan', preConfirm:()=>{
+      const n=$('#swal_pos_name').value.trim();
+      const lat=parseFloat($('#swal_pos_lat').value);
+      const lng=parseFloat($('#swal_pos_lng').value);
+      if(!n||isNaN(lat)||isNaN(lng)){ SwalAlert('Error','Isi semua data dengan benar','error'); return false; }
+      db.collection('pos').add({nama:n,lat,lng,dusunId:currentDusunId}).then(()=>{ SwalToast('Pos tersimpan'); loadPos(); });
+    }
+  });
+}
 </script>
 </body>
 </html>
