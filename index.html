@@ -2,11 +2,11 @@
 <html lang="id">
 <head>
   <meta charset="utf-8" />
-  <title>SISTEM 800 BARIS - Sistem Keamanan Dusun (FULL)</title>
+  <title>Sistem Keamanan Dusun — Full</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <!-- Bootstrap -->
+  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Firebase (compat) -->
+  <!-- Firebase compat -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -16,765 +16,755 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <style>
-    :root{--card-radius:12px;}
-    body{background:#f4f7ff;font-family:Inter,Segoe UI,Arial,sans-serif;padding:18px;}
-    .card{border-radius:var(--card-radius);box-shadow:0 6px 18px rgba(20,30,60,0.06);}
-    .form-control, .btn{border-radius:8px;}
-    input.upper{ text-transform:uppercase; }
-    #map{width:100%;height:320px;border-radius:8px;background:#eef;}
-    .hidden{display:none!important;}
-    .muted{color:#666;font-size:0.9rem;}
-    .copy-btn{min-width:96px;}
-    .small{font-size:0.85rem;color:#555;}
-    .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;}
+    :root{
+      --card-radius:12px;
+      --accent: #3b82f6;
+    }
+    body {
+      background: #f4f7ff;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      padding: 18px;
+    }
+    .card {
+      border-radius: var(--card-radius);
+      box-shadow: 0 6px 18px rgba(20,30,60,0.06);
+    }
+    .form-control, .btn { border-radius:8px; }
+    input.upper { text-transform:uppercase; }
+    #map { width:100%; height:320px; border-radius:8px; background:#eef; display:block; }
+    .hidden { display:none!important; }
+    .muted { color:#6b7280; font-size:0.92rem; }
+    .small { font-size:0.85rem; color:#374151; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .section-gap { margin-top:16px; }
+    @media (max-width: 768px) {
+      body { padding:12px; }
+      #map { height:220px; }
+    }
   </style>
 </head>
 <body>
-<div class="container mx-auto" style="max-width:1100px;">
-  <h3 class="text-center mb-4">SISTEM 800 BARIS — Sistem Keamanan Dusun (FULL)</h3>
+  <div class="container" style="max-width:1100px;">
+    <h3 class="text-center mb-4">Sistem Keamanan Dusun</h3>
 
-  <!-- AUTH / CREATE -->
-  <div id="authCard" class="card p-3 mb-4">
-    <div class="row g-3">
-      <!-- Left: Buat Dusun (Kepala Dusun) -->
-      <div class="col-md-6">
-        <h5>Buat Dusun (Kepala Dusun)</h5>
-        <input id="dusun_nama" class="form-control mb-2 upper" placeholder="NAMA DUSUN">
+    <!-- AUTH / REGISTER -->
+    <div id="authCard" class="card p-3 mb-4">
+      <div class="row g-3">
+        <div class="col-12 col-md-6">
+          <h5>Daftar Warga</h5>
+          <div class="row g-2">
+            <div class="col-12"><input id="reg_nama" class="form-control" placeholder="NAMA LENGKAP"></div>
+            <div class="col-12"><input id="reg_hp" class="form-control" placeholder="NOMOR HP (0812... atau +628...)" oninput="formatPhoneTyping(this)"></div>
+            <div class="col-12"><input id="reg_password" type="password" class="form-control" placeholder="PASSWORD (min 6)"></div>
+            <div class="col-12">
+              <select id="reg_role" class="form-control">
+                <option value="warga">WARGA</option>
+                <option value="kepala_dusun">KEPALA DUSUN</option>
+                <option value="ketua_rt">KETUA RT</option>
+                <option value="ketua_rw">KETUA RW</option>
+                <option value="kepala_keluarga">KEPALA KELUARGA</option>
+                <option value="lainnya">LAINNYA</option>
+              </select>
+            </div>
 
-        <!-- Dropdown alamat untuk Buat Dusun -->
-        <select id="dusun_prov_select" class="form-control mb-2"><option value="">Pilih Provinsi</option></select>
-        <select id="dusun_kab_select" class="form-control mb-2"><option value="">Pilih Kabupaten/Kota</option></select>
-        <select id="dusun_kec_select" class="form-control mb-2"><option value="">Pilih Kecamatan</option></select>
-        <select id="dusun_des_select" class="form-control mb-2"><option value="">Pilih Desa/Kelurahan</option></select>
+            <!-- Region dropdowns (dynamic) -->
+            <div class="col-12 col-sm-6"><select id="reg_prov_select" class="form-control"><option value="">Pilih Provinsi</option></select></div>
+            <div class="col-12 col-sm-6"><select id="reg_kab_select" class="form-control"><option value="">Pilih Kabupaten/Kota</option></select></div>
+            <div class="col-12 col-sm-6"><select id="reg_kec_select" class="form-control"><option value="">Pilih Kecamatan</option></select></div>
+            <div class="col-12 col-sm-6"><select id="reg_des_select" class="form-control"><option value="">Pilih Desa/Kelurahan</option></select></div>
 
-        <!-- kode group -->
-        <div id="kode_group" class="input-group mb-2 hidden">
-          <input id="dusun_code" class="form-control" placeholder="KODE DUSUN (GENERATED)" readonly>
-          <button id="copy_code_btn" class="btn btn-outline-secondary copy-btn" type="button">COPY</button>
+            <div class="col-6"><input id="reg_rt" class="form-control" placeholder="RT (mis. 001)" maxlength="3" onblur="padRT(this)"></div>
+            <div class="col-6"><input id="reg_rw" class="form-control" placeholder="RW (mis. 001)" maxlength="3" onblur="padRW(this)"></div>
+
+            <div class="col-12"><textarea id="reg_alamat_lengkap" class="form-control" placeholder="ALAMAT LENGKAP (Jalan, No., RT/RW)"></textarea></div>
+            <div class="col-6"><input id="reg_blok" class="form-control" placeholder="BLOK (opsional)"></div>
+            <div class="col-6"><input id="reg_no" class="form-control" placeholder="NO RUMAH (opsional)"></div>
+
+            <div class="col-12 d-grid">
+              <button class="btn btn-success" onclick="onRegister()">Daftar</button>
+            </div>
+            <div class="col-12">
+              <button class="btn btn-link p-0" onclick="clearRegister()">Reset form</button>
+            </div>
+          </div>
         </div>
 
-        <div class="d-grid gap-2 mb-2">
-          <button id="generate_btn" class="btn btn-primary">Generate Kode</button>
-          <button id="save_dusun_btn" class="btn btn-success hidden">Simpan Dusun</button>
-        </div>
-        <div class="muted">Setelah generate: SALIN kode & bagikan ke warga. Kode berlaku 24 jam (default) dan dapat diganti kapan saja oleh Kepala Dusun.</div>
-      </div>
-
-      <!-- Right: Daftar & Login -->
-      <div class="col-md-6">
-        <h5>Daftar Warga</h5>
-        <input id="reg_nama" class="form-control mb-2" placeholder="NAMA LENGKAP">
-        <input id="reg_hp" class="form-control mb-2" placeholder="NOMOR HP (contoh: 0812... atau +62812...)" oninput="formatPhoneTyping(this)">
-        <input id="reg_password" type="password" class="form-control mb-2" placeholder="PASSWORD (min 6)">
-
-        <!-- ADDED: Role dropdown -->
-        <select id="reg_role" class="form-control mb-2">
-          <option value="warga">WARGA</option>
-          <option value="kepala_desa">KEPALA DESA</option>
-          <option value="kepala_dusun">KEPALA DUSUN</option>
-          <option value="ketua_rt">KETUA RT</option>
-          <option value="ketua_rw">KETUA RW</option>
-          <option value="kepala_keluarga">KEPALA KELUARGA</option>
-          <option value="istri">ISTRI</option>
-          <option value="anak">ANAK</option>
-          <option value="lainnya">LAINNYA</option>
-        </select>
-        <!-- END ADDED -->
-
-        <!-- Dropdown alamat pendaftaran -->
-        <select id="reg_prov_select" class="form-control mb-2"><option value="">Pilih Provinsi</option></select>
-        <select id="reg_kab_select" class="form-control mb-2"><option value="">Pilih Kabupaten/Kota</option></select>
-        <select id="reg_kec_select" class="form-control mb-2"><option value="">Pilih Kecamatan</option></select>
-        <select id="reg_des_select" class="form-control mb-2"><option value="">Pilih Desa/Kelurahan</option></select>
-
-        <div class="row g-2 mb-2">
-          <div class="col"><input id="reg_rt" class="form-control" placeholder="RT (mis. 001)" maxlength="3" onblur="padRT(this)"></div>
-          <div class="col"><input id="reg_rw" class="form-control" placeholder="RW (mis. 001)" maxlength="3" onblur="padRW(this)"></div>
-        </div>
-
-        <textarea id="reg_alamat_lengkap" class="form-control mb-2" placeholder="ALAMAT LENGKAP (Jalan, No., RT/RW)"></textarea>
-
-        <div class="row g-2 mb-2">
-          <div class="col"><input id="reg_blok" class="form-control" placeholder="BLOK (opsional)"></div>
-          <div class="col"><input id="reg_no" class="form-control" placeholder="NO RUMAH (opsional)"></div>
-        </div>
-
-        <div class="d-grid gap-2">
-          <input id="reg_kode" class="form-control mb-2 upper" placeholder="KODE DUSUN (dari Kepala Dusun)">
-          <button class="btn btn-success" onclick="onRegister()">Daftar</button>
-          <button class="btn btn-outline-secondary" onclick="clearRegister()">Reset</button>
-        </div>
-
-        <hr>
-
-        <h5>Login</h5>
-        <input id="login_hp" class="form-control mb-2" placeholder="NOMOR HP (contoh: 0812... atau +62812...)" oninput="formatPhoneTyping(this)">
-        <input id="login_pass" type="password" class="form-control mb-2" placeholder="PASSWORD">
-        <div class="d-grid gap-2">
-          <button class="btn btn-primary" onclick="onLogin()">Login</button>
+        <div class="col-12 col-md-6">
+          <h5>Login</h5>
+          <div class="row g-2">
+            <div class="col-12"><input id="login_hp" class="form-control" placeholder="NOMOR HP (0812... atau +628...)" oninput="formatPhoneTyping(this)"></div>
+            <div class="col-12"><input id="login_pass" type="password" class="form-control" placeholder="PASSWORD"></div>
+            <div class="col-12 d-grid">
+              <button class="btn btn-primary" onclick="onLogin()">Login</button>
+            </div>
+            <div class="col-12">
+              <div class="muted">Semua pendaftaran dilakukan tanpa KODE DUSUN. Masukkan KODE setelah login di dashboard jika ingin bergabung ke dusun.</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboardCard" class="card p-3 hidden">
+      <div class="topbar mb-3">
+        <div>
+          <h4 class="mb-0">Dashboard Dusun</h4>
+          <div class="muted">Selamat datang, <b id="display_name"></b> · <span id="display_role"></span></div>
+          <div class="small">Waktu: <span id="clock"></span></div>
+        </div>
+        <div class="text-end">
+          <button id="btnLogout" class="btn btn-danger btn-sm" onclick="onLogout()">Logout</button>
+        </div>
+      </div>
+
+      <!-- Jika user belum join dusun -->
+      <div id="joinDusunPanel" class="card p-3 mb-3 d-none">
+        <h6>Masukkan Kode Dusun</h6>
+        <div class="input-group">
+          <input id="joinKodeDusun" class="form-control upper" placeholder="KODE DUSUN">
+          <button class="btn btn-primary" onclick="joinDusun()">Gabung</button>
+        </div>
+        <div class="muted mt-2">Isi kode dusun yang diberikan Kepala Dusun untuk bergabung. Jika belum punya kode, minta Kepala Dusun membuat kode di dashboard mereka.</div>
+      </div>
+
+      <!-- Panel buat dusun (hanya untuk kepala_dusun) -->
+      <div id="buatDusunPanel" class="card p-3 mb-3 d-none">
+        <h6>Buat / Kelola Dusun (Kepala Dusun)</h6>
+        <div class="row g-2">
+          <div class="col-12"><input id="dusun_nama" class="form-control upper" placeholder="NAMA DUSUN"></div>
+          <div class="col-12 col-md-6"><select id="dusun_prov_select" class="form-control"><option value="">Pilih Provinsi</option></select></div>
+          <div class="col-12 col-md-6"><select id="dusun_kab_select" class="form-control"><option value="">Pilih Kabupaten/Kota</option></select></div>
+          <div class="col-12 col-md-6"><select id="dusun_kec_select" class="form-control"><option value="">Pilih Kecamatan</option></select></div>
+          <div class="col-12 col-md-6"><select id="dusun_des_select" class="form-control"><option value="">Pilih Desa/Kelurahan</option></select></div>
+
+          <div id="kode_group" class="input-group mb-2 hidden">
+            <input id="dusun_code" class="form-control" readonly>
+            <button id="copy_code_btn" class="btn btn-outline-secondary" type="button" onclick="copyDusunCode()">COPY</button>
+          </div>
+
+          <div class="col-12 d-flex gap-2">
+            <button id="generate_btn" class="btn btn-primary" onclick="onGenerateCode()">Generate Kode</button>
+            <button id="save_dusun_btn" class="btn btn-success hidden" onclick="onSaveDusun()">Simpan Dusun</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Info Kepala Dusun (ditampilkan setelah user terhubung ke dusun) -->
+      <div id="kepalaDusunInfo" class="card p-3 mb-3 d-none">
+        <h6>Kepala Dusun</h6>
+        <div id="kepalaDusunDetail" class="muted">Memuat data...</div>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-lg-5">
+          <div class="card p-3 mb-3">
+            <h6>Buat Laporan SOS</h6>
+            <select id="lap_jenis" class="form-control mb-2">
+              <option>Kemalingan</option>
+              <option>Kebakaran</option>
+              <option>Medis</option>
+              <option>Ambulance</option>
+              <option>Mencurigakan</option>
+            </select>
+            <select id="lap_loc_opt" class="form-control mb-2" onchange="toggleLokasiInput()">
+              <option value="saat_ini">Lokasi Saat Ini (jika diizinkan)</option>
+              <option value="lainnya">Lokasi Lain</option>
+            </select>
+            <textarea id="lap_lokasi" class="form-control mb-2 hidden" placeholder="Deskripsi lokasi (opsional)"></textarea>
+            <div class="d-grid">
+              <button class="btn btn-danger" onclick="sendReport()">Kirim Laporan</button>
+            </div>
+          </div>
+
+          <div class="card p-3 mb-3">
+            <h6>Statistik Kejadian</h6>
+            <div style="height:220px;"><canvas id="chartKejadian" style="width:100%;height:100%"></canvas></div>
+          </div>
+
+          <div class="card p-3 mb-3">
+            <h6>Daftar Laporan Terbaru</h6>
+            <div id="listReports" class="muted">Memuat...</div>
+          </div>
+        </div>
+
+        <div class="col-lg-7">
+          <div class="card p-3 mb-3">
+            <h6>Pos Jaga Dusun</h6>
+            <div id="map">Peta (tidak aktif — tambahkan API key Google Maps jika ingin aktif)</div>
+            <div class="mt-3 d-flex gap-2">
+              <button class="btn btn-primary" onclick="promptAddPos()">Tambah Pos</button>
+              <button class="btn btn-outline-secondary" onclick="loadPos()">Muat Ulang Pos</button>
+            </div>
+            <div id="listPos" class="mt-3"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="footerHelp" class="mt-3 muted small">Catatan: ganti konfigurasi Firebase di bagian <code>firebaseConfig</code> sebelum digunakan.</div>
   </div>
 
-  <!-- Dashboard -->
-  <div id="dashboardCard" class="card p-3 hidden">
-    <div class="topbar">
-      <div>
-        <h4>Dashboard Dusun</h4>
-        <div class="muted">Selamat datang, <b id="display_name"></b> · <span id="display_role"></span></div>
-        <div class="muted small">Waktu: <span id="clock"></span></div>
-      </div>
-      <div class="text-end">
-        <button id="btnLogout" class="btn btn-danger btn-sm">Logout</button>
-      </div>
-    </div>
+  <!-- OPTIONAL: Google Maps script (jika mau aktifkan, ganti key) -->
+  <!-- <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY"></script> -->
 
-    <!-- kode (kepala dusun only) -->
-    <div id="kodeDashboard" class="card p-3 mt-3 d-none">
-      <div class="d-flex justify-content-between">
-        <div>
-          <div class="muted">Kode Dusun</div>
-          <h5 id="display_code"></h5>
-        </div>
-        <div>
-          <div class="muted">Sisa waktu</div>
-          <div id="display_countdown" style="font-weight:600"></div>
-        </div>
-      </div>
-    </div>
+  <script>
+  /***** CONFIG: GANTI DENGAN KONFIG FIREBASE PROJECT ANDA *****/
+  const firebaseConfig = {
+    apiKey: "YOUR_FIREBASE_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+  /************************************************************/
 
-    <div class="row mt-3 g-3">
-      <div class="col-lg-5">
-        <div class="card p-3 mb-3">
-          <h6>Buat Laporan SOS</h6>
-          <select id="lap_jenis" class="form-control mb-2">
-            <option>Kemalingan</option>
-            <option>Kebakaran</option>
-            <option>Medis</option>
-            <option>Ambulance</option>
-            <option>Mencurigakan</option>
-          </select>
-          <select id="lap_loc_opt" class="form-control mb-2" onchange="toggleLokasiInput()">
-            <option value="saat_ini">Lokasi Saat Ini (jika diizinkan)</option>
-            <option value="lainnya">Lokasi Lain</option>
-          </select>
-          <textarea id="lap_lokasi" class="form-control mb-2 hidden" placeholder="Deskripsi lokasi (opsional)"></textarea>
-          <div class="d-grid">
-            <button class="btn btn-danger" onclick="sendReport()">Kirim Laporan</button>
-          </div>
-        </div>
+  // init firebase
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
 
-        <div class="card p-3 mb-3">
-          <h6>Statistik Kejadian</h6>
-          <canvas id="chartKejadian" style="width:100%;height:220px"></canvas>
-        </div>
+  // State
+  let currentUser = null;
+  let currentWargaDoc = null;
+  let currentDusunDoc = null;
+  let kodeInterval = null;
+  let laporanChart = null;
+  let mapObj = null;
+  let posMarkers = [];
 
-        <div class="card p-3 mb-3">
-          <h6>Daftar Laporan Terbaru</h6>
-          <div id="listReports"></div>
-        </div>
-      </div>
+  // helpers
+  const $ = id => document.getElementById(id);
+  const show = id => { const el = $(id); if(el) el.classList.remove('hidden'); };
+  const hide = id => { const el = $(id); if(el) el.classList.add('hidden'); };
+  const Toast = (title, icon='success') => Swal.fire({ title, icon, toast:true, position:'top-end', showConfirmButton:false, timer:2000 });
+  const Err = (t) => Swal.fire("Error", t, "error");
 
-      <div class="col-lg-7">
-        <div class="card p-3 mb-3">
-          <h6>Pos Jaga Dusun</h6>
-          <div id="map">Peta (Google Maps) - tambahkan API key untuk aktivasi</div>
-          <div class="d-flex gap-2 mt-3">
-            <button class="btn btn-primary" onclick="promptAddPos()">Tambah Pos RT</button>
-            <button class="btn btn-outline-secondary" onclick="loadPos()">Muat Ulang Pos</button>
-          </div>
-          <div id="listPos" class="mt-3"></div>
-        </div>
-
-        <div id="kkPanel" class="card p-3 mb-3 hidden">
-          <h6>Verifikasi Warga (KK)</h6>
-          <div id="pendingList"></div>
-        </div>
-
-        <div id="adminPanel" class="card p-3 mb-3 hidden">
-          <h6>Manajemen Dusun (Kepala Dusun)</h6>
-          <div class="d-flex gap-2 mb-2">
-            <button class="btn btn-outline-primary" onclick="regenerateCode()">Regenerate Kode</button>
-            <button class="btn btn-outline-danger" onclick="expireCodeNow()">Expire Kode Sekarang</button>
-          </div>
-          <div id="dusunInfo"></div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-</div>
-
-<!-- Google Maps: ganti key ini jika ingin aktif (opsional) -->
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY"></script>
-
-<script>
-/* ================= CONFIG ================= */
-/* Dimasukkan Firebase config yang Anda berikan */
-const firebaseConfig = {
-  apiKey: "AIzaSyA6GAeIc7ZesIed9MAelUf6x_sBFdp9E-Q",
-  authDomain: "dusun-super.firebaseapp.com",
-  projectId: "dusun-super",
-  storageBucket: "dusun-super.firebasestorage.app",
-  messagingSenderId: "1083284057385",
-  appId: "1:1083284057385:web:21cfe467b047bb5a241b38",
-  measurementId: "G-LJ6KP57Q9M"
-};
-/* Masa berlaku kode dusun (ms) */
-const KODE_EXPIRE_MS = 24 * 60 * 60 * 1000;
-/* ================================================= */
-
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-/* ================= State ================= */
-let currentUser = null;
-let currentWargaDoc = null;
-let currentDusunDoc = null;
-let kodeInterval = null;
-let laporanChart = null;
-let mapObj = null;
-let posMarkers = [];
-
-/* ================= Helpers ================= */
-const $ = id => document.getElementById(id);
-const show = id => { const el=$(id); if(el) el.classList.remove('hidden'); };
-const hide = id => { const el=$(id); if(el) el.classList.add('hidden'); };
-const SwalToast = (title, icon='success', timer=2000) => { return Swal.fire({ title, icon, toast:true, position:'top-end', showConfirmButton:false, timer }); };
-const SwalAlert = (title, html, icon='info') => { return Swal.fire({ title, html, icon }); };
-
-/* Auto-uppercase for inputs with class "upper" */
-document.addEventListener('input', e=>{
-  if(e.target && e.target.classList && e.target.classList.contains('upper')){
-    e.target.value = e.target.value.toUpperCase();
+  function normalizePhoneForKey(v){
+    let s = (v||"").replace(/\s+/g,"").replace(/\D/g,"");
+    if(s.startsWith("0")) s = "62" + s.substring(1);
+    if(!s.startsWith("62")) s = "62" + s;
+    return s;
   }
-});
-
-/* ================ Phone formatting & RT/RW padding ================ */
-function normalizePhoneForKey(v){
-  let s = (v||"").replace(/\s+/g,"").replace(/\D/g,"");
-  if(s.startsWith("0")) s = "62"+s.substring(1);
-  if(!s.startsWith("62")) s = "62"+s;
-  return s; // e.g. "62812..."
-}
-function formatPhoneTyping(el){
-  let raw = el.value.replace(/[^\d\+]/g,"");
-  if(raw.startsWith("+")) {
-    let digits = raw.replace(/\D/g,"");
-    el.value = "+" + digits;
-  } else {
-    el.value = raw;
+  function formatPhoneTyping(el){
+    let raw = el.value.replace(/[^\d\+]/g,"");
+    if(raw.startsWith("+")) { let digits = raw.replace(/\D/g,""); el.value = "+" + digits; } else el.value = raw;
   }
-}
-function padRT(el){
-  let v = (el.value||"").replace(/\D/g,"");
-  v = v.padStart(3,"0");
-  el.value = v;
-}
-function padRW(el){
-  let v = (el.value||"").replace(/\D/g,"");
-  v = v.padStart(3,"0");
-  el.value = v;
-}
-['reg_hp','login_hp'].forEach(id=>{
-  const el = $(id);
-  if(el) { el.addEventListener('blur', ()=>formatPhoneOnBlur(el)); }
-});
-function formatPhoneOnBlur(el){
-  const key = normalizePhoneForKey(el.value);
-  if(!key) { el.value=""; return; }
-  el.value = "+" + key;
-}
+  function padRT(el){ el.value = (el.value||"").replace(/\D/g,"").padStart(3,"0"); }
+  function padRW(el){ el.value = (el.value||"").replace(/\D/g,"").padStart(3,"0"); }
 
-/* ================ Clock ================== */
-function updateClock(){ 
-  const now = new Date(); 
-  $('clock').innerText = now.toLocaleString();
-  setTimeout(updateClock,1000);
-}
+  function updateClock(){ const now = new Date(); $('clock').innerText = now.toLocaleString(); setTimeout(updateClock,1000); }
 
-/* ================ Initialize Chart ================ */
-function initChart() {
-  const ctx = document.getElementById('chartKejadian').getContext('2d');
-  laporanChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: ['Kebakaran','Kemalingan','Medis','Ambulance','Mencurigakan'],
-      datasets: [{ label: 'Jumlah', data: [0,0,0,0,0], backgroundColor: ['#e74c3c','#f39c12','#3498db','#2ecc71','#9b59b6'] }]
-    },
-    options: { responsive:true, maintainAspectRatio:false }
-  });
-}
-
-/* ================ Generate Kode Dusun ================ */
-function generateCode(){
-  return Math.random().toString(36).substring(2,9).toUpperCase();
-}
-
-/* ================ UI: Generate & Save Dusun ================ */
-$('generate_btn').addEventListener('click', ()=>{
-  const code = generateCode();
-  $('dusun_code').value = code;
-  show('kode_group');
-  show('save_dusun_btn');
-});
-
-$('copy_code_btn').addEventListener('click', ()=>{
-  navigator.clipboard.writeText($('dusun_code').value);
-  SwalToast("Kode Dusun disalin!");
-});
-
-$('save_dusun_btn').addEventListener('click', onSaveDusun);
-
-async function onSaveDusun(){
-  const nama=$('dusun_nama').value.trim();
-  const provText = $('dusun_prov_select').selectedOptions[0]?.text || '';
-  const kabText = $('dusun_kab_select').selectedOptions[0]?.text || '';
-  const kecText = $('dusun_kec_select').selectedOptions[0]?.text || '';
-  const desText = $('dusun_des_select').selectedOptions[0]?.text || '';
-  const code=$('dusun_code').value.trim();
-  if(!nama||!code){ SwalAlert("Gagal","Nama & Kode Dusun wajib","error"); return; }
-  if(!currentUser){ SwalAlert("Gagal","Anda harus login sebagai Kepala Dusun terlebih dahulu","error"); return; }
-
-  try{
-    // pastikan kode unik
-    const q = await db.collection('Dusun').where('kode','==',code).get();
-    if(!q.empty){ SwalAlert("Gagal","Kode sudah terpakai. Silakan generate ulang.","error"); return; }
-
-    const now = firebase.firestore.FieldValue.serverTimestamp();
-    const expiresAt = Date.now() + KODE_EXPIRE_MS;
-    const docRef = await db.collection('Dusun').add({
-      nama,
-      provinsi: provText, kabupaten: kabText, kecamatan: kecText, desa: desText,
-      kode: code,
-      kepalaId: currentUser.uid,
-      createdAt: now,
-      kodeExpiresAt: firebase.firestore.Timestamp.fromMillis(expiresAt),
-      active:true
+  function initChart(){
+    const ctx = document.getElementById('chartKejadian').getContext('2d');
+    laporanChart = new Chart(ctx, {
+      type: 'bar',
+      data: { labels: ['Kebakaran','Kemalingan','Medis','Ambulance','Mencurigakan'], datasets: [{ label: 'Jumlah', data: [0,0,0,0,0] }] },
+      options: { responsive:true, maintainAspectRatio:false }
     });
-    currentDusunDoc = { id: docRef.id, data: { nama, kode:code, kodeExpiresAt: expiresAt, provinsi:provText, kabupaten:kabText, kecamatan:kecText, desa:desText } };
-    SwalToast("Dusun tersimpan!");
-    hide('save_dusun_btn');
-    showDusunOnDashboard();
-  }catch(err){
-    SwalAlert("Error", err.message,'error');
-  }
-}
-
-/* ================ Registration ================ */
-async function onRegister(){
-  const nama=$('reg_nama').value.trim();
-  const hp=$('reg_hp').value.trim();
-  const password=$('reg_password').value;
-  const selectedRole = ($('reg_role') && $('reg_role').value) ? $('reg_role').value : 'warga';
-  const kodeDusun = ($('reg_kode').value || '').trim().toUpperCase();
-  const prov = $('reg_prov_select').value ? $('reg_prov_select').selectedOptions[0].text : '';
-  const kab = $('reg_kab_select').value ? $('reg_kab_select').selectedOptions[0].text : '';
-  const kec = $('reg_kec_select').value ? $('reg_kec_select').selectedOptions[0].text : '';
-  const des = $('reg_des_select').value ? $('reg_des_select').selectedOptions[0].text : '';
-  const rt = $('reg_rt').value.trim();
-  const rw = $('reg_rw').value.trim();
-  const alamatFull = $('reg_alamat_lengkap').value.trim();
-  const blok = $('reg_blok').value.trim();
-  const no = $('reg_no').value.trim();
-
-  // VALIDASI: nama, hp, password wajib (Kepala Dusun tidak wajib KODE)
-  if(!nama||!hp||!password){
-    SwalAlert("Error","Lengkapi: Nama, HP, Password","error");
-    return;
-  }
-  if(password.length < 6){ SwalAlert("Error","Password minimal 6 karakter","error"); return; }
-
-  // PERINTAH BARU: hanya role selain kepala_dusun wajib isi kode
-  if(selectedRole !== 'kepala_dusun' && !kodeDusun){
-    SwalAlert("Error","Kode Dusun wajib untuk peran selain Kepala Dusun","error");
-    return;
   }
 
-  try{
-    // Validasi kode dusun (jika role bukan kepala_dusun)
-    let dusunDoc = null;
-    if(selectedRole !== 'kepala_dusun'){
-      const snap = await db.collection('Dusun').where('kode','==',kodeDusun).limit(1).get();
-      if(snap.empty) { SwalAlert("Error","Kode Dusun tidak valid","error"); return; }
-      dusunDoc = snap.docs[0];
-      const dusunData = dusunDoc.data();
-      if(dusunData.kodeExpiresAt && dusunData.kodeExpiresAt.toMillis && dusunData.kodeExpiresAt.toMillis() < Date.now()){
-        SwalAlert("Error","Kode Dusun sudah kadaluarsa. Minta kode baru dari Kepala Dusun","error"); return;
+  /* ==================== REGION DROPDOWNS (EMSIFA API) ==================== */
+  const API_REG = "https://www.emsifa.com/api-wilayah-indonesia/api/";
+  async function loadRegionDropdowns(){
+    try{
+      // provinsi
+      const resProv = await fetch(API_REG + 'provinces.json');
+      const provs = await resProv.json();
+      const dusProv = $('dusun_prov_select');
+      const regProv = $('reg_prov_select');
+      provs.forEach(p => {
+        if(dusProv) dusProv.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+        if(regProv) regProv.innerHTML += `<option value="${p.id}">${p.name}</option>`;
+      });
+
+      // dusun form handlers (dashboard)
+      if($('dusun_prov_select')){
+        $('dusun_prov_select').addEventListener('change', async function(){
+          $('dusun_kab_select').innerHTML = '<option value="">Pilih Kabupaten/Kota</option>';
+          $('dusun_kec_select').innerHTML = '<option value="">Pilih Kecamatan</option>';
+          $('dusun_des_select').innerHTML = '<option value="">Pilih Desa/Kelurahan</option>';
+          if(this.value){
+            const r = await fetch(API_REG + 'regencies/' + this.value + '.json');
+            const ks = await r.json();
+            ks.forEach(k => dusun_kab_select.innerHTML += `<option value="${k.id}">${k.name}</option>`);
+          }
+        });
+        $('dusun_kab_select').addEventListener('change', async function(){
+          $('dusun_kec_select').innerHTML = '<option value="">Pilih Kecamatan</option>';
+          $('dusun_des_select').innerHTML = '<option value="">Pilih Desa/Kelurahan</option>';
+          if(this.value){
+            const r = await fetch(API_REG + 'districts/' + this.value + '.json');
+            const ks = await r.json();
+            ks.forEach(k => dusun_kec_select.innerHTML += `<option value="${k.id}">${k.name}</option>`);
+          }
+        });
+        $('dusun_kec_select').addEventListener('change', async function(){
+          $('dusun_des_select').innerHTML = '<option value="">Pilih Desa/Kelurahan</option>';
+          if(this.value){
+            const r = await fetch(API_REG + 'villages/' + this.value + '.json');
+            const ks = await r.json();
+            ks.forEach(k => dusun_des_select.innerHTML += `<option value="${k.id}">${k.name}</option>`);
+          }
+        });
       }
+
+      // register form handlers
+      if($('reg_prov_select')){
+        $('reg_prov_select').addEventListener('change', async function(){
+          $('reg_kab_select').innerHTML = '<option value="">Pilih Kabupaten/Kota</option>';
+          $('reg_kec_select').innerHTML = '<option value="">Pilih Kecamatan</option>';
+          $('reg_des_select').innerHTML = '<option value="">Pilih Desa/Kelurahan</option>';
+          if(this.value){
+            const r = await fetch(API_REG + 'regencies/' + this.value + '.json');
+            const ks = await r.json();
+            ks.forEach(k => reg_kab_select.innerHTML += `<option value="${k.id}">${k.name}</option>`);
+          }
+        });
+        $('reg_kab_select').addEventListener('change', async function(){
+          $('reg_kec_select').innerHTML = '<option value="">Pilih Kecamatan</option>';
+          $('reg_des_select').innerHTML = '<option value="">Pilih Desa/Kelurahan</option>';
+          if(this.value){
+            const r = await fetch(API_REG + 'districts/' + this.value + '.json');
+            const ks = await r.json();
+            ks.forEach(k => reg_kec_select.innerHTML += `<option value="${k.id}">${k.name}</option>`);
+          }
+        });
+        $('reg_kec_select').addEventListener('change', async function(){
+          $('reg_des_select').innerHTML = '<option value="">Pilih Desa/Kelurahan</option>';
+          if(this.value){
+            const r = await fetch(API_REG + 'villages/' + this.value + '.json');
+            const ks = await r.json();
+            ks.forEach(k => reg_des_select.innerHTML += `<option value="${k.id}">${k.name}</option>`);
+          }
+        });
+      }
+    }catch(e){
+      console.warn('Gagal muat wilayah', e);
     }
+  }
 
-    // Cek duplikat nomor HP
-    const norm = normalizePhoneForKey(hp);
-    const dup = await db.collection('Warga').where('phone','==',norm).limit(1).get();
-    if(!dup.empty){ SwalAlert("Error","Nomor HP ini sudah terdaftar","error"); return; }
+  /* ==================== REGISTER (without kodeDusun) ==================== */
+  async function onRegister(){
+    const nama = $('reg_nama').value.trim();
+    const hp = $('reg_hp').value.trim();
+    const password = $('reg_password').value;
+    const role = $('reg_role').value || 'warga';
+    const prov = $('reg_prov_select').selectedOptions[0]?.text || '';
+    const kab = $('reg_kab_select').selectedOptions[0]?.text || '';
+    const kec = $('reg_kec_select').selectedOptions[0]?.text || '';
+    const des = $('reg_des_select').selectedOptions[0]?.text || '';
+    const rt = $('reg_rt').value.trim();
+    const rw = $('reg_rw').value.trim();
+    const alamatFull = $('reg_alamat_lengkap').value.trim();
+    const blok = $('reg_blok').value.trim();
+    const no = $('reg_no').value.trim();
 
-    // Buat akun di Firebase Auth (email panggilan)
-    const fakeEmail = norm + "@dusun.fake";
-    const userCred = await auth.createUserWithEmailAndPassword(fakeEmail, password);
-    const uid = userCred.user.uid;
+    if(!nama || !hp || !password){ Err("Lengkapi: Nama, HP, Password"); return; }
+    if(password.length < 6){ Err("Password minimal 6 karakter"); return; }
 
-    // Simpan data Warga — jika kepala_dusun, simpan kodeDusun = null
-    await db.collection('Warga').doc(uid).set({
-      nama, phone: norm, role: selectedRole, status: 'pending',
-      kodeDusun: (selectedRole === 'kepala_dusun' ? null : kodeDusun),
-      provinsi: prov, kabupaten: kab, kecamatan: kec, desa: des,
-      rt, rw, alamat: alamatFull, blok, no,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    try{
+      const norm = normalizePhoneForKey(hp);
+      const dup = await db.collection('Warga').where('phone','==',norm).limit(1).get();
+      if(!dup.empty){ Err("Nomor HP sudah terdaftar"); return; }
+
+      const fakeEmail = norm + "@dusun.fake";
+      // create user
+      const userCred = await auth.createUserWithEmailAndPassword(fakeEmail, password);
+      // sign in immediately to ensure permissions for writes
+      await auth.signInWithEmailAndPassword(fakeEmail, password);
+
+      const uid = userCred.user.uid;
+      await db.collection('Warga').doc(uid).set({
+        nama,
+        phone: norm,
+        role,
+        status: 'pending',
+        kodeDusun: null, // default belum bergabung
+        provinsi: prov,
+        kabupaten: kab,
+        kecamatan: kec,
+        desa: des,
+        rt, rw, alamat: alamatFull, blok, no,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      Toast("Pendaftaran berhasil! Silakan login jika belum otomatis masuk.");
+      clearRegister();
+    }catch(err){
+      Err(err.message || String(err));
+    }
+  }
+
+  function clearRegister(){
+    ['reg_nama','reg_hp','reg_password','reg_role','reg_rt','reg_rw','reg_alamat_lengkap','reg_blok','reg_no'].forEach(id=>{
+      const el = $(id); if(el) el.value = '';
     });
-
-    SwalToast("Pendaftaran berhasil! Menunggu verifikasi Kepala Keluarga.");
-    clearRegister();
-  }catch(err){
-    SwalAlert("Error", err.message,'error');
   }
-}
 
-function clearRegister(){
-  ['reg_nama','reg_hp','reg_password','reg_role','reg_prov_select','reg_kab_select','reg_kec_select','reg_des_select','reg_rt','reg_rw','reg_alamat_lengkap','reg_blok','reg_no','reg_kode'].forEach(id=>{
-    const el=$(id); if(el) el.value='';
-  });
-}
-
-/* ================ Login ================== */
-async function onLogin(){
-  const hp=$('login_hp').value.trim();
-  const password=$('login_pass').value;
-  if(!hp||!password){ SwalAlert("Error","Nomor HP & password wajib","error"); return; }
-
-  try{
-    const norm = normalizePhoneForKey(hp);
-    const fakeEmail = norm + "@dusun.fake";
-
-    await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-    const userCred = await auth.signInWithEmailAndPassword(fakeEmail, password);
-    currentUser = userCred.user;
-    localStorage.setItem('userUID', currentUser.uid);
-    SwalToast("Login berhasil!");
-    await loadUserProfile();
-    showDashboard();
-  }catch(err){
-    SwalAlert("Error", err.message,'error');
-  }
-}
-
-/* ================ Load User Profile ================== */
-async function loadUserProfile(){
-  if(!auth.currentUser) return;
-  const uid = auth.currentUser.uid;
-  const doc = await db.collection('Warga').doc(uid).get();
-  if(!doc.exists){
-    SwalToast("Profile belum lengkap. Silakan lengkapi data.");
-    return;
-  }
-  currentWargaDoc = { id: doc.id, data: doc.data() };
-  currentUser = auth.currentUser;
-  // load dusun doc
-  if(currentWargaDoc.data.kodeDusun){
-    const q = await db.collection('Dusun').where('kode','==', currentWargaDoc.data.kodeDusun).limit(1).get();
-    if(!q.empty) currentDusunDoc = { id: q.docs[0].id, data: q.docs[0].data() };
-  }
-}
-
-/* ================ Auth state listener & Auto login ================ */
-auth.onAuthStateChanged(async (u) => {
-  if(u){
-    currentUser = u;
-    await loadUserProfile();
-    showDashboard();
-  } else {
-    currentUser = null;
-    currentWargaDoc = null;
-    currentDusunDoc = null;
-    showAuth();
-  }
-});
-
-window.addEventListener('load', async ()=>{
-  updateClock();
-  initChart();
-  // Initialize dropdowns for regions (both Dusun form and Register form)
-  await loadRegionDropdowns();
-  // Auto-login fallback by UID
-  const savedUID = localStorage.getItem('userUID');
-  if(savedUID && !auth.currentUser){
-    try {
-      const doc = await db.collection('Warga').doc(savedUID).get();
-      if(doc.exists) currentWargaDoc = { id: doc.id, data: doc.data() };
-    } catch(e){ console.warn(e); }
-  }
-});
-
-/* ================ Show/Hide UI ================== */
-function showAuth(){ show('authCard'); hide('dashboardCard'); }
-function showDashboard(){ hide('authCard'); show('dashboardCard'); updateClock(); renderRoleUI(); }
-function renderRoleUI(){
-  $('display_name').innerText = currentWargaDoc?.data?.nama || (currentUser && currentUser.email) || 'Pengguna';
-  $('display_role').innerText = (currentWargaDoc?.data?.role || 'warga').toUpperCase();
-  $('btnLogout').onclick = onLogout;
-  const role = currentWargaDoc?.data?.role || 'warga';
-  if(role === 'kepala_dusun'){
-    show('kodeDashboard'); show('adminPanel'); show('kkPanel');
-    renderDusunAdmin();
-  } else {
-    hide('kodeDashboard'); hide('adminPanel');
-  }
-  if(role === 'kk' || role === 'kepala_dusun'){
-    show('kkPanel'); loadPending();
-  } else {
-    hide('kkPanel');
-  }
-  if(currentDusunDoc && currentDusunDoc.data){
-    showDusunDetails();
-    subscribeReportsForDusun(currentDusunDoc.data.kode);
-    loadPos();
-  } else {
-    $('listReports').innerHTML = '<div class="muted">Belum terhubung dengan dusun manapun.</div>';
-    updateChartCounts({});
-  }
-}
-
-/* ================ Logout ================== */
-async function onLogout(){ await auth.signOut(); localStorage.removeItem('userUID'); currentUser=null; currentWargaDoc=null; currentDusunDoc=null; SwalToast("Logout berhasil"); showAuth(); }
-
-/* ================ Dusun admin render ================== */
-function showDusunOnDashboard(){
-  if(currentDusunDoc && currentDusunDoc.data){
-    $('display_code').innerText = currentDusunDoc.data.kode || '';
-    const expires = currentDusunDoc.data.kodeExpiresAt && currentDusunDoc.data.kodeExpiresAt.toMillis ? currentDusunDoc.data.kodeExpiresAt.toMillis() : (currentDusunDoc.data.kodeExpiresAt || (Date.now() + KODE_EXPIRE_MS));
-    startKodeCountdown(expires);
-  }
-}
-function renderDusunAdmin(){
-  if(!currentDusunDoc || !currentDusunDoc.data) { $('dusunInfo').innerHTML = '<div class="muted">Belum ada data dusun yang Anda pimpin.</div>'; return; }
-  const d = currentDusunDoc.data;
-  $('dusunInfo').innerHTML = `<div><strong>${d.nama}</strong> (${d.provinsi||''} / ${d.kabupaten||''})</div><div class="muted small">Kode: ${d.kode}</div>`;
-  $('display_code').innerText = d.kode || '';
-  showDusunOnDashboard();
-}
-
-/* ================ Kode Countdown ================ */
-function startKodeCountdown(expiresAtMs){
-  if(kodeInterval) clearInterval(kodeInterval);
-  function update(){
-    const diff = expiresAtMs - Date.now();
-    if(diff <= 0){
-      $('display_countdown').innerText = 'KADALUARSA';
-      clearInterval(kodeInterval);
-    } else {
-      const h = Math.floor(diff/3600000);
-      const m = Math.floor((diff%3600000)/60000);
-      const s = Math.floor((diff%60000)/1000);
-      $('display_countdown').innerText = `${h}h ${m}m ${s}s`;
+  /* ==================== AUTH / LOGIN ==================== */
+  async function onLogin(){
+    const hp = $('login_hp').value.trim();
+    const pass = $('login_pass').value;
+    if(!hp || !pass){ Err("Nomor HP & password wajib"); return; }
+    try{
+      const norm = normalizePhoneForKey(hp);
+      const fakeEmail = norm + "@dusun.fake";
+      await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+      const userCred = await auth.signInWithEmailAndPassword(fakeEmail, pass);
+      currentUser = userCred.user;
+      await loadUserProfile();
+      Toast("Login berhasil");
+      showDashboard();
+    }catch(err){
+      Err(err.message || String(err));
     }
   }
-  update();
-  kodeInterval = setInterval(update,1000);
-}
 
-/* ================ Regenerate & expire kode (admin) ================ */
-async function regenerateCode(){
-  if(!currentDusunDoc || !currentDusunDoc.id) return;
-  const newCode = generateCode();
-  const expires = Date.now() + KODE_EXPIRE_MS;
-  await db.collection('Dusun').doc(currentDusunDoc.id).update({ kode: newCode, kodeExpiresAt: firebase.firestore.Timestamp.fromMillis(expires) });
-  const d = await db.collection('Dusun').doc(currentDusunDoc.id).get();
-  currentDusunDoc.data = d.data();
-  SwalToast("Kode di-regenerate");
-  renderDusunAdmin();
-}
-async function expireCodeNow(){
-  if(!currentDusunDoc || !currentDusunDoc.id) return;
-  await db.collection('Dusun').doc(currentDusunDoc.id).update({ kodeExpiresAt: firebase.firestore.Timestamp.fromMillis(Date.now()-1000) });
-  currentDusunDoc.data.kodeExpiresAt = Date.now()-1000;
-  SwalToast("Kode di-expire sekarang");
-  renderDusunAdmin();
-}
-
-/* ================ Pending: KK Approve/Reject ================== */
-async function loadPending(){
-  if(!currentDusunDoc || !currentDusunDoc.data) { $('pendingList').innerHTML = '<div class="muted">Tidak ada dusun</div>'; return; }
-  const kode = currentDusunDoc.data.kode;
-  const snap = await db.collection('Warga').where('kodeDusun','==',kode).where('status','==','pending').get();
-  const container = $('pendingList'); container.innerHTML = '';
-  if(snap.empty) { container.innerHTML = '<div class="muted">Tidak ada pendaftar pending.</div>'; return; }
-  snap.forEach(doc=>{
-    const d = doc.data();
-    const div = document.createElement('div');
-    div.className = 'd-flex justify-content-between align-items-center mb-2';
-    div.innerHTML = `<div><strong>${d.nama}</strong><div class="muted small">${d.phone} · ${d.desa || ''} · RT ${d.rt||'-'}/RW ${d.rw||'-'}</div></div>
-      <div>
-        <button class="btn btn-success btn-sm me-2" onclick="approveUser('${doc.id}')">Setujui</button>
-        <button class="btn btn-danger btn-sm" onclick="rejectUser('${doc.id}')">Tolak</button>
-      </div>`;
-    container.appendChild(div);
-  });
-}
-async function approveUser(uid){
-  if(!currentWargaDoc || !currentDusunDoc) return;
-  await db.collection('Warga').doc(uid).update({ status: 'aktif', approvedBy: currentWargaDoc.id, approvedAt: firebase.firestore.FieldValue.serverTimestamp() });
-  SwalToast("Warga disetujui");
-  loadPending();
-}
-async function rejectUser(uid){
-  await db.collection('Warga').doc(uid).update({ status: 'rejected', rejectedBy: currentWargaDoc.id, rejectedAt: firebase.firestore.FieldValue.serverTimestamp() });
-  SwalToast("Pendaftar ditolak");
-  loadPending();
-}
-
-/* ================ Reports (Laporan SOS) ================== */
-async function sendReport(){
-  if(!currentWargaDoc){ SwalAlert("Error","Anda harus login","error"); return; }
-  if(currentWargaDoc.data.status !== 'aktif'){ SwalAlert("Error","Akun Anda belum aktif (menunggu verifikasi KK)","error"); return; }
-  const jenis = $('lap_jenis').value;
-  const lokasiOpt = $('lap_loc_opt').value;
-  const lokasiDesc = $('lap_lokasi').value.trim();
-  const dusunCode = currentWargaDoc.data.kodeDusun || (currentDusunDoc && currentDusunDoc.data && currentDusunDoc.data.kode);
-  let lat = null, lng = null;
-  if(lokasiOpt === 'saat_ini' && navigator.geolocation){
-    try {
-      const pos = await new Promise((res,rej)=> navigator.geolocation.getCurrentPosition(res,rej,{ timeout: 8000 }));
-      lat = pos.coords.latitude; lng = pos.coords.longitude;
-    } catch(e) { console.warn("GPS denied or failed", e); }
+  async function loadUserProfile(){
+    if(!auth.currentUser) return;
+    const uid = auth.currentUser.uid;
+    const doc = await db.collection('Warga').doc(uid).get();
+    if(doc.exists){
+      currentWargaDoc = { id: doc.id, data: doc.data() };
+      // if user already has kodeDusun, pre-load currentDusunDoc
+      if(currentWargaDoc.data.kodeDusun){
+        const q = await db.collection('Dusun').where('kode','==', currentWargaDoc.data.kodeDusun).limit(1).get();
+        if(!q.empty) currentDusunDoc = { id: q.docs[0].id, data: q.docs[0].data() };
+      } else {
+        currentDusunDoc = null;
+      }
+    } else {
+      currentWargaDoc = null;
+      currentDusunDoc = null;
+    }
   }
-  try{
-    await db.collection('Laporan').add({ jenis, lokasiDeskripsi: lokasiDesc || null, lat, lng, dusunCode: dusunCode || null, userId: currentWargaDoc.id, createdAt: firebase.firestore.FieldValue.serverTimestamp(), status: 'open' });
-    SwalToast("Laporan terkirim!");
-  }catch(err){ SwalAlert("Error", err.message,'error'); }
-}
 
-/* ================ Subscribe Reports for Dusun (realtime) ================== */
-let laporanUnsub = null;
-function subscribeReportsForDusun(kodeDusun){
-  if(laporanUnsub) laporanUnsub();
-  if(!kodeDusun) { updateChartCounts({}); return; }
-  laporanUnsub = db.collection('Laporan').where('dusunCode','==',kodeDusun).orderBy('createdAt','desc').onSnapshot(snapshot=>{
-    const arr = [];
-    snapshot.forEach(doc=> arr.push({ id:doc.id, data: doc.data() }));
-    renderReports(arr);
-    const counts = {}; arr.forEach(r => counts[r.data.jenis] = (counts[r.data.jenis]||0) + 1);
-    updateChartCounts(counts);
+  auth.onAuthStateChanged(async (u) => {
+    if(u){
+      currentUser = u;
+      await loadUserProfile();
+      showDashboard();
+    } else {
+      currentUser = null;
+      currentWargaDoc = null;
+      currentDusunDoc = null;
+      showAuth();
+    }
   });
-}
-function renderReports(arr){
-  const container = $('listReports'); container.innerHTML = '';
-  if(!arr.length) { container.innerHTML = '<div class="muted">Belum ada laporan.</div>'; return; }
-  arr.forEach(r=>{
-    const d = r.data;
-    const el = document.createElement('div'); el.className = 'mb-2 p-2 border rounded';
-    const time = d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleString() : '-';
-    el.innerHTML = `<div><strong>${d.jenis}</strong> <span class="muted small">· ${time}</span></div><div class="muted small">${d.lokasiDeskripsi||''} ${d.lat ? `<br>Lat:${d.lat.toFixed(5)} Lng:${d.lng.toFixed(5)}` : ''}</div>`;
-    container.appendChild(el);
-  });
-}
 
-/* ================ Chart update ================== */
-function updateChartCounts(counts){
-  const labels = ['Kebakaran','Kemalingan','Medis','Ambulance','Mencurigakan'];
-  const data = labels.map(l => counts[l] || 0);
-  if(laporanChart){ laporanChart.data.datasets[0].data = data; laporanChart.update(); }
-}
+  function showAuth(){ show('authCard'); hide('dashboardCard'); }
+  function showDashboard(){ hide('authCard'); show('dashboardCard'); updateClock(); renderRoleUI(); }
 
-/* ================ Pos Jaga (Map) ================ */
-async function promptAddPos(){
-  if(!currentWargaDoc){ SwalAlert("Error","Anda harus login terlebih dahulu","error"); return; }
-  const role = currentWargaDoc.data.role;
-  if(role !== 'kepala_dusun' && role !== 'kk'){ SwalAlert("Akses Ditolak","Hanya Kepala Dusun/KK yang boleh menambah pos","error"); return; }
-  const { value: formValues } = await Swal.fire({
-    title: 'Tambah Pos Jaga',
-    html: '<input id="swal-nama" class="swal2-input" placeholder="Nama Pos">' +
-          '<input id="swal-lat" class="swal2-input" placeholder="Latitude (opsional)">' +
-          '<input id="swal-lng" class="swal2-input" placeholder="Longitude (opsional)">',
-    focusConfirm: false,
-    preConfirm: () => ({ nama: document.getElementById('swal-nama').value, lat: document.getElementById('swal-lat').value, lng: document.getElementById('swal-lng').value })
-  });
-  if(!formValues || !formValues.nama) return;
-  try{
-    await db.collection('PosDusun').add({ nama: formValues.nama, lat: formValues.lat ? parseFloat(formValues.lat) : null, lng: formValues.lng ? parseFloat(formValues.lng) : null, dusunCode: currentDusunDoc.data.kode, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-    SwalToast("Pos ditambahkan");
-    loadPos();
-  }catch(e){ SwalAlert("Error", e.message,'error'); }
-}
-async function loadPos(){
-  if(!currentDusunDoc || !currentDusunDoc.data) { $('listPos').innerHTML = '<div class="muted">Belum ada pos.</div>'; return; }
-  const snap = await db.collection('PosDusun').where('dusunCode','==', currentDusunDoc.data.kode).get();
-  const list = $('listPos'); list.innerHTML = '';
-  snap.forEach(doc=>{
-    const d = doc.data();
-    const el = document.createElement('div'); el.className = 'p-2 border rounded mb-2';
-    el.innerHTML = `<div><strong>${d.nama}</strong></div><div class="muted small">${d.lat||'-'}, ${d.lng||'-'}</div>`;
-    list.appendChild(el);
-  });
-  // Maps
-  if(window.google && mapObj === null){
-    try { mapObj = new google.maps.Map(document.getElementById('map'), { center: {lat:-2.0, lng:117.0}, zoom: 5 }); } catch(e){ console.warn(e); }
+  /* ==================== RENDER DASHBOARD / ROLE UI ==================== */
+  function renderRoleUI(){
+    $('display_name').innerText = currentWargaDoc?.data?.nama || 'Pengguna';
+    $('display_role').innerText = (currentWargaDoc?.data?.role || 'warga').toUpperCase();
+
+    const role = currentWargaDoc?.data?.role || 'warga';
+
+    // If user not yet joined a dusun -> show only join panel and hide all other data
+    if(!currentWargaDoc?.data?.kodeDusun){
+      show('joinDusunPanel');
+      hide('kepalaDusunInfo');
+      hide('buatDusunPanel');
+      // hide content panels
+      $('listReports').innerHTML = '<div class="muted">Belum terhubung ke dusun. Masukkan kode dusun pada panel "Masukkan Kode Dusun".</div>';
+      // ensure other panels are not showing sensitive content
+      return;
+    }
+
+    // user joined dusun -> load dusun data
+    hide('joinDusunPanel');
+
+    // if user is kepala_dusun -> show create/manage dusun panel
+    if(role === 'kepala_dusun'){
+      show('buatDusunPanel');
+      // pre-fill dusun region selects if needed
+      // Also load any dusun doc where kepalaId == currentUser.uid if exists
+      loadDusunOwnedByUser();
+    } else {
+      hide('buatDusunPanel');
+    }
+
+    // load reports/pos etc for this dusun
+    if(currentDusunDoc && currentDusunDoc.data){
+      showDusunDetails();
+      subscribeReportsForDusun(currentDusunDoc.data.kode);
+      loadPos();
+      if(currentDusunDoc.data.kepalaId) loadKepalaDusunInfo(currentDusunDoc.data.kepalaId);
+    } else {
+      // try to fetch dusun doc by kode
+      (async ()=>{
+        try{
+          const k = currentWargaDoc.data.kodeDusun;
+          const q = await db.collection('Dusun').where('kode','==',k).limit(1).get();
+          if(!q.empty) {
+            currentDusunDoc = { id: q.docs[0].id, data: q.docs[0].data() };
+            showDusunDetails();
+            subscribeReportsForDusun(currentDusunDoc.data.kode);
+            loadPos();
+            if(currentDusunDoc.data.kepalaId) loadKepalaDusunInfo(currentDusunDoc.data.kepalaId);
+          } else {
+            $('listReports').innerHTML = '<div class="muted">Dusun tidak ditemukan (kode mungkin salah).</div>';
+          }
+        }catch(e){
+          console.warn(e);
+        }
+      })();
+    }
   }
-  posMarkers.forEach(m=>m.setMap(null)); posMarkers = [];
-  if(window.google && mapObj){
+
+  /* ==================== JOIN DUSUN (dashboard) ==================== */
+  async function joinDusun(){
+    const kode = $('joinKodeDusun').value.trim().toUpperCase();
+    if(!kode){ Err("Masukkan kode dusun"); return; }
+    try{
+      const snap = await db.collection('Dusun').where('kode','==',kode).limit(1).get();
+      if(snap.empty){ Err("Kode dusun tidak ditemukan"); return; }
+      const dusunDoc = snap.docs[0];
+      // update warga doc with kodeDusun
+      await db.collection('Warga').doc(currentWargaDoc.id).update({ kodeDusun: kode });
+      currentWargaDoc.data.kodeDusun = kode;
+      currentDusunDoc = { id: dusunDoc.id, data: dusunDoc.data() };
+      Toast("Berhasil bergabung ke dusun");
+      renderRoleUI();
+    }catch(e){
+      Err(e.message || String(e));
+    }
+  }
+
+  /* ==================== DUSUN: Generate & Save (Kepala Dusun) ==================== */
+  function onGenerateCode(){
+    const code = Math.random().toString(36).substring(2,9).toUpperCase();
+    $('dusun_code').value = code;
+    $('kode_group').classList.remove('hidden');
+    $('save_dusun_btn').classList.remove('hidden');
+  }
+  function copyDusunCode(){
+    const v = $('dusun_code').value || '';
+    if(!v) return;
+    navigator.clipboard.writeText(v).then(()=>Toast("Kode disalin"));
+  }
+
+  async function onSaveDusun(){
+    const nama = $('dusun_nama').value.trim();
+    const provText = $('dusun_prov_select').selectedOptions[0]?.text || '';
+    const kabText = $('dusun_kab_select').selectedOptions[0]?.text || '';
+    const kecText = $('dusun_kec_select').selectedOptions[0]?.text || '';
+    const desText = $('dusun_des_select').selectedOptions[0]?.text || '';
+    const code = $('dusun_code').value.trim();
+    if(!nama || !code){ Err("Nama & kode dusun wajib"); return; }
+    try{
+      // ensure code unique
+      const q = await db.collection('Dusun').where('kode','==',code).get();
+      if(!q.empty){ Err("Kode sudah terpakai, generate ulang"); return; }
+      const now = firebase.firestore.FieldValue.serverTimestamp();
+      const expiresAt = firebase.firestore.Timestamp.fromMillis(Date.now() + (24*60*60*1000));
+      const docRef = await db.collection('Dusun').add({
+        nama,
+        provinsi: provText,
+        kabupaten: kabText,
+        kecamatan: kecText,
+        desa: desText,
+        kode: code,
+        kepalaId: currentUser.uid,
+        createdAt: now,
+        kodeExpiresAt: expiresAt,
+        active: true
+      });
+      // set user's kodeDusun automatically to the created code
+      await db.collection('Warga').doc(currentWargaDoc.id).update({ kodeDusun: code });
+      currentWargaDoc.data.kodeDusun = code;
+      currentDusunDoc = { id: docRef.id, data: { nama, provinsi:provText, kabupaten:kabText, kecamatan:kecText, desa:desText, kode:code, kepalaId: currentUser.uid } };
+      Toast("Dusun dibuat dan Anda sekarang menjadi kepala dusun");
+      renderRoleUI();
+    }catch(e){
+      Err(e.message || String(e));
+    }
+  }
+
+  async function loadDusunOwnedByUser(){
+    try{
+      const snap = await db.collection('Dusun').where('kepalaId','==',currentUser.uid).limit(1).get();
+      if(!snap.empty){
+        currentDusunDoc = { id: snap.docs[0].id, data: snap.docs[0].data() };
+        // show code and countdown
+        $('dusun_code').value = currentDusunDoc.data.kode || '';
+        $('kode_group').classList.remove('hidden');
+        $('save_dusun_btn').classList.add('hidden');
+      }
+    }catch(e){ console.warn(e); }
+  }
+
+  /* ==================== Kepala Dusun Info ==================== */
+  async function loadKepalaDusunInfo(kepalaId){
+    try{
+      const doc = await db.collection('Warga').doc(kepalaId).get();
+      if(doc.exists){
+        const data = doc.data();
+        let alamat = "";
+        if(data.alamat) alamat += data.alamat + ", ";
+        if(data.blok) alamat += "Blok " + data.blok + " ";
+        if(data.no) alamat += "No. " + data.no + ", ";
+        alamat += `RT ${data.rt || '-'} / RW ${data.rw || '-'}, ${data.desa || ''}, ${data.kecamatan || ''}, ${data.kabupaten || ''}, ${data.provinsi || ''}`;
+        $('kepalaDusunDetail').innerHTML = `<div><strong>${data.nama || '-'}</strong></div><div class="small">${alamat}</div><div class="small">HP: ${data.phone || '-'}</div>`;
+        show('kepalaDusunInfo');
+      } else {
+        $('kepalaDusunDetail').innerText = "Data kepala dusun tidak ditemukan.";
+        show('kepalaDusunInfo');
+      }
+    }catch(e){
+      console.warn(e);
+    }
+  }
+
+  /* ==================== Laporan ==================== */
+  async function sendReport(){
+    if(!currentWargaDoc){ Err("Anda harus login"); return; }
+    if(currentWargaDoc.data.status !== 'aktif' && currentWargaDoc.data.status !== 'pending'){ /* still allow */ }
+    if(!currentWargaDoc.data.kodeDusun){ Err("Anda harus bergabung dengan dusun terlebih dahulu"); return; }
+    const jenis = $('lap_jenis').value;
+    const lokasiOpt = $('lap_loc_opt').value;
+    const lokasiDesc = $('lap_lokasi').value.trim();
+    let lat = null, lng = null;
+    if(lokasiOpt === 'saat_ini' && navigator.geolocation){
+      try{
+        const pos = await new Promise((res,rej) => navigator.geolocation.getCurrentPosition(res,rej,{ timeout:8000 }));
+        lat = pos.coords.latitude; lng = pos.coords.longitude;
+      }catch(e){ console.warn("GPS denied/failed", e); }
+    }
+    try{
+      await db.collection('Laporan').add({
+        jenis,
+        lokasiDeskripsi: lokasiDesc || null,
+        lat, lng,
+        dusunCode: currentWargaDoc.data.kodeDusun || null,
+        userId: currentWargaDoc.id,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        status: 'open'
+      });
+      Toast("Laporan terkirim");
+    }catch(e){ Err(e.message || String(e)); }
+  }
+
+  /* ==================== Subscribe Reports (realtime) ==================== */
+  let laporanUnsub = null;
+  function subscribeReportsForDusun(kodeDusun){
+    if(laporanUnsub) laporanUnsub();
+    if(!kodeDusun) { updateChartCounts({}); return; }
+    laporanUnsub = db.collection('Laporan').where('dusunCode','==',kodeDusun).orderBy('createdAt','desc').onSnapshot(snapshot=>{
+      const arr = [];
+      snapshot.forEach(doc=> arr.push({ id: doc.id, data: doc.data() }));
+      renderReports(arr);
+      const counts = {}; arr.forEach(r => counts[r.data.jenis] = (counts[r.data.jenis]||0) + 1);
+      updateChartCounts(counts);
+    });
+  }
+
+  function renderReports(arr){
+    const container = $('listReports'); container.innerHTML = '';
+    if(!arr.length){ container.innerHTML = '<div class="muted">Belum ada laporan.</div>'; return; }
+    arr.forEach(r => {
+      const d = r.data;
+      const time = d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleString() : '-';
+      const el = document.createElement('div'); el.className = 'mb-2 p-2 border rounded';
+      el.innerHTML = `<div><strong>${d.jenis}</strong> <span class="muted small">· ${time}</span></div><div class="muted small">${d.lokasiDeskripsi || ''}${d.lat ? `<br>Lat:${d.lat.toFixed(5)} Lng:${d.lng.toFixed(5)}` : ''}</div>`;
+      container.appendChild(el);
+    });
+  }
+
+  function updateChartCounts(counts){
+    const labels = ['Kebakaran','Kemalingan','Medis','Ambulance','Mencurigakan'];
+    const data = labels.map(l => counts[l] || 0);
+    if(laporanChart){ laporanChart.data.datasets[0].data = data; laporanChart.update(); }
+  }
+
+  /* ==================== Pos Dusun (map) ==================== */
+  async function promptAddPos(){
+    if(!currentWargaDoc){ Err("Login dulu"); return; }
+    const role = currentWargaDoc.data.role;
+    if(role !== 'kepala_dusun' && role !== 'ketua_rt' && role !== 'ketua_rw'){ Err("Hanya Kepala Dusun/RT/RW yang boleh menambah pos"); return; }
+
+    const { value: formValues } = await Swal.fire({
+      title: 'Tambah Pos Jaga',
+      html: '<input id="swal-nama" class="swal2-input" placeholder="Nama Pos">' +
+            '<input id="swal-lat" class="swal2-input" placeholder="Latitude (opsional)">' +
+            '<input id="swal-lng" class="swal2-input" placeholder="Longitude (opsional)">',
+      focusConfirm: false,
+      preConfirm: () => ({
+        nama: document.getElementById('swal-nama')?.value,
+        lat: document.getElementById('swal-lat')?.value,
+        lng: document.getElementById('swal-lng')?.value
+      })
+    });
+    if(!formValues || !formValues.nama) return;
+    try{
+      await db.collection('PosDusun').add({
+        nama: formValues.nama,
+        lat: formValues.lat ? parseFloat(formValues.lat) : null,
+        lng: formValues.lng ? parseFloat(formValues.lng) : null,
+        dusunCode: currentDusunDoc.data.kode,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      Toast("Pos ditambahkan");
+      loadPos();
+    }catch(e){ Err(e.message || String(e)); }
+  }
+
+  async function loadPos(){
+    if(!currentDusunDoc || !currentDusunDoc.data) { $('listPos').innerHTML = '<div class="muted">Belum ada pos.</div>'; return; }
+    const snap = await db.collection('PosDusun').where('dusunCode','==', currentDusunDoc.data.kode).get();
+    const list = $('listPos'); list.innerHTML = '';
     snap.forEach(doc=>{
       const d = doc.data();
-      if(d.lat && d.lng){
-        const mk = new google.maps.Marker({ position: { lat: d.lat, lng: d.lng }, map: mapObj, title: d.nama });
-        posMarkers.push(mk);
+      const el = document.createElement('div'); el.className = 'p-2 border rounded mb-2';
+      el.innerHTML = `<div><strong>${d.nama}</strong></div><div class="muted small">${d.lat||'-'}, ${d.lng||'-'}</div>`;
+      list.appendChild(el);
+    });
+    // map markers (optional if Google Maps loaded)
+    try{
+      if(window.google && !mapObj){
+        mapObj = new google.maps.Map(document.getElementById('map'), { center: { lat: -2.0, lng: 117.0 }, zoom: 5 });
       }
-    });
-    if(posMarkers[0]) mapObj.setCenter(posMarkers[0].getPosition());
+      posMarkers.forEach(m=>m.setMap(null)); posMarkers = [];
+      if(window.google && mapObj){
+        snap.forEach(doc=>{
+          const d = doc.data();
+          if(d.lat && d.lng){
+            const mk = new google.maps.Marker({ position: { lat: d.lat, lng: d.lng }, map: mapObj, title: d.nama });
+            posMarkers.push(mk);
+          }
+        });
+        if(posMarkers[0]) mapObj.setCenter(posMarkers[0].getPosition());
+      }
+    }catch(e){ /* ignore */ }
   }
-}
 
-/* ================ Utility: show Dusun details ================ */
-function showDusunDetails(){
-  if(!currentDusunDoc || !currentDusunDoc.data) return;
-  $('listReports').innerHTML = '<div class="muted">Memuat laporan...</div>';
-  $('dusunInfo') && ( $('dusunInfo').innerHTML = `<div><strong>${currentDusunDoc.data.nama}</strong> · Kode: ${currentDusunDoc.data.kode}</div>` );
-  if((currentWargaDoc.data.role === 'kk' || currentWargaDoc.data.role === 'kepala_dusun')) loadPending();
-}
+  /* ==================== Misc / Init ==================== */
+  async function showDusunDetails(){
+    if(!currentDusunDoc || !currentDusunDoc.data) return;
+    $('listReports').innerHTML = '<div class="muted">Memuat laporan...</div>';
+    $('kepalaDusunInfo') && ( $('kepalaDusunDetail').innerHTML = 'Memuat data kepala dusun...' );
+  }
 
-/* ================ Toggle lokasi input ================ */
-function toggleLokasiInput(){ const val = $('lap_loc_opt').value; if(val === 'lainnya') $('lap_lokasi').classList.remove('hidden'); else $('lap_lokasi').classList.add('hidden'); }
+  async function onLogout(){
+    await auth.signOut();
+    currentUser = null; currentWargaDoc = null; currentDusunDoc = null;
+    Toast("Logout berhasil");
+    showAuth();
+  }
 
-/* ================================================== */
-/* ================ REGION DROPDOWN ================= */
-/* Uses EMSIFA API for full Indonesia (online)        */
-/* Populates both Dusun form and Register form       */
-/* ================================================== */
-const API_REG = "https://www.emsifa.com/api-wilayah-indonesia/api/";
-async function loadRegionDropdowns(){
-  try{
-    // Provinsi
-    const resProv = await fetch(API_REG + 'provinces.json'); const provs = await resProv.json();
-    const dusProv = $('dusun_prov_select'); const regProv = $('reg_prov_select');
-    provs.forEach(p => { dusProv.innerHTML += `<option value="${p.id}">${p.name}</option>`; regProv.innerHTML += `<option value="${p.id}">${p.name}</option>`; });
+  // Load region dropdowns on page load
+  window.addEventListener('load', async ()=>{
+    updateClock();
+    initChart();
+    await loadRegionDropdowns();
+  });
 
-    // Attach change handlers for dusun form
-    $('dusun_prov_select').addEventListener('change', async function(){
-      $('dusun_kab_select').innerHTML = '<option value="">Pilih Kabupaten/Kota</option>'; $('dusun_kec_select').innerHTML = '<option value="">Pilih Kecamatan</option>'; $('dusun_des_select').innerHTML = '<option value="">Pilih Desa/Kelurahan</option>';
-      if(this.value){ const res = await fetch(API_REG + 'regencies/' + this.value + '.json'); const data = await res.json(); data.forEach(k => dusun_kab_select.innerHTML += `<option value="${k.id}">${k.name}</option>`); }
-    });
-    $('dusun_kab_select').addEventListener('change', async function(){ $('dusun_kec_select').innerHTML = '<option value="">Pilih Kecamatan</option>'; $('dusun_des_select').innerHTML = '<option value="">Pilih Desa/Kelurahan</option>'; if(this.value){ const res = await fetch(API_REG + 'districts/' + this.value + '.json'); const data = await res.json(); data.forEach(k => dusun_kec_select.innerHTML += `<option value="${k.id}">${k.name}</option>`); } });
-    $('dusun_kec_select').addEventListener('change', async function(){ $('dusun_des_select').innerHTML = '<option value="">Pilih Desa/Kelurahan</option>'; if(this.value){ const res = await fetch(API_REG + 'villages/' + this.value + '.json'); const data = await res.json(); data.forEach(d => dusun_des_select.innerHTML += `<option value="${d.id}">${d.name}</option>`); } });
+  // Auth state listener already set above
 
-    // Attach change handlers for register form
-    $('reg_prov_select').addEventListener('change', async function(){
-      $('reg_kab_select').innerHTML = '<option value="">Pilih Kabupaten/Kota</option>'; $('reg_kec_select').innerHTML = '<option value="">Pilih Kecamatan</option>'; $('reg_des_select').innerHTML = '<option value="">Pilih Desa/Kelurahan</option>';
-      if(this.value){ const res = await fetch(API_REG + 'regencies/' + this.value + '.json'); const data = await res.json(); data.forEach(k => reg_kab_select.innerHTML += `<option value="${k.id}">${k.name}</option>`); }
-    });
-    $('reg_kab_select').addEventListener('change', async function(){ $('reg_kec_select').innerHTML = '<option value="">Pilih Kecamatan</option>'; $('reg_des_select').innerHTML = '<option value="">Pilih Desa/Kelurahan</option>'; if(this.value){ const res = await fetch(API_REG + 'districts/' + this.value + '.json'); const data = await res.json(); data.forEach(k => reg_kec_select.innerHTML += `<option value="${k.id}">${k.name}</option>`); } });
-    $('reg_kec_select').addEventListener('change', async function(){ $('reg_des_select').innerHTML = '<option value="">Pilih Desa/Kelurahan</option>'; if(this.value){ const res = await fetch(API_REG + 'villages/' + this.value + '.json'); const data = await res.json(); data.forEach(d => reg_des_select.innerHTML += `<option value="${d.id}">${d.name}</option>`); } });
-  }catch(e){ console.warn('Gagal muat data wilayah', e); }
-}
-
-/* ================================================== */
-/* ================ Misc helpers & safe console ====== */
-/* ================================================== */
-if(!window.console) window.console = { log:function(){}, warn:function(){}, error:function(){} };
-
-/* ================================================== */
-/* ================ END OF SCRIPT ==================== */
-/* ================================================== */
-</script>
+  </script>
 </body>
 </html>
