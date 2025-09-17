@@ -67,7 +67,7 @@
         <input id="reg_hp" class="form-control mb-2" placeholder="NOMOR HP (contoh: 0812... atau +62812...)" oninput="formatPhoneTyping(this)">
         <input id="reg_password" type="password" class="form-control mb-2" placeholder="PASSWORD (min 6)">
 
-        <!-- ADDED: Role dropdown (user requested) -->
+        <!-- ADDED: Role dropdown -->
         <select id="reg_role" class="form-control mb-2">
           <option value="warga">WARGA</option>
           <option value="kepala_desa">KEPALA DESA</option>
@@ -212,14 +212,15 @@
 
 <script>
 /* ================= CONFIG ================= */
-/* Ganti konfigurasi Firebase dengan milik Anda */
+/* Dimasukkan Firebase config yang Anda berikan */
 const firebaseConfig = {
-  apiKey: "YOUR_FIREBASE_API_KEY",
-  authDomain: "YOUR_PROJECT.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyA6GAeIc7ZesIed9MAelUf6x_sBFdp9E-Q",
+  authDomain: "dusun-super.firebaseapp.com",
+  projectId: "dusun-super",
+  storageBucket: "dusun-super.firebasestorage.app",
+  messagingSenderId: "1083284057385",
+  appId: "1:1083284057385:web:21cfe467b047bb5a241b38",
+  measurementId: "G-LJ6KP57Q9M"
 };
 /* Masa berlaku kode dusun (ms) */
 const KODE_EXPIRE_MS = 24 * 60 * 60 * 1000;
@@ -380,17 +381,30 @@ async function onRegister(){
   const blok = $('reg_blok').value.trim();
   const no = $('reg_no').value.trim();
 
-  if(!nama||!hp||!password||!kodeDusun){ SwalAlert("Error","Lengkapi: Nama, HP, Password, Kode Dusun","error"); return; }
+  // VALIDASI: nama, hp, password wajib (Kepala Dusun tidak wajib KODE)
+  if(!nama||!hp||!password){
+    SwalAlert("Error","Lengkapi: Nama, HP, Password","error");
+    return;
+  }
   if(password.length < 6){ SwalAlert("Error","Password minimal 6 karakter","error"); return; }
 
+  // PERINTAH BARU: hanya role selain kepala_dusun wajib isi kode
+  if(selectedRole !== 'kepala_dusun' && !kodeDusun){
+    SwalAlert("Error","Kode Dusun wajib untuk peran selain Kepala Dusun","error");
+    return;
+  }
+
   try{
-    // Validasi kode dusun
-    const snap = await db.collection('Dusun').where('kode','==',kodeDusun).limit(1).get();
-    if(snap.empty) { SwalAlert("Error","Kode Dusun tidak valid","error"); return; }
-    const dusunDoc = snap.docs[0];
-    const dusunData = dusunDoc.data();
-    if(dusunData.kodeExpiresAt && dusunData.kodeExpiresAt.toMillis && dusunData.kodeExpiresAt.toMillis() < Date.now()){
-      SwalAlert("Error","Kode Dusun sudah kadaluarsa. Minta kode baru dari Kepala Dusun","error"); return;
+    // Validasi kode dusun (jika role bukan kepala_dusun)
+    let dusunDoc = null;
+    if(selectedRole !== 'kepala_dusun'){
+      const snap = await db.collection('Dusun').where('kode','==',kodeDusun).limit(1).get();
+      if(snap.empty) { SwalAlert("Error","Kode Dusun tidak valid","error"); return; }
+      dusunDoc = snap.docs[0];
+      const dusunData = dusunDoc.data();
+      if(dusunData.kodeExpiresAt && dusunData.kodeExpiresAt.toMillis && dusunData.kodeExpiresAt.toMillis() < Date.now()){
+        SwalAlert("Error","Kode Dusun sudah kadaluarsa. Minta kode baru dari Kepala Dusun","error"); return;
+      }
     }
 
     // Cek duplikat nomor HP
@@ -403,9 +417,10 @@ async function onRegister(){
     const userCred = await auth.createUserWithEmailAndPassword(fakeEmail, password);
     const uid = userCred.user.uid;
 
+    // Simpan data Warga — jika kepala_dusun, simpan kodeDusun = null
     await db.collection('Warga').doc(uid).set({
       nama, phone: norm, role: selectedRole, status: 'pending',
-      kodeDusun: kodeDusun,
+      kodeDusun: (selectedRole === 'kepala_dusun' ? null : kodeDusun),
       provinsi: prov, kabupaten: kab, kecamatan: kec, desa: des,
       rt, rw, alamat: alamatFull, blok, no,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
