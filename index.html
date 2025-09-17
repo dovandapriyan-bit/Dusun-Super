@@ -2,9 +2,9 @@
 <html lang="id">
 <head>
   <meta charset="utf-8" />
-  <title>Sistem Keamanan Dusun — Full</title>
+  <title>Sistem Keamanan Dusun — Full (Terbaru)</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <!-- Bootstrap CSS -->
+  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <!-- Firebase compat -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -18,55 +18,58 @@
   <style>
     :root{
       --card-radius:12px;
-      --accent: #ef4444; /* tombol SOS merah */
-      --muted: #6b7280;
+      --muted:#6b7280;
+      --accent:#ef4444;
     }
     body{
-      background: #f4f7ff;
+      background:#f4f7ff;
       font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-      padding: 18px;
+      padding:18px;
     }
-    .card{ border-radius: var(--card-radius); box-shadow: 0 6px 18px rgba(20,30,60,0.06); }
-    .form-control, .btn { border-radius: 8px; }
-    input.upper { text-transform: uppercase; }
-    .muted { color: var(--muted); font-size: 0.92rem; }
-    .small { font-size: 0.85rem; color: #374151; }
-    #map { width: 100%; height: 300px; border-radius: 8px; background: #eef; display:block; }
-    .hidden { display: none !important; }
-    .topbar { display:flex;align-items:center;justify-content:space-between;gap:12px; }
-    .section-gap { margin-top: 14px; }
-    /* SOS button large round */
-    .sos-btn {
+    .card{ border-radius:var(--card-radius); box-shadow:0 6px 18px rgba(20,30,60,0.06); }
+    .form-control, .btn{ border-radius:8px; }
+    input.upper{ text-transform:uppercase; }
+    .muted{ color:var(--muted); font-size:0.92rem; }
+    .small{ font-size:0.85rem; color:#374151; }
+    .hidden{ display:none!important; }
+    .topbar{ display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    #map{ width:100%; height:300px; border-radius:8px; background:#eef; display:block; }
+    @media(max-width:768px){ #map{ height:220px; } }
+
+    /* SOS center button (bulat di tengah bawah) */
+    .sos-center {
       position: fixed;
-      right: 18px;
+      left: 50%;
+      transform: translateX(-50%);
       bottom: 18px;
-      width: 84px;
-      height: 84px;
-      border-radius: 50%;
+      width: 96px;
+      height: 96px;
+      border-radius:50%;
       background: var(--accent);
-      color: white;
+      color: #fff;
       border: none;
-      box-shadow: 0 8px 20px rgba(239,68,68,0.24);
+      font-weight:700;
+      font-size:18px;
       display:flex;
       align-items:center;
       justify-content:center;
-      font-weight:700;
-      font-size:18px;
-      z-index: 9999;
+      box-shadow: 0 12px 34px rgba(239,68,68,0.25);
+      z-index:9999;
     }
     @media(min-width:992px){
-      .sos-btn { right: 28px; bottom: 28px; width:100px; height:100px; font-size:20px; }
+      .sos-center{ width:120px; height:120px; font-size:20px; bottom:28px; }
     }
-    @media(max-width:768px){
-      #map { height: 220px; }
-    }
+
+    /* small helper tables */
+    table.table-sm td, table.table-sm th{ padding:.4rem .6rem; }
+
   </style>
 </head>
 <body>
-  <div class="container" style="max-width:1100px;">
+  <div class="container" style="max-width:1200px;">
     <h3 class="text-center mb-4">Sistem Keamanan Dusun</h3>
 
-    <!-- AUTH / REGISTER -->
+    <!-- AUTH -->
     <div id="authCard" class="card p-3 mb-4">
       <div class="row g-3">
         <div class="col-12 col-md-6">
@@ -79,14 +82,15 @@
               <select id="reg_role" class="form-control">
                 <option value="warga">WARGA</option>
                 <option value="kepala_dusun">KEPALA DUSUN</option>
+                <option value="kepala_keluarga">KEPALA KELUARGA</option>
+                <option value="istri">ISTRI</option>
                 <option value="ketua_rt">KETUA RT</option>
                 <option value="ketua_rw">KETUA RW</option>
-                <option value="kepala_keluarga">KEPALA KELUARGA</option>
                 <option value="lainnya">LAINNYA</option>
               </select>
             </div>
 
-            <!-- Region dropdowns dynamic -->
+            <!-- region dropdowns -->
             <div class="col-12 col-sm-6"><select id="reg_prov_select" class="form-control"><option value="">Pilih Provinsi</option></select></div>
             <div class="col-12 col-sm-6"><select id="reg_kab_select" class="form-control"><option value="">Pilih Kabupaten/Kota</option></select></div>
             <div class="col-12 col-sm-6"><select id="reg_kec_select" class="form-control"><option value="">Pilih Kecamatan</option></select></div>
@@ -137,78 +141,68 @@
         </div>
       </div>
 
-      <!-- Join Dusun (warga selain kepala) -->
+      <!-- join dusun panel (warga) -->
       <div id="joinDusunPanel" class="card p-3 mb-3 d-none">
-        <h6>Masukkan Kode Dusun</h6>
-        <div class="input-group">
-          <input id="joinKodeDusun" class="form-control upper" placeholder="KODE DUSUN">
-          <button class="btn btn-primary" onclick="joinDusun()">Gabung</button>
+        <h6>Gabung Dusun</h6>
+        <div class="row g-2">
+          <div class="col-12">
+            <div class="muted">Masukkan kode dusun yang diberikan Kepala Dusun atau pilih dusun dari daftar di bawah lalu masukkan kode.</div>
+          </div>
+          <div class="col-9"><input id="joinKodeDusun" class="form-control upper" placeholder="KODE DUSUN"></div>
+          <div class="col-3 d-grid"><button class="btn btn-primary" onclick="joinDusun()">Gabung</button></div>
+
+          <div class="col-12 mt-2">
+            <h6 class="mb-2">Daftar Dusun (coba gabung)</h6>
+            <div id="tableAvailableDusun"></div>
+          </div>
         </div>
-        <div class="muted mt-2">Masukkan kode yang diberikan Kepala Dusun untuk bergabung.</div>
       </div>
 
-      <!-- Buat Dusun (hanya kepala_dusun) -->
+      <!-- buat dusun panel untuk kepala_dusun -->
       <div id="buatDusunPanel" class="card p-3 mb-3 d-none">
-        <h6>Buat Dusun (Kepala Dusun)</h6>
+        <h6>Kelola Dusun (Kepala Dusun)</h6>
         <div class="row g-2">
-          <div class="col-12"><input id="dusun_nama" class="form-control upper" placeholder="NAMA DUSUN"></div>
-          <div class="col-12 col-md-6"><select id="dusun_prov_select" class="form-control"><option value="">Pilih Provinsi</option></select></div>
-          <div class="col-12 col-md-6"><select id="dusun_kab_select" class="form-control"><option value="">Pilih Kabupaten/Kota</option></select></div>
-          <div class="col-12 col-md-6"><select id="dusun_kec_select" class="form-control"><option value="">Pilih Kecamatan</option></select></div>
-          <div class="col-12 col-md-6"><select id="dusun_des_select" class="form-control"><option value="">Pilih Desa/Kelurahan</option></select></div>
+          <div class="col-12 col-md-6"><input id="dusun_nama" class="form-control upper" placeholder="NAMA DUSUN"></div>
+          <div class="col-12 col-md-6"><button class="btn btn-primary w-100" onclick="onGenerateCode()">Generate Kode</button></div>
 
           <div id="kode_group" class="input-group mb-2 hidden">
             <input id="dusun_code" class="form-control" readonly placeholder="KODE DUSUN">
             <button id="copy_code_btn" class="btn btn-outline-secondary" type="button" onclick="copyDusunCode()">COPY</button>
           </div>
 
-          <div class="col-12 d-flex gap-2">
-            <button id="generate_btn" class="btn btn-primary" onclick="onGenerateCode()">Generate Kode</button>
-            <button id="save_dusun_btn" class="btn btn-success hidden" onclick="onSaveDusun()">Simpan Dusun</button>
+          <div class="col-12 d-grid"><button id="save_dusun_btn" class="btn btn-success hidden" onclick="onSaveDusun()">Simpan Dusun</button></div>
+
+          <div class="col-12 mt-3">
+            <h6 class="mb-2">Daftar Dusun Anda</h6>
+            <div id="tableDusunOwner"></div>
           </div>
         </div>
       </div>
 
-      <!-- Kepala Dusun Info -->
+      <!-- Kepala Dusun info -->
       <div id="kepalaDusunInfo" class="card p-3 mb-3 d-none">
         <h6>Kepala Dusun</h6>
         <div id="kepalaDusunDetail" class="muted">Memuat data...</div>
       </div>
 
+      <!-- Family members & verification -->
+      <div class="card p-3 mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+          <h6 class="mb-0">Anggota Keluarga (Satu alamat)</h6>
+          <div class="muted small">Tampilkan warga dengan alamat/RT-RW sama</div>
+        </div>
+        <div id="tableFamilyMembers" class="mt-2"></div>
+      </div>
+
       <div class="row g-3">
         <div class="col-lg-5">
           <div class="card p-3 mb-3">
-            <h6>Buat Laporan SOS</h6>
-            <div class="mb-2">
-              <select id="lap_jenis" class="form-control">
-                <option>Kemalingan</option>
-                <option>Kebakaran</option>
-                <option>Medis</option>
-                <option>Ambulance</option>
-                <option>Mencurigakan</option>
-              </select>
-            </div>
-            <div class="mb-2">
-              <select id="lap_loc_opt" class="form-control" onchange="toggleLokasiInput()">
-                <option value="saat_ini">Lokasi Saat Ini (jika diizinkan)</option>
-                <option value="lainnya">Deskripsi Lokasi</option>
-              </select>
-            </div>
-            <div class="mb-2">
-              <textarea id="lap_lokasi" class="form-control hidden" placeholder="Deskripsi lokasi (opsional)"></textarea>
-            </div>
-            <div class="d-grid">
-              <button class="btn btn-danger" onclick="sendReport()">Kirim Laporan</button>
-            </div>
+            <h6 class="mb-2">Statistik & Persentase Keamanan Dusun</h6>
+            <div id="securityPercentTable">Memuat...</div>
           </div>
 
           <div class="card p-3 mb-3">
-            <h6>Statistik Kejadian</h6>
-            <div style="height:220px;"><canvas id="chartKejadian" style="width:100%;height:100%"></canvas></div>
-          </div>
-
-          <div class="card p-3 mb-3">
-            <h6>Daftar Laporan Terbaru</h6>
+            <h6 class="mb-2">Daftar Laporan Terbaru</h6>
             <div id="listReports" class="muted">Memuat...</div>
           </div>
         </div>
@@ -216,9 +210,9 @@
         <div class="col-lg-7">
           <div class="card p-3 mb-3">
             <h6>Pos Jaga Dusun</h6>
-            <div id="map">Peta (aktifkan Google Maps jika ingin marker visual)</div>
+            <div id="map">Peta (opsional)</div>
             <div class="mt-3 d-flex gap-2">
-              <button class="btn btn-primary" onclick="prepareSetPos()">Set Lokasi Pos (klik lalu konfirmasi)</button>
+              <button class="btn btn-primary" onclick="prepareSetPos()">Set Lokasi Pos (GPS)</button>
               <button class="btn btn-outline-secondary" onclick="loadPos()">Muat Ulang Pos</button>
             </div>
             <div id="listPos" class="mt-3"></div>
@@ -227,49 +221,42 @@
       </div>
     </div>
 
-    <div class="mt-3 muted small">Catatan: ganti konfigurasi Firebase di bagian <code>firebaseConfig</code> sebelum digunakan.</div>
+    <div class="mt-3 muted small">Catatan: ganti konfigurasi Firebase di <code>firebaseConfig</code> bila belum diisi. Jika Firestore menolak akses -> sesuaikan Rules seperti pembahasan sebelumnya.</div>
   </div>
 
-  <!-- SOS button (fixed) -->
-  <button class="sos-btn" id="btnSOS" title="SOS" onclick="triggerSOS()">SOS</button>
+  <!-- SOS button center (bulat) -->
+  <button class="sos-center" id="btnSOS" title="SOS" onclick="openSOSModal()">SOS</button>
 
-  <!-- OPTIONAL Google Maps script (if want map visual): <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY"></script> -->
-
+  <!-- scripts -->
   <script>
-  /************************************************
-   * GANTI firebaseConfig dengan milik Anda
-   ************************************************/
+  /******************************
+   * FIREBASE CONFIG - ISI DENGAN PROJECTMU
+   ******************************/
   const firebaseConfig = {
-    // Contoh (ganti dengan nilai project Anda):
     apiKey: "AIzaSyA6GAeIc7ZesIed9MAelUf6x_sBFdp9E-Q",
-  authDomain: "dusun-super.firebaseapp.com",
-  projectId: "dusun-super",
-  storageBucket: "dusun-super.firebasestorage.app",
-  messagingSenderId: "1083284057385",
-  appId: "1:1083284057385:web:21cfe467b047bb5a241b38",
-  measurementId: "G-LJ6KP57Q9M"
+    authDomain: "dusun-super.firebaseapp.com",
+    projectId: "dusun-super",
+    storageBucket: "dusun-super.appspot.com",
+    messagingSenderId: "1083284057385",
+    appId: "1:1083284057385:web:21cfe467b047bb5a241b38",
+    measurementId: "G-LJ6KP57Q9M"
   };
-  // jika config belum diisi user, inisialisasi tetap dipanggil conditionally
-  if(firebaseConfig && firebaseConfig.apiKey){
-    firebase.initializeApp(firebaseConfig);
-  } else {
-    // create dummy firebase namespace to avoid immediate exceptions (still require real config to work)
-    console.warn("firebaseConfig kosong — ganti dengan konfigurasi Firebase project Anda.");
-    // don't attempt to use firebase APIs if not configured
-  }
 
-  const auth = firebaseConfig && firebaseConfig.apiKey ? firebase.auth() : null;
-  const db = firebaseConfig && firebaseConfig.apiKey ? firebase.firestore() : null;
+  // initialize firebase
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
 
-  // State
+  // ensure persistence so user doesn't logout on refresh
+  auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e=>console.warn("setPersistence:",e));
+
+  // state
   let currentUser = null;
   let currentWargaDoc = null;
   let currentDusunDoc = null;
   let laporanChart = null;
-  let mapObj = null;
-  let posMarkers = [];
 
-  // Helpers
+  // helper $
   const $ = id => document.getElementById(id);
   const show = id => { const el = $(id); if(el) el.classList.remove('hidden'); };
   const hide = id => { const el = $(id); if(el) el.classList.add('hidden'); };
@@ -278,13 +265,13 @@
 
   function normalizePhoneForKey(v){
     let s = (v||"").replace(/\s+/g,"").replace(/\D/g,"");
-    if(s.startsWith("0")) s = "62" + s.substring(1);
-    if(!s.startsWith("62")) s = "62" + s;
+    if(s.startsWith("0")) s = "62"+s.substring(1);
+    if(!s.startsWith("62")) s = "62"+s;
     return s;
   }
   function formatPhoneTyping(el){
     let raw = el.value.replace(/[^\d\+]/g,"");
-    if(raw.startsWith("+")) { let digits = raw.replace(/\D/g,""); el.value = "+" + digits; } else el.value = raw;
+    if(raw.startsWith("+")){ let digits = raw.replace(/\D/g,""); el.value = "+" + digits; } else el.value = raw;
   }
   function padRT(el){ el.value = (el.value||"").replace(/\D/g,"").padStart(3,"0"); }
   function padRW(el){ el.value = (el.value||"").replace(/\D/g,"").padStart(3,"0"); }
@@ -292,206 +279,132 @@
   function updateClock(){ const now = new Date(); $('clock').innerText = now.toLocaleString(); setTimeout(updateClock,1000); }
 
   function initChart(){
-    const ctx = document.getElementById('chartKejadian').getContext('2d');
+    const ctx = document.getElementById('chartKejadian')?.getContext('2d');
+    if(!ctx) return;
     laporanChart = new Chart(ctx, {
       type: 'bar',
-      data: { labels: ['Kebakaran','Kemalingan','Medis','Ambulance','Mencurigakan'], datasets: [{ label: 'Jumlah', data: [0,0,0,0,0] }] },
+      data: { labels: ['Kebakaran','Kemalingan','Medis','Ambulance','Mencurigakan'], datasets: [{ label:'Jumlah', data:[0,0,0,0,0] }]},
       options: { responsive:true, maintainAspectRatio:false }
     });
   }
 
-  /* ================= REGION DROPDOWNS (EMSIFA API) ================= */
+  /* ================== REGION DROPDOWNS ================== */
   const API_REG = "https://www.emsifa.com/api-wilayah-indonesia/api/";
   async function loadRegionDropdowns(){
     try{
       const resProv = await fetch(API_REG + 'provinces.json');
       const provs = await resProv.json();
-      const dusProv = $('dusun_prov_select');
       const regProv = $('reg_prov_select');
-      provs.forEach(p => {
-        if(dusProv) dusProv.innerHTML += `<option value="${p.id}">${p.name}</option>`;
-        if(regProv) regProv.innerHTML += `<option value="${p.id}">${p.name}</option>`;
-      });
-
-      // dusun form handlers
-      if($('dusun_prov_select')){
-        $('dusun_prov_select').addEventListener('change', async function(){
-          $('dusun_kab_select').innerHTML = '<option value="">Pilih Kabupaten/Kota</option>';
-          $('dusun_kec_select').innerHTML = '<option value="">Pilih Kecamatan</option>';
-          $('dusun_des_select').innerHTML = '<option value="">Pilih Desa/Kelurahan</option>';
-          if(this.value){
-            const r = await fetch(API_REG + 'regencies/' + this.value + '.json');
-            const ks = await r.json();
-            ks.forEach(k => dusun_kab_select.innerHTML += `<option value="${k.id}">${k.name}</option>`);
-          }
-        });
-        $('dusun_kab_select').addEventListener('change', async function(){
-          $('dusun_kec_select').innerHTML = '<option value="">Pilih Kecamatan</option>';
-          $('dusun_des_select').innerHTML = '<option value="">Pilih Desa/Kelurahan</option>';
-          if(this.value){
-            const r = await fetch(API_REG + 'districts/' + this.value + '.json');
-            const ks = await r.json();
-            ks.forEach(k => dusun_kec_select.innerHTML += `<option value="${k.id}">${k.name}</option>`);
-          }
-        });
-        $('dusun_kec_select').addEventListener('change', async function(){
-          $('dusun_des_select').innerHTML = '<option value="">Pilih Desa/Kelurahan</option>';
-          if(this.value){
-            const r = await fetch(API_REG + 'villages/' + this.value + '.json');
-            const ks = await r.json();
-            ks.forEach(k => dusun_des_select.innerHTML += `<option value="${k.id}">${k.name}</option>`);
-          }
-        });
+      provs.forEach(p => regProv && (regProv.innerHTML += `<option value="${p.id}">${p.name}</option>`));
+    }catch(e){ console.warn("Gagal muat provinsi", e); }
+    // handlers for reg selects (we only need reg_prov_select -> reg_kab...)
+    $('reg_prov_select')?.addEventListener('change', async function(){
+      $('reg_kab_select').innerHTML = '<option value="">Pilih Kabupaten/Kota</option>';
+      $('reg_kec_select').innerHTML = '<option value="">Pilih Kecamatan</option>';
+      $('reg_des_select').innerHTML = '<option value="">Pilih Desa/Kelurahan</option>';
+      if(this.value){
+        const r = await fetch(API_REG + 'regencies/' + this.value + '.json');
+        const ks = await r.json();
+        ks.forEach(k => reg_kab_select.innerHTML += `<option value="${k.id}">${k.name}</option>`);
       }
-
-      // register form handlers
-      if($('reg_prov_select')){
-        $('reg_prov_select').addEventListener('change', async function(){
-          $('reg_kab_select').innerHTML = '<option value="">Pilih Kabupaten/Kota</option>';
-          $('reg_kec_select').innerHTML = '<option value="">Pilih Kecamatan</option>';
-          $('reg_des_select').innerHTML = '<option value="">Pilih Desa/Kelurahan</option>';
-          if(this.value){
-            const r = await fetch(API_REG + 'regencies/' + this.value + '.json');
-            const ks = await r.json();
-            ks.forEach(k => reg_kab_select.innerHTML += `<option value="${k.id}">${k.name}</option>`);
-          }
-        });
-        $('reg_kab_select').addEventListener('change', async function(){
-          $('reg_kec_select').innerHTML = '<option value="">Pilih Kecamatan</option>';
-          $('reg_des_select').innerHTML = '<option value="">Pilih Desa/Kelurahan</option>';
-          if(this.value){
-            const r = await fetch(API_REG + 'districts/' + this.value + '.json');
-            const ks = await r.json();
-            ks.forEach(k => reg_kec_select.innerHTML += `<option value="${k.id}">${k.name}</option>`);
-          }
-        });
-        $('reg_kec_select').addEventListener('change', async function(){
-          $('reg_des_select').innerHTML = '<option value="">Pilih Desa/Kelurahan</option>';
-          if(this.value){
-            const r = await fetch(API_REG + 'villages/' + this.value + '.json');
-            const ks = await r.json();
-            ks.forEach(k => reg_des_select.innerHTML += `<option value="${k.id}">${k.name}</option>`);
-          }
-        });
+    });
+    $('reg_kab_select')?.addEventListener('change', async function(){
+      $('reg_kec_select').innerHTML = '<option value="">Pilih Kecamatan</option>';
+      $('reg_des_select').innerHTML = '<option value="">Pilih Desa/Kelurahan</option>';
+      if(this.value){
+        const r = await fetch(API_REG + 'districts/' + this.value + '.json');
+        const ks = await r.json(); ks.forEach(k => reg_kec_select.innerHTML += `<option value="${k.id}">${k.name}</option>`);
       }
-    }catch(e){
-      console.warn('Gagal muat wilayah', e);
-    }
+    });
+    $('reg_kec_select')?.addEventListener('change', async function(){
+      $('reg_des_select').innerHTML = '<option value="">Pilih Desa/Kelurahan</option>';
+      if(this.value){
+        const r = await fetch(API_REG + 'villages/' + this.value + '.json');
+        const ks = await r.json(); ks.forEach(k => reg_des_select.innerHTML += `<option value="${k.id}">${k.name}</option>`);
+      }
+    });
   }
 
-  /* ================= REGISTER (no auto-login final) ================= */
+  /* ================== REGISTER (no auto-login) ================== */
   async function onRegister(){
-    if(!auth || !db){ Err("Firebase belum dikonfigurasi. Masukkan firebaseConfig di script."); return; }
-
+    if(!auth || !db) return Err("Firebase belum dikonfigurasi.");
     const nama = $('reg_nama').value.trim();
     const hp = $('reg_hp').value.trim();
-    const password = $('reg_password').value;
+    const pass = $('reg_password').value;
     const role = $('reg_role').value || 'warga';
     const prov = $('reg_prov_select').selectedOptions[0]?.text || '';
     const kab = $('reg_kab_select').selectedOptions[0]?.text || '';
     const kec = $('reg_kec_select').selectedOptions[0]?.text || '';
     const des = $('reg_des_select').selectedOptions[0]?.text || '';
-    const rt = $('reg_rt').value.trim();
-    const rw = $('reg_rw').value.trim();
-    const alamatFull = $('reg_alamat_lengkap').value.trim();
-    const blok = $('reg_blok').value.trim();
-    const no = $('reg_no').value.trim();
+    const rt = $('reg_rt').value.trim(); const rw = $('reg_rw').value.trim();
+    const alamatFull = $('reg_alamat_lengkap').value.trim(); const blok = $('reg_blok').value.trim(); const no = $('reg_no').value.trim();
 
-    if(!nama || !hp || !password){ Err("Lengkapi: Nama, HP, Password"); return; }
-    if(password.length < 6){ Err("Password minimal 6 karakter"); return; }
-
+    if(!nama||!hp||!pass) return Err("Lengkapi: Nama, HP, Password");
+    if(pass.length < 6) return Err("Password minimal 6 karakter");
     try{
       const norm = normalizePhoneForKey(hp);
       const dup = await db.collection('Warga').where('phone','==',norm).limit(1).get();
-      if(!dup.empty){ Err("Nomor HP sudah terdaftar"); return; }
+      if(!dup.empty) return Err("Nomor HP sudah terdaftar");
 
       const fakeEmail = norm + "@dusun.fake";
-
-      // create user (this action will auto sign-in the new user)
-      const userCred = await auth.createUserWithEmailAndPassword(fakeEmail, password);
+      // create user (this will sign them in)
+      const userCred = await auth.createUserWithEmailAndPassword(fakeEmail, pass);
       const uid = userCred.user.uid;
-
-      // create warga doc while signed in (ensures write allowed by rules that require auth)
+      // create warga doc
       await db.collection('Warga').doc(uid).set({
-        nama,
-        phone: norm,
-        role,
-        status: 'pending',
-        kodeDusun: null,
-        provinsi: prov,
-        kabupaten: kab,
-        kecamatan: kec,
-        desa: des,
+        nama, phone: norm, role, status: 'pending', kodeDusun: null,
+        provinsi: prov, kabupaten: kab, kecamatan: kec, desa: des,
         rt, rw, alamat: alamatFull, blok, no,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
-
-      // Immediately sign out to honor "do not auto-login" requirement
+      // sign out immediately to require manual login
       await auth.signOut();
-
-      Swal.fire({
-        title: "Pendaftaran Berhasil",
-        html: "Akun berhasil dibuat. Silakan login untuk melanjutkan.",
-        icon: "success"
-      });
+      Swal.fire({ title:"Pendaftaran Berhasil", html:"Akun berhasil dibuat. Silakan login untuk melanjutkan.", icon:"success" });
       clearRegister();
-    }catch(err){
-      Err(err.message || String(err));
-    }
+    }catch(err){ Err(err.message || String(err)); }
   }
-
   function clearRegister(){
-    ['reg_nama','reg_hp','reg_password','reg_role','reg_rt','reg_rw','reg_alamat_lengkap','reg_blok','reg_no'].forEach(id=>{
-      const el = $(id); if(el) el.value = '';
-    });
+    ['reg_nama','reg_hp','reg_password','reg_role','reg_rt','reg_rw','reg_alamat_lengkap','reg_blok','reg_no','reg_prov_select','reg_kab_select','reg_kec_select','reg_des_select'].forEach(id=>{ const e = $(id); if(e) e.value=''; });
   }
 
-  /* ================= LOGIN ================= */
+  /* ================== LOGIN ================== */
   async function onLogin(){
-    if(!auth){ Err("Firebase belum dikonfigurasi."); return; }
-    const hp = $('login_hp').value.trim();
-    const pass = $('login_pass').value;
-    if(!hp || !pass){ Err("Nomor HP & password wajib"); return; }
+    if(!auth) return Err("Firebase belum dikonfigurasi.");
+    const hp = $('login_hp').value.trim(); const pass = $('login_pass').value;
+    if(!hp||!pass) return Err("Nomor HP & password wajib");
     try{
       const norm = normalizePhoneForKey(hp);
       const fakeEmail = norm + "@dusun.fake";
       await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-      const userCred = await auth.signInWithEmailAndPassword(fakeEmail, pass);
-      currentUser = userCred.user;
+      const cred = await auth.signInWithEmailAndPassword(fakeEmail, pass);
+      currentUser = cred.user;
       await loadUserProfile();
       Toast("Login berhasil");
       showDashboard();
-    }catch(err){
-      Err(err.message || String(err));
-    }
+    }catch(err){ Err(err.message || String(err)); }
   }
 
   async function loadUserProfile(){
-    if(!auth) return;
-    const uid = auth.currentUser?.uid;
-    if(!uid) return;
+    if(!auth.currentUser) return;
+    const uid = auth.currentUser.uid;
     const doc = await db.collection('Warga').doc(uid).get();
     if(doc.exists){
       currentWargaDoc = { id: doc.id, data: doc.data() };
       if(currentWargaDoc.data.kodeDusun){
         const q = await db.collection('Dusun').where('kode','==', currentWargaDoc.data.kodeDusun).limit(1).get();
         if(!q.empty) currentDusunDoc = { id: q.docs[0].id, data: q.docs[0].data() };
+        else currentDusunDoc = null;
       } else currentDusunDoc = null;
-    } else {
-      currentWargaDoc = null;
-      currentDusunDoc = null;
-    }
+    } else { currentWargaDoc = null; currentDusunDoc = null; }
   }
 
-  auth && auth.onAuthStateChanged(async (u) => {
+  auth.onAuthStateChanged(async (u)=>{
     if(u){
       currentUser = u;
       await loadUserProfile();
       showDashboard();
     } else {
-      currentUser = null;
-      currentWargaDoc = null;
-      currentDusunDoc = null;
+      currentUser = null; currentWargaDoc = null; currentDusunDoc = null;
       showAuth();
     }
   });
@@ -499,241 +412,253 @@
   function showAuth(){ show('authCard'); hide('dashboardCard'); }
   function showDashboard(){ hide('authCard'); show('dashboardCard'); updateClock(); renderRoleUI(); }
 
-  /* ================= RENDER / ROLE UI ================= */
+  /* ================== RENDER UI ================== */
   function renderRoleUI(){
     $('display_name').innerText = currentWargaDoc?.data?.nama || 'Pengguna';
     $('display_role').innerText = (currentWargaDoc?.data?.role || 'warga').toUpperCase();
-
     const role = currentWargaDoc?.data?.role || 'warga';
 
-    // not joined yet
+    // not joined yet => show join panel + available dusun table, hide rest
     if(!currentWargaDoc?.data?.kodeDusun){
       show('joinDusunPanel');
       hide('kepalaDusunInfo');
       hide('buatDusunPanel');
-      $('listReports').innerHTML = '<div class="muted">Belum terhubung ke dusun. Masukkan kode dusun pada panel "Masukkan Kode Dusun".</div>';
+      $('listReports').innerHTML = '<div class="muted">Belum terhubung ke dusun. Masukkan kode pada panel "Gabung Dusun".</div>';
+      loadAvailableDusuns();
+      loadFamilyMembers(); // still show members at same address if any
+      renderSecurityPercentTable(); // empty/default
       return;
     }
 
+    // joined
     hide('joinDusunPanel');
-
-    // if user is kepala_dusun -> show create Dusun panel
+    loadAvailableDusuns(); // still useful
+    // if kepala_dusun -> show create/manage dusun panel and load owner table
     if(role === 'kepala_dusun'){
       show('buatDusunPanel');
-      loadDusunOwnedByUser();
+      loadDusunOwnerTable();
     } else {
       hide('buatDusunPanel');
     }
 
-    // load dusun data, reports, pos
+    // load family members, dusun info, reports, pos, security
+    loadFamilyMembers();
     if(currentDusunDoc && currentDusunDoc.data){
-      showDusunDetails();
+      if(currentDusunDoc.data.kepalaId) loadKepalaDusunInfo(currentDusunDoc.data.kepalaId);
       subscribeReportsForDusun(currentDusunDoc.data.kode);
       loadPos();
-      if(currentDusunDoc.data.kepalaId) loadKepalaDusunInfo(currentDusunDoc.data.kepalaId);
+      loadSecurityPercentTable(); // compute and render
     } else {
       // try to fetch by kode if missing
       (async ()=>{
         try{
           const k = currentWargaDoc.data.kodeDusun;
           const q = await db.collection('Dusun').where('kode','==',k).limit(1).get();
-          if(!q.empty) {
-            currentDusunDoc = { id: q.docs[0].id, data: q.docs[0].data() };
-            showDusunDetails();
-            subscribeReportsForDusun(currentDusunDoc.data.kode);
-            loadPos();
-            if(currentDusunDoc.data.kepalaId) loadKepalaDusunInfo(currentDusunDoc.data.kepalaId);
-          } else {
-            $('listReports').innerHTML = '<div class="muted">Dusun tidak ditemukan (kode mungkin salah).</div>';
-          }
+          if(!q.empty) currentDusunDoc = { id: q.docs[0].id, data: q.docs[0].data() };
+          if(currentDusunDoc?.data?.kepalaId) loadKepalaDusunInfo(currentDusunDoc.data.kepalaId);
         }catch(e){ console.warn(e); }
       })();
     }
   }
 
-  /* ================= JOIN DUSUN ================= */
-  async function joinDusun(){
-    if(!db){ Err("Firebase belum dikonfigurasi."); return; }
-    const kode = $('joinKodeDusun').value.trim().toUpperCase();
-    if(!kode){ Err("Masukkan kode dusun"); return; }
+  /* ================== AVAILABLE DUSUN (warga) ================== */
+  async function loadAvailableDusuns(){
+    if(!db) return;
     try{
-      const snap = await db.collection('Dusun').where('kode','==',kode).limit(1).get();
-      if(snap.empty){ Err("Kode dusun tidak ditemukan"); return; }
-      const dusunDoc = snap.docs[0];
-      await db.collection('Warga').doc(currentWargaDoc.id).update({ kodeDusun: kode });
-      currentWargaDoc.data.kodeDusun = kode;
-      currentDusunDoc = { id: dusunDoc.id, data: dusunDoc.data() };
+      const snap = await db.collection('Dusun').orderBy('nama').limit(50).get();
+      const container = $('tableAvailableDusun');
+      if(snap.empty){ container.innerHTML = '<div class="muted">Belum ada data dusun publik.</div>'; return; }
+      let html = `<table class="table table-sm"><thead><tr><th>Nama</th><th>Wilayah</th><th>Aksi</th></tr></thead><tbody>`;
+      snap.forEach(doc=>{
+        const d = doc.data();
+        const wilayah = `${d.desa||''} ${d.kecamatan||''} ${d.kabupaten||''} ${d.provinsi||''}`;
+        html += `<tr><td>${d.nama||''}</td><td>${wilayah}</td><td><button class="btn btn-sm btn-primary" onclick="promptJoinSpecific('${doc.id}')">Gabung</button></td></tr>`;
+      });
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+    }catch(e){ console.warn(e); }
+  }
+
+  async function promptJoinSpecific(dusunDocId){
+    // open modal asking for kode; validate against doc
+    const { value: kode } = await Swal.fire({
+      title: 'Masukkan Kode Dusun',
+      input: 'text',
+      inputLabel: 'Masukkan kode dusun untuk bergabung',
+      inputPlaceholder: 'KODE DUSUN',
+      showCancelButton: true
+    });
+    if(!kode) return;
+    try{
+      const doc = await db.collection('Dusun').doc(dusunDocId).get();
+      if(!doc.exists) return Err("Dusun tidak ditemukan");
+      const d = doc.data();
+      if(d.kode !== kode.trim().toUpperCase()) return Err("Kode tidak cocok");
+      // update warga
+      await db.collection('Warga').doc(currentWargaDoc.id).update({ kodeDusun: d.kode });
+      currentWargaDoc.data.kodeDusun = d.kode;
+      currentDusunDoc = { id: doc.id, data: d };
       Toast("Berhasil bergabung ke dusun");
       renderRoleUI();
     }catch(e){ Err(e.message || String(e)); }
   }
 
-  /* ================= DUSUN: Generate & Save (Kepala Dusun) ================= */
-  function onGenerateCode(){
-    const code = Math.random().toString(36).substring(2,9).toUpperCase();
-    $('dusun_code').value = code;
-    $('kode_group').classList.remove('hidden');
-    $('save_dusun_btn').classList.remove('hidden');
-  }
-  function copyDusunCode(){
-    const v = $('dusun_code').value || '';
-    if(!v) return;
-    navigator.clipboard.writeText(v).then(()=>Toast("Kode disalin"));
-  }
-  async function onSaveDusun(){
-    if(!db){ Err("Firebase belum dikonfigurasi."); return; }
-    const nama = $('dusun_nama').value.trim();
-    const provText = $('dusun_prov_select').selectedOptions[0]?.text || '';
-    const kabText = $('dusun_kab_select').selectedOptions[0]?.text || '';
-    const kecText = $('dusun_kec_select').selectedOptions[0]?.text || '';
-    const desText = $('dusun_des_select').selectedOptions[0]?.text || '';
-    const code = $('dusun_code').value.trim();
-    if(!nama || !code){ Err("Nama & kode dusun wajib"); return; }
+  /* ================== DUSUN OWNER TABLE (kepala dusun) ================== */
+  async function loadDusunOwnerTable(){
+    if(!db || !currentUser) return;
     try{
-      const q = await db.collection('Dusun').where('kode','==',code).get();
-      if(!q.empty){ Err("Kode sudah terpakai, generate ulang"); return; }
-      const now = firebase.firestore.FieldValue.serverTimestamp();
-      const docRef = await db.collection('Dusun').add({
-        nama,
-        provinsi: provText,
-        kabupaten: kabText,
-        kecamatan: kecText,
-        desa: desText,
-        kode: code,
-        kepalaId: currentUser.uid,
-        createdAt: now,
-        active: true
+      const snap = await db.collection('Dusun').where('kepalaId','==', currentUser.uid).get();
+      const container = $('tableDusunOwner');
+      if(snap.empty){ container.innerHTML = '<div class="muted">Belum ada dusun yang Anda miliki.</div>'; return; }
+      let html = `<table class="table table-sm"><thead><tr><th>Nama</th><th>Wilayah</th><th>Kode</th><th>Aksi</th></tr></thead><tbody>`;
+      snap.forEach(doc=>{
+        const d = doc.data();
+        const wilayah = `${d.desa||''} ${d.kecamatan||''} ${d.kabupaten||''} ${d.provinsi||''}`;
+        html += `<tr><td>${d.nama||''}</td><td>${wilayah}</td><td>${d.kode||''}</td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary" onclick="regenerateCode('${doc.id}')">Regenerate</button>
+            <button class="btn btn-sm btn-outline-danger" onclick="expireCodeNow('${doc.id}')">Expire</button>
+          </td></tr>`;
       });
-      await db.collection('Warga').doc(currentWargaDoc.id).update({ kodeDusun: code });
-      currentWargaDoc.data.kodeDusun = code;
-      currentDusunDoc = { id: docRef.id, data: { nama, provinsi: provText, kabupaten: kabText, kecamatan: kecText, desa: desText, kode: code, kepalaId: currentUser.uid } };
-      Toast("Dusun dibuat dan Anda sekarang menjadi Kepala Dusun");
-      renderRoleUI();
-    }catch(e){ Err(e.message || String(e)); }
-  }
-  async function loadDusunOwnedByUser(){
-    try{
-      const snap = await db.collection('Dusun').where('kepalaId','==',currentUser.uid).limit(1).get();
-      if(!snap.empty){
-        currentDusunDoc = { id: snap.docs[0].id, data: snap.docs[0].data() };
-        $('dusun_code').value = currentDusunDoc.data.kode || '';
-        $('kode_group').classList.remove('hidden');
-        $('save_dusun_btn').classList.add('hidden');
-      }
+      html += `</tbody></table>`;
+      container.innerHTML = html;
     }catch(e){ console.warn(e); }
   }
 
-  /* ================= Kepala Dusun Info ================= */
-  async function loadKepalaDusunInfo(kepalaId){
+  async function regenerateCode(dusunId){
+    if(!db) return;
+    const newCode = Math.random().toString(36).substring(2,9).toUpperCase();
     try{
-      const doc = await db.collection('Warga').doc(kepalaId).get();
-      if(doc.exists){
-        const data = doc.data();
-        let alamat = "";
-        if(data.alamat) alamat += data.alamat + ", ";
-        if(data.blok) alamat += "Blok " + data.blok + " ";
-        if(data.no) alamat += "No. " + data.no + ", ";
-        alamat += `RT ${data.rt || '-'} / RW ${data.rw || '-'}, ${data.desa || ''}, ${data.kecamatan || ''}, ${data.kabupaten || ''}, ${data.provinsi || ''}`;
-        $('kepalaDusunDetail').innerHTML = `<div><strong>${data.nama || '-'}</strong></div><div class="small">${alamat}</div><div class="small">HP: ${data.phone || '-'}</div>`;
-        show('kepalaDusunInfo');
-      } else {
-        $('kepalaDusunDetail').innerText = "Data kepala dusun tidak ditemukan.";
-        show('kepalaDusunInfo');
-      }
-    }catch(e){ console.warn(e); }
+      await db.collection('Dusun').doc(dusunId).update({ kode: newCode });
+      Toast("Kode di-regenerate");
+      loadDusunOwnerTable();
+    }catch(e){ Err(e.message || String(e)); }
   }
-
-  /* ================= REPORTS ================= */
-  async function sendReport(){
-    if(!currentWargaDoc){ Err("Anda harus login"); return; }
-    if(!currentWargaDoc.data.kodeDusun){ Err("Anda harus bergabung dengan dusun terlebih dahulu"); return; }
-    const jenis = $('lap_jenis').value;
-    const lokasiOpt = $('lap_loc_opt').value;
-    const lokasiDesc = $('lap_lokasi').value.trim();
-    let lat = null, lng = null;
-    if(lokasiOpt === 'saat_ini' && navigator.geolocation){
-      try{
-        const pos = await new Promise((res,rej) => navigator.geolocation.getCurrentPosition(res,rej,{ timeout:8000 }));
-        lat = pos.coords.latitude; lng = pos.coords.longitude;
-      }catch(e){ console.warn("GPS denied/failed", e); }
-    }
+  async function expireCodeNow(dusunId){
+    if(!db) return;
     try{
-      await db.collection('Laporan').add({
-        jenis,
-        lokasiDeskripsi: lokasiDesc || null,
-        lat, lng,
-        dusunCode: currentWargaDoc.data.kodeDusun || null,
-        userId: currentWargaDoc.id,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-        status: 'open'
-      });
-      Toast("Laporan terkirim");
+      await db.collection('Dusun').doc(dusunId).update({ kodeExpiresAt: firebase.firestore.Timestamx.fromMillis(Date.now()-1000) });
+      Toast("Kode di-expire");
+      loadDusunOwnerTable();
     }catch(e){ Err(e.message || String(e)); }
   }
 
-  /* ================= Real-time laporan subscribe ================= */
+  /* ================== FAMILY MEMBERS (same address) ================== */
+  async function loadFamilyMembers(){
+    if(!db || !currentWargaDoc) return;
+    try{
+      const kode = currentWargaDoc.data.kodeDusun || null;
+      const rt = currentWargaDoc.data.rt || null;
+      const rw = currentWargaDoc.data.rw || null;
+      const desa = currentWargaDoc.data.desa || null;
+      if(!kode || !rt || !rw) { $('tableFamilyMembers').innerHTML = '<div class="muted">Lengkapi RT/RW & gabung dusun untuk melihat anggota keluarga.</div>'; return; }
+      const snap = await db.collection('Warga').where('kodeDusun','==',kode).where('rt','==',rt).where('rw','==',rw).where('desa','==',desa).get();
+      if(snap.empty){ $('tableFamilyMembers').innerHTML = '<div class="muted">Tidak ada warga lain di alamat yang sama.</div>'; return; }
+      let html = `<table class="table table-sm"><thead><tr><th>Nama</th><th>Role</th><th>Status</th><th>Aksi</th></tr></thead><tbody>`;
+      snap.forEach(doc=>{
+        const d = doc.data();
+        const uid = doc.id;
+        if(uid === currentWargaDoc.id){
+          // show but no action for self
+          html += `<tr><td><strong>${d.nama}</strong> (Anda)</td><td>${d.role||''}</td><td>${d.status||'-'}</td><td></td></tr>`;
+        } else {
+          const verifyBtn = (currentWargaDoc.data.role === 'kepala_dusun' || currentWargaDoc.data.role === 'kepala_keluarga') && d.status !== 'aktif'
+            ? `<button class="btn btn-sm btn-success" onclick="verifyMember('${uid}')">Verifikasi</button>` : '';
+          html += `<tr><td>${d.nama||''}</td><td>${d.role||''}</td><td>${d.status||'-'}</td><td>${verifyBtn}</td></tr>`;
+        }
+      });
+      html += `</tbody></table>`;
+      $('tableFamilyMembers').innerHTML = html;
+    }catch(e){ console.warn(e); }
+  }
+
+  async function verifyMember(uid){
+    if(!db) return;
+    try{
+      await db.collection('Warga').doc(uid).update({ status: 'aktif', verifiedBy: currentWargaDoc.id, verifiedAt: firebase.firestore.FieldValue.serverTimestamp() });
+      Toast("Anggota keluarga diverifikasi");
+      loadFamilyMembers();
+    }catch(e){ Err(e.message || String(e)); }
+  }
+
+  /* ================== SECURITY PERCENT TABLE ================== */
+  async function loadSecurityPercentTable(){
+    if(!db || !currentDusunDoc) { renderSecurityPercentTable(); return; }
+    try{
+      const kode = currentDusunDoc.data.kode;
+      const snap = await db.collection('Laporan').where('dusunCode','==',kode).get();
+      const counts = {};
+      let total = 0;
+      snap.forEach(doc=>{
+        const d = doc.data();
+        counts[d.jenis] = (counts[d.jenis]||0) + 1; total++;
+      });
+      renderSecurityPercentTable(counts, total);
+    }catch(e){ console.warn(e); renderSecurityPercentTable(); }
+  }
+  function renderSecurityPercentTable(counts={}, total=0){
+    const labels = ['Kebakaran','Kemalingan','Medis','Ambulance','Mencurigakan'];
+    let html = `<table class="table table-sm"><thead><tr><th>Jenis</th><th>Jumlah</th><th>Persentase</th></tr></thead><tbody>`;
+    labels.forEach(l=>{
+      const c = counts[l] || 0;
+      const pct = total ? Math.round((c/total)*100) : 0;
+      html += `<tr><td>${l}</td><td>${c}</td><td style="width:50%"><div class="progress" style="height:12px"><div class="progress-bar" role="progressbar" style="width:${pct}%" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100">${pct}%</div></div></td></tr>`;
+    });
+    html += `</tbody></table>`;
+    $('securityPercentTable').innerHTML = html;
+  }
+
+  /* ================== REPORTS subscribe & render ================== */
   let laporanUnsub = null;
   function subscribeReportsForDusun(kodeDusun){
     if(laporanUnsub) laporanUnsub();
-    if(!kodeDusun) { updateChartCounts({}); return; }
+    if(!kodeDusun) { renderReports([]); updateChartCounts({}); return; }
     laporanUnsub = db.collection('Laporan').where('dusunCode','==',kodeDusun).orderBy('createdAt','desc').onSnapshot(snapshot=>{
       const arr = []; snapshot.forEach(doc=> arr.push({ id: doc.id, data: doc.data() }));
       renderReports(arr);
       const counts = {}; arr.forEach(r => counts[r.data.jenis] = (counts[r.data.jenis]||0) + 1);
       updateChartCounts(counts);
+      renderSecurityPercentTable(counts, arr.length);
     });
   }
+
   function renderReports(arr){
     const container = $('listReports'); container.innerHTML = '';
     if(!arr.length){ container.innerHTML = '<div class="muted">Belum ada laporan.</div>'; return; }
     arr.forEach(r=>{
-      const d = r.data;
-      const time = d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleString() : '-';
+      const d = r.data; const time = d.createdAt ? new Date(d.createdAt.seconds*1000).toLocaleString() : '-';
       const el = document.createElement('div'); el.className = 'mb-2 p-2 border rounded';
       el.innerHTML = `<div><strong>${d.jenis}</strong> <span class="muted small">· ${time}</span></div><div class="muted small">${d.lokasiDeskripsi || ''}${d.lat ? `<br>Lat:${d.lat.toFixed(5)} Lng:${d.lng.toFixed(5)}` : ''}</div>`;
       container.appendChild(el);
     });
   }
+
   function updateChartCounts(counts){
     const labels = ['Kebakaran','Kemalingan','Medis','Ambulance','Mencurigakan'];
     const data = labels.map(l => counts[l] || 0);
     if(laporanChart){ laporanChart.data.datasets[0].data = data; laporanChart.update(); }
   }
 
-  /* ================= POS JAGA: set lokasi via GPS (no manual lat/lng) ================= */
-  // When user clicks "Set Lokasi Pos", call this to capture location and save
+  /* ================== POS JAGA (Set lokasi via GPS) ================== */
   async function prepareSetPos(){
-    if(!currentWargaDoc){ Err("Anda harus login"); return; }
+    if(!currentWargaDoc) return Err("Login terlebih dahulu");
     const role = currentWargaDoc.data.role;
-    if(role !== 'kepala_dusun' && role !== 'ketua_rt' && role !== 'ketua_rw'){ Err("Hanya Kepala Dusun/RT/RW yang boleh menambah pos"); return; }
-
-    const { value: nama } = await Swal.fire({
-      title: 'Nama Pos Jaga',
-      input: 'text',
-      inputLabel: 'Nama Pos (contoh: Pos RT 01)',
-      inputPlaceholder: 'Masukkan nama pos',
-      showCancelButton: true
-    });
+    if(role !== 'kepala_dusun' && role !== 'kepala_keluarga' && role !== 'ketua_rt' && role !== 'ketua_rw'){
+      return Err("Hanya Kepala Dusun / Kepala Keluarga / Ketua RT/RW yang dapat menambahkan pos");
+    }
+    const { value: nama } = await Swal.fire({ title:'Nama Pos Jaga', input:'text', inputPlaceholder:'Contoh: Pos RT 01', showCancelButton:true });
     if(!nama) return;
-
-    Swal.fire({ title: 'Mencoba mengambil lokasi... (beri izin jika diminta)', allowOutsideClick:false, didOpen: ()=>Swal.showLoading() });
+    Swal.fire({ title:'Mengambil lokasi... beri izin GPS jika diminta', allowOutsideClick:false, didOpen: ()=>Swal.showLoading() });
     try{
       const pos = await new Promise((res,rej)=> navigator.geolocation.getCurrentPosition(res,rej,{ timeout:15000 }));
       Swal.close();
-      const lat = pos.coords.latitude;
-      const lng = pos.coords.longitude;
-      // simpan ke firestore
-      await db.collection('PosDusun').add({
-        nama,
-        lat, lng,
-        dusunCode: currentDusunDoc.data.kode,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
-      Toast("Pos tersimpan dengan lokasi Anda");
+      const lat = pos.coords.latitude; const lng = pos.coords.longitude;
+      await db.collection('PosDusun').add({ nama, lat, lng, dusunCode: currentDusunDoc.data.kode, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+      Toast("Pos tersimpan");
       loadPos();
     }catch(e){
       Swal.close();
-      Err("Gagal mendapatkan lokasi. Pastikan GPS diizinkan dan coba lagi.");
+      Err("Gagal mendapatkan lokasi. Pastikan GPS/izin aktif.");
     }
   }
 
@@ -749,54 +674,101 @@
     });
   }
 
-  /* ================= SOS action (placeholder) ================= */
-  function triggerSOS(){
-    // simple visual confirm; implement real integration (call center, webhook) as needed
-    Swal.fire({
-      title: "Kirim SOS?",
-      html: "Anda akan mengirim tanda darurat ke sistem dusun. Lanjutkan?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Kirim SOS"
-    }).then(async (res)=>{
-      if(res.isConfirmed){
-        // create a Laporan SOS with jenis = 'SOS'
-        if(!currentWargaDoc || !currentWargaDoc.data.kodeDusun){ Err("Anda harus bergabung dengan dusun untuk mengirim SOS"); return; }
-        try{
-          await db.collection('Laporan').add({
-            jenis: 'SOS',
-            lokasiDeskripsi: null,
-            lat: null, lng: null,
-            dusunCode: currentWargaDoc.data.kodeDusun,
-            userId: currentWargaDoc.id,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            status: 'open'
-          });
-          Toast("SOS terkirim!");
-        }catch(e){ Err(e.message || String(e)); }
+  /* ================== SOS modal (center button) ================== */
+  async function openSOSModal(){
+    // Show a modal with jenis selection and location choices
+    const { value: formValues } = await Swal.fire({
+      title: 'Kirim SOS / Laporan Darurat',
+      html:
+        `<select id="swal-jenis" class="swal2-input"><option>Kebakaran</option><option>Kemalingan</option><option>Medis</option><option>Ambulance</option><option>SOS</option></select>` +
+        `<select id="swal-loc-choice" class="swal2-input"><option value="rumah">Di Rumah</option><option value="lainnya">Di Tempat Lain</option></select>` +
+        `<input id="swal-loc-desc" class="swal2-input hidden" placeholder="Deskripsi lokasi (contoh: Jalan, patokan)"/>` +
+        `<div style="font-size:0.85rem;color:#666;margin-top:6px">Jika pilih 'Di Rumah' sistem coba gunakan alamat &/atau GPS (jika diizinkan).</div>`,
+      focusConfirm:false,
+      showCancelButton:true,
+      preConfirm: ()=> {
+        return {
+          jenis: document.getElementById('swal-jenis').value,
+          locChoice: document.getElementById('swal-loc-choice').value,
+          locDesc: document.getElementById('swal-loc-desc').value
+        }
+      },
+      didOpen: ()=>{
+        const locChoice = document.getElementById('swal-loc-choice');
+        const locDesc = document.getElementById('swal-loc-desc');
+        locChoice.addEventListener('change', ()=> {
+          if(locChoice.value === 'lainnya') locDesc.classList.remove('hidden'); else locDesc.classList.add('hidden');
+        });
       }
     });
+    if(!formValues) return;
+    // create report
+    const jenis = formValues.jenis;
+    const locChoice = formValues.locChoice;
+    const locDesc = formValues.locDesc && formValues.locDesc.trim() ? formValues.locDesc.trim() : null;
+    if(!currentWargaDoc) return Err("Login terlebih dahulu");
+    if(!currentWargaDoc.data.kodeDusun) return Err("Gabung ke dusun dulu");
+    let lat = null, lng = null;
+    if(locChoice === 'rumah'){
+      // try to use GPS if available (best effort)
+      try{
+        const pos = await new Promise((res,rej)=> navigator.geolocation.getCurrentPosition(res,rej,{ timeout:8000 }));
+        lat = pos.coords.latitude; lng = pos.coords.longitude;
+      }catch(e){ /* ignore */ }
+    } else {
+      // tempat lain: no GPS automatically (user provided description)
+    }
+    try{
+      await db.collection('Laporan').add({
+        jenis,
+        lokasiDeskripsi: locDesc || null,
+        lat, lng,
+        dusunCode: currentWargaDoc.data.kodeDusun,
+        userId: currentWargaDoc.id,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        status: 'open'
+      });
+      Toast("Laporan/SOS terkirim");
+    }catch(e){ Err(e.message || String(e)); }
   }
 
-  /* ================= Misc helpers & init ================= */
-  function showDusunDetails(){
-    if(!currentDusunDoc || !currentDusunDoc.data) return;
-    $('listReports').innerHTML = '<div class="muted">Memuat laporan...</div>';
-    $('kepalaDusunDetail') && ( $('kepalaDusunDetail').innerHTML = 'Memuat data kepala dusun...' );
+  /* ================== DUSUN create/save (kepala dusun) ================== */
+  function onGenerateCode(){
+    const code = Math.random().toString(36).substring(2,9).toUpperCase();
+    $('dusun_code').value = code; $('kode_group').classList.remove('hidden'); $('save_dusun_btn').classList.remove('hidden');
+  }
+  function copyDusunCode(){ const v = $('dusun_code').value || ''; if(!v) return; navigator.clipboard.writeText(v).then(()=>Toast("Kode disalin")); }
+
+  async function onSaveDusun(){
+    if(!db || !currentUser) return Err("Firebase belum dikonfigurasi.");
+    const nama = $('dusun_nama').value.trim();
+    const code = $('dusun_code').value.trim();
+    if(!nama || !code) return Err("Nama & kode dusun wajib");
+    try{
+      const q = await db.collection('Dusun').where('kode','==',code).get();
+      if(!q.empty) return Err("Kode sudah terpakai");
+      const docRef = await db.collection('Dusun').add({
+        nama, kode: code, kepalaId: currentUser.uid,
+        provinsi: '', kabupaten:'', kecamatan:'', desa:'',
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        active: true
+      });
+      // update user's kodeDusun
+      await db.collection('Warga').doc(currentWargaDoc.id).update({ kodeDusun: code });
+      currentWargaDoc.data.kodeDusun = code;
+      currentDusunDoc = { id: docRef.id, data: { nama, kode: code, kepalaId: currentUser.uid } };
+      Toast("Dusun dibuat & Anda menjadi Kepala Dusun");
+      renderRoleUI();
+    }catch(e){ Err(e.message || String(e)); }
   }
 
-  async function onLogout(){
-    if(auth){ await auth.signOut(); }
-    currentUser = null; currentWargaDoc = null; currentDusunDoc = null;
-    Toast("Logout berhasil");
-    showAuth();
-  }
-
-  // load region dropdowns and init chart & clock on load
+  /* ================== MISC INIT ================== */
   window.addEventListener('load', async ()=>{
     updateClock();
     initChart();
     await loadRegionDropdowns();
+    // initial load available dusuns (for join)
+    loadAvailableDusuns();
   });
 
   </script>
