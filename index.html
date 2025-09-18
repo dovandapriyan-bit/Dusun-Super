@@ -4,24 +4,21 @@
   <meta charset="utf-8" />
   <title>Sistem Keamanan Dusun — FULL</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     :root{
       --muted:#6b7280; --accent:#ef4444; --safe:#16a34a; --caution:#f59e0b; --danger:#ef4444;
       --card-radius:12px;
     }
-    body{ background:#f4f7ff; font-family:Inter, "Segoe UI", Roboto, Arial; padding:18px; -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
+    html,body{height:100%;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;}
+    body{ background:#f4f7ff; font-family:Inter, "Segoe UI", Roboto, Arial; padding:18px; }
     .card{ border-radius:var(--card-radius); box-shadow:0 8px 30px rgba(14,30,60,0.06); }
     .form-control, .btn{ border-radius:8px; }
     .muted{ color:var(--muted); font-size:0.92rem; }
+    .small{ font-size:0.85rem; color:#374151; }
     input.upper{ text-transform:uppercase; }
-    #map{ width:100%; height:320px; border-radius:8px; background:#eef; }
-    .sos-btn{
-      width:110px;height:110px;border-radius:999px;background:var(--accent);color:#fff;font-weight:800;
-      display:flex;align-items:center;justify-content:center;font-size:18px;border:none;cursor:pointer;
-      box-shadow:0 12px 32px rgba(239,68,68,0.25);
-    }
+    #map{ width:100%; height:340px; border-radius:8px; background:#eef; }
+    .sos-btn{ width:110px;height:110px;border-radius:999px;background:var(--accent);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:18px;border:none;cursor:pointer;box-shadow:0 12px 32px rgba(239,68,68,0.25);}
     @media(max-width:767px){
       .sos-btn{ width:96px;height:96px;position:fixed;bottom:18px;left:50%;transform:translateX(-50%);z-index:9999; }
       body{ padding-bottom:140px; }
@@ -29,6 +26,10 @@
     table.table-sm td, table.table-sm th{ padding:.4rem .6rem; }
     .pos-photo{ max-width:100%; max-height:160px; border-radius:8px; margin-top:6px; display:block; }
     .hidden{ display:none!important; }
+    .status-aman{background:var(--safe);color:#fff;padding:6px 10px;border-radius:8px;}
+    .status-waspada{background:var(--caution);color:#000;padding:6px 10px;border-radius:8px;}
+    .status-rawan{background:var(--danger);color:#fff;padding:6px 10px;border-radius:8px;}
+    .btn-small{padding:.25rem .5rem;font-size:.85rem;}
   </style>
 
   <!-- Firebase compat -->
@@ -37,11 +38,11 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 
-  <!-- Chart.js (optional, kept if needed later) -->
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- SweetAlert2 -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <!-- Google Maps (replace key) -->
+  <!-- Google Maps: replace key -->
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY"></script>
 </head>
 <body>
@@ -51,14 +52,15 @@
     <!-- AUTH / REGISTER -->
     <div id="authCard" class="card p-3 mb-4">
       <div class="row g-3">
-        <div class="col-lg-6">
+        <!-- Register -->
+        <div class="col-md-6">
           <h5>Daftar Warga</h5>
           <input id="reg_nama" class="form-control mb-2" placeholder="NAMA LENGKAP">
           <input id="reg_hp" class="form-control mb-2" placeholder="NOMOR HP (0812... / +628...)" oninput="formatPhoneTyping(this)">
           <input id="reg_password" type="password" class="form-control mb-2" placeholder="PASSWORD (min 6)">
           <label class="small text-muted">Status</label>
           <select id="reg_role" class="form-control mb-2">
-            <optgroup label="Kepala / Kepala Keluarga">
+            <optgroup label="Kepala">
               <option value="kepala_desa">Kepala Desa</option>
               <option value="kepala_dusun">Kepala Dusun</option>
               <option value="ketua_rt_rw">Ketua RT / RW</option>
@@ -86,10 +88,11 @@
             <button class="btn btn-success" onclick="onRegister()">Daftar</button>
             <button class="btn btn-outline-secondary" onclick="clearRegister()">Reset</button>
           </div>
-          <div class="muted mt-2">Setelah mendaftar: muncul konfirmasi berhasil. <strong>Tidak otomatis login.</strong></div>
+          <div class="muted mt-2">Setelah mendaftar: muncul notifikasi berhasil. <strong>Tidak otomatis login.</strong></div>
         </div>
 
-        <div class="col-lg-6">
+        <!-- Login -->
+        <div class="col-md-6">
           <h5>Login</h5>
           <input id="login_hp" class="form-control mb-2" placeholder="NOMOR HP" oninput="formatPhoneTyping(this)">
           <input id="login_pass" type="password" class="form-control mb-2" placeholder="PASSWORD">
@@ -104,9 +107,9 @@
 
     <!-- DASHBOARD -->
     <div id="dashboardCard" class="card p-3 hidden">
-      <div class="d-flex justify-content-between align-items-start mb-3">
+      <div class="topbar d-flex justify-content-between align-items-start mb-3">
         <div>
-          <h4 id="display_name">Nama Pengguna</h4>
+          <h4 id="display_name">Nama</h4>
           <div class="muted">Status: <b id="display_role">-</b> · <span id="display_verified"></span></div>
           <div class="muted small">Waktu: <span id="clock"></span></div>
         </div>
@@ -115,20 +118,30 @@
         </div>
       </div>
 
-      <!-- Header actions: Tambah Dusun (kepala only) & Tambah Pos (kepala only) -->
+      <!-- Header actions -->
       <div class="d-flex gap-2 mb-3">
-        <div id="btnCreateDusunWrap" class="hidden">
+        <div id="createDusunWrap" class="hidden">
           <button class="btn btn-outline-primary" onclick="promptCreateDusun()">Tambah Dusun</button>
         </div>
-        <div id="btnAddPosWrap" class="hidden">
+        <div id="joinDusunWrap" class="hidden">
+          <input id="join_kode" class="form-control d-inline-block" style="width:220px" placeholder="Masukkan Kode Dusun">
+          <button class="btn btn-success" onclick="onJoinDusun()">Gabung</button>
+        </div>
+        <div id="addPosWrap" class="hidden">
           <button class="btn btn-primary" onclick="promptAddPos()">Tambah Pos</button>
         </div>
       </div>
 
-      <!-- Dusun info (kepala dusun displayed to warga) -->
+      <!-- Dusun info -->
       <div id="dusunInfoCard" class="card p-3 mb-3 hidden">
         <h6>Informasi Kepala Dusun</h6>
         <div id="kepalaDusunInfo" class="muted small">Memuat...</div>
+      </div>
+
+      <!-- Family & Verifikasi -->
+      <div class="card p-3 mb-3">
+        <h6>Daftar Anggota (RT/RW Anda)</h6>
+        <div id="familyList" class="mt-2">Memuat...</div>
       </div>
 
       <!-- Map & Pos List -->
@@ -136,7 +149,7 @@
         <div class="col-lg-7">
           <div class="card p-3 mb-3">
             <h6>Peta Pos</h6>
-            <div id="map">Peta (aktifkan API key untuk melihat peta)</div>
+            <div id="map">Peta (tambahkan API key agar aktif)</div>
           </div>
         </div>
         <div class="col-lg-5">
@@ -147,17 +160,25 @@
         </div>
       </div>
 
+      <!-- Statistik -->
+      <div class="card p-3 mb-3">
+        <h6>Statistik Kejadian 30 hari</h6>
+        <canvas id="chartKejadian" style="width:100%;height:160px"></canvas>
+        <div id="securitySummary" class="mt-2"></div>
+      </div>
+
       <!-- SOS -->
       <div class="text-center mt-3">
         <button class="sos-btn" onclick="openSOS()">SOS</button>
       </div>
     </div>
 
-    <div class="muted small mt-3">Catatan: ubah konfigurasi Firebase & Google Maps API key di atas sebelum menggunakan peta dan storage.</div>
+    <div class="muted small mt-3">Catatan: ganti konfigurasi Firebase & Google Maps API key sebelum penggunaan peta & storage.</div>
   </div>
 
 <script>
-/* ================= CONFIG: ganti jika perlu ================= */
+/* =================== CONFIG =================== */
+/* Ganti firebaseConfig dengan milik Anda */
 const firebaseConfig = {
   apiKey: "AIzaSyA6GAeIc7ZesIed9MAelUf6x_sBFdp9E-Q",
   authDomain: "dusun-super.firebaseapp.com",
@@ -167,30 +188,32 @@ const firebaseConfig = {
   appId: "1:1083284057385:web:21cfe467b047bb5a241b38",
   measurementId: "G-LJ6KP57Q9M"
 };
-/* ============================================================ */
+/* expire kode dusun not used here but kept if needed */
+const KODE_EXPIRE_MS = 24*60*60*1000;
+/* ============================================== */
 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 const storage = firebase.storage();
 
-/* Keep persistence so refresh doesn't logout */
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e=>console.warn("persistence:",e));
+/* Keep login persistent */
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e=>console.warn("persistence",e));
 
-/* ================= State ================= */
+/* =================== STATE =================== */
 let currentUser = null;
-let currentWarga = null;      // { id, data }
-let currentDusun = null;      // { id, data } — will be set when joined or when selected
-let mapObj = null;
+let currentWarga = null;
+let currentDusun = null;
 let posMarkers = [];
+let laporanUnsub = null;
 let chartKej = null;
 
-/* ================= Helpers ================= */
+/* =================== HELPERS =================== */
 const $ = id => document.getElementById(id);
-const show = id => { const e=$(id); if(e) e.classList.remove('hidden'); };
-const hide = id => { const e=$(id); if(e) e.classList.add('hidden'); };
-const toast = (t, icon='success') => Swal.fire({ title:t, icon, toast:true, position:'top-end', showConfirmButton:false, timer:1800 });
-const err = m => Swal.fire("Error", m, "error");
+const show = id => { const el=$(id); if(el) el.classList.remove('hidden'); };
+const hide = id => { const el=$(id); if(el) el.classList.add('hidden'); };
+const toast = (t,icon='success') => Swal.fire({ title:t, icon, toast:true, position:'top-end', showConfirmButton:false, timer:1600 });
+const err = (m) => Swal.fire("Error", m, "error");
 
 function formatPhoneTyping(el){ el.value = el.value.replace(/[^\d\+]/g,''); }
 function normalizePhoneForKey(v){ let s=(v||"").replace(/\D/g,""); if(s.startsWith("0")) s="62"+s.substring(1); if(!s.startsWith("62")) s="62"+s; return s; }
@@ -199,24 +222,21 @@ function padRW(el){ el.value = (el.value||"").replace(/\D/g,"").padStart(3,"0");
 function generateCode(len=6){ return Math.random().toString(36).substring(2,2+len).toUpperCase(); }
 function updateClock(){ if($('clock')) $('clock').innerText = new Date().toLocaleString(); setTimeout(updateClock,1000); }
 
-/* ================= Region dropdown (EMSIFA) - optional for register addresses ================= */
+/* =================== REGION loading (optional) =================== */
 const API_REG = "https://www.emsifa.com/api-wilayah-indonesia/api/";
-async function loadRegionDropdownsIfAny(){
-  // we have no visible region selects here (registration has free textarea), so skip.
-}
 
-/* ================== REGISTER ================== */
-/* Kepala roles become immediately 'aktif' */
+/* =================== REGISTER =================== */
+/* perintah: kepala roles langsung verified (aktif); use "status" / label status */
 async function onRegister(){
   const nama = $('reg_nama').value.trim();
   const hp = $('reg_hp').value.trim();
   const pass = $('reg_password').value;
-  const status = $('reg_role').value; // label "status" per request
+  const role = $('reg_role').value;
   const alamat = $('reg_alamat_lengkap').value.trim();
   const rt = $('reg_rt').value.trim();
   const rw = $('reg_rw').value.trim();
 
-  if(!nama || !hp || !pass){ err("Lengkapi: Nama, HP, Password"); return; }
+  if(!nama || !hp || !pass){ err("Lengkapi Nama, HP, Password"); return; }
   if(pass.length < 6){ err("Password minimal 6 karakter"); return; }
 
   try{
@@ -229,21 +249,26 @@ async function onRegister(){
     const uid = userCred.user.uid;
 
     const kepalaRoles = ['kepala_desa','kepala_dusun','ketua_rt_rw','kepala_keluarga','istri_kepala_dusun'];
-    const verifiedStatus = kepalaRoles.includes(status) ? 'aktif' : 'pending';
+    const verifiedStatus = kepalaRoles.includes(role) ? 'aktif' : 'pending';
 
     await db.collection('Warga').doc(uid).set({
-      nama, phone: norm, status: verifiedStatus, role: status,
-      alamat, rt, rw,
+      nama,
+      phone: norm,
+      status: verifiedStatus, // perpermintaan: label "status"
+      role: role,
+      alamat,
+      rt,
+      rw,
       kodeDusun: null,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 
-    // Force sign out to require manual login
+    // sign out to require manual login
     await auth.signOut();
     Swal.fire("Berhasil","Pendaftaran berhasil. Silakan login untuk melanjutkan.","success");
     clearRegister();
   }catch(e){
-    console.error("register err", e);
+    console.error(e);
     err(e.message || String(e));
   }
 }
@@ -251,10 +276,10 @@ function clearRegister(){
   ['reg_nama','reg_hp','reg_password','reg_alamat_lengkap','reg_rt','reg_rw'].forEach(id=>{ if($(id)) $(id).value=''; });
 }
 
-/* ================== LOGIN ================== */
+/* =================== LOGIN =================== */
 async function onLogin(){
-  const hp = $('login_hp').value.trim();
-  const pass = $('login_pass').value;
+  const hp = $('login_hp').value ? $('login_hp').value.trim() : '';
+  const pass = $('login_pass').value ? $('login_pass').value : '';
   if(!hp || !pass){ err("Nomor HP & password wajib"); return; }
   try{
     const norm = normalizePhoneForKey(hp);
@@ -265,133 +290,194 @@ async function onLogin(){
     await loadUserProfile();
     toast("Login berhasil");
   }catch(e){
-    console.error("login err", e);
+    console.error(e);
     err(e.message || String(e));
   }
 }
 
-/* ================= Load profile & dashboard rendering ================= */
+/* =================== LOAD PROFILE =================== */
 async function loadUserProfile(){
   if(!auth.currentUser) return;
   const uid = auth.currentUser.uid;
   const doc = await db.collection('Warga').doc(uid).get();
-  if(doc.exists) currentWarga = { id: doc.id, data: doc.data() };
-  else currentWarga = null;
+  if(!doc.exists){ err("Profil tidak ditemukan"); return; }
+  currentWarga = { id: doc.id, data: doc.data() };
 
   renderDashboard();
 }
 
-/* Auth state listener (persist login) */
-auth.onAuthStateChanged(async u => {
-  if(u){ currentUser = u; await loadUserProfile(); }
-  else { currentUser = null; currentWarga = null; currentDusun = null; showAuth(); }
-});
-
-/* ================= UI show/hide ================= */
-function showAuth(){ show('authCard'); hide('dashboardCard'); }
+/* =================== RENDER DASHBOARD =================== */
 function renderDashboard(){
   hide('authCard'); show('dashboardCard');
   updateClock();
-  if(!currentWarga){
-    // if not loaded, prompt re-login
-    showAuth();
-    return;
-  }
+
   $('display_name').innerText = currentWarga.data.nama || '';
   $('display_role').innerText = (currentWarga.data.role || '').toUpperCase();
   $('display_verified').innerText = (currentWarga.data.status || '').toUpperCase();
 
-  // Show create-dusun and add-pos only for kepala roles
+  // Headless: show create/join/add pos according to role and whether joined
   const kepalaRoles = ['kepala_desa','kepala_dusun','ketua_rt_rw','kepala_keluarga','istri_kepala_dusun'];
+
   if(kepalaRoles.includes(currentWarga.data.role)){
-    show('btnCreateDusunWrap'); show('btnAddPosWrap');
+    show('createDusunWrap');
+    show('addPosWrap'); // not used, we have addPosWrap id? ensure correct
+    show('addPosWrap'); // earlier we used addPosWrap; but final used addPosWrap? ensure both
   } else {
-    hide('btnCreateDusunWrap'); hide('btnAddPosWrap');
+    hide('createDusunWrap');
   }
 
-  // If user has kodeDusun, load that dusun info; else hide info
+  // Show join form if not joined
+  if(!currentWarga.data.kodeDusun) show('joinDusunWrap'); else hide('joinDusunWrap');
+
+  // If joined, load dusun info & family & pos & stats
   if(currentWarga.data.kodeDusun){
     loadDusunInfoByKode(currentWarga.data.kodeDusun);
+    refreshFamilyList();
+    subscribeReportsForDusun(currentWarga.data.kodeDusun);
   } else {
-    // clear dusun info / pos list
     $('kepalaDusunInfo').innerText = 'Belum terhubung ke dusun manapun.';
     hide('dusunInfoCard');
-    loadPosList(null); // show all pos? We'll show empty if not joined.
+    $('posList').innerHTML = '<div class="muted">Gabung ke dusun untuk melihat pos.</div>';
+    // clear map markers
+    clearMarkers();
   }
 }
 
-/* ================= Tambah Dusun (kepala only) ================= */
+/* =================== CREATE DUSUN =================== */
 async function promptCreateDusun(){
   if(!currentWarga) return err("Login dulu");
-  const { value: formValues } = await Swal.fire({
+  const kepalaRoles = ['kepala_desa','kepala_dusun','ketua_rt_rw','kepala_keluarga','istri_kepala_dusun'];
+  if(!kepalaRoles.includes(currentWarga.data.role)) return err("Hanya subrole Kepala yang bisa membuat dusun");
+
+  const { value: form } = await Swal.fire({
     title: 'Buat Dusun Baru',
-    html: '<input id="swal_nama_dusun" class="swal2-input" placeholder="Nama Dusun">' +
-          '<input id="swal_alamat_kepala" class="swal2-input" placeholder="Alamat Kepala Dusun (opsional)">' +
-          '<input id="swal_hp_kepala" class="swal2-input" placeholder="No HP Kepala Dusun (opsional)">',
+    html: `<input id="swal_nama" class="swal2-input" placeholder="Nama Dusun">
+           <input id="swal_blok" class="swal2-input" placeholder="Blok (opsional)">
+           <input id="swal_no" class="swal2-input" placeholder="No Rumah Kepala (opsional)">
+           <input id="swal_hp" class="swal2-input" placeholder="HP Kepala (opsional)">`,
     focusConfirm: false,
     preConfirm: () => ({
-      nama: document.getElementById('swal_nama_dusun').value,
-      alamat: document.getElementById('swal_alamat_kepala').value,
-      hp: document.getElementById('swal_hp_kepala').value
+      nama: document.getElementById('swal_nama').value,
+      blok: document.getElementById('swal_blok').value,
+      no: document.getElementById('swal_no').value,
+      hp: document.getElementById('swal_hp').value
     }),
     showCancelButton: true
   });
-  if(!formValues || !formValues.nama) return;
+  if(!form || !form.nama) return;
+
   try{
     const kode = generateCode(6);
-    const docRef = await db.collection('Dusun').add({
-      nama: formValues.nama,
+    const payload = {
+      nama: form.nama,
       kode,
       kepalaId: currentWarga.id,
       kepalaNama: currentWarga.data.nama,
-      kepalaHp: formValues.hp || currentWarga.data.phone || '',
-      kepalaAlamat: formValues.alamat || currentWarga.data.alamat || '',
+      kepalaHp: form.hp || currentWarga.data.phone || '',
+      kepalaAlamat: `${form.blok ? 'Blok ' + form.blok : ''} ${form.no ? 'No ' + form.no : ''}`.trim(),
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
+    };
+    await db.collection('Dusun').add(payload);
     toast("Dusun dibuat. Kode: " + kode);
-  }catch(e){ console.error(e); err(e.message||String(e)); }
+  }catch(e){ console.error(e); err(e.message || String(e)); }
 }
 
-/* ================= Load Dusun Info by kode and render kepala info (include blok & no if available) ================= */
+/* =================== JOIN DUSUN =================== */
+async function onJoinDusun(){
+  const kode = $('join_kode').value ? $('join_kode').value.trim().toUpperCase() : '';
+  if(!currentWarga) return err("Login dulu");
+  if(!kode) return err("Masukkan kode dusun");
+  try{
+    const snap = await db.collection('Dusun').where('kode','==', kode).limit(1).get();
+    if(snap.empty) return err("Kode dusun tidak ditemukan");
+    await db.collection('Warga').doc(currentWarga.id).update({ kodeDusun: kode });
+    currentWarga.data.kodeDusun = kode;
+    toast("Berhasil bergabung ke dusun");
+    loadDusunInfoByKode(kode);
+    refreshFamilyList();
+    subscribeReportsForDusun(kode);
+  }catch(e){ console.error(e); err(e.message || String(e)); }
+}
+
+/* =================== LOAD DUSUN INFO BY KODE =================== */
 async function loadDusunInfoByKode(kodeDusun){
   try{
     const snap = await db.collection('Dusun').where('kode','==', kodeDusun).limit(1).get();
     if(snap.empty){ hide('dusunInfoCard'); return; }
     currentDusun = { id: snap.docs[0].id, data: snap.docs[0].data() };
     const d = currentDusun.data;
-    // kepalaAlamat may contain blok & no if set during registration or creation
-    let alamatKep = d.kepalaAlamat || '';
-    // also try to find kepala info from Warga if kepalaId exists
+    // try get kepala full address from Warga if exists
+    let kepalaAlamat = d.kepalaAlamat || '';
     if(d.kepalaId){
       try{
         const kdoc = await db.collection('Warga').doc(d.kepalaId).get();
         if(kdoc.exists){
           const kd = kdoc.data();
-          alamatKep = kd.alamat || alamatKep || '';
+          kepalaAlamat = kd.alamat || kepalaAlamat || '';
+          // include blok/no if present in Warga.alamat
         }
-      }catch(e){/* ignore */}
+      }catch(e){ }
     }
     $('kepalaDusunInfo').innerHTML = `<div><strong>${d.kepalaNama || '-'}</strong></div>
       <div class="muted small">HP: ${d.kepalaHp || '-'}</div>
       <div class="muted small">Dusun: ${d.nama || '-'}</div>
-      <div class="muted small">Alamat Kepala Dusun: ${alamatKep || '-'}</div>`;
+      <div class="muted small">Alamat Kepala Dusun: ${kepalaAlamat || '-'}</div>`;
     show('dusunInfoCard');
-    // load pos for this dusun
+    // load family and pos for this dusun
+    refreshFamilyList();
     loadPosList(kodeDusun);
-    // show markers on map for this dusun
     loadPosMarkers(kodeDusun);
-  }catch(e){ console.error(e); err(e.message||String(e)); }
+    loadStatistics(kodeDusun);
+  }catch(e){ console.error(e); err(e.message || String(e)); }
 }
 
-/* ================= Prompt Add Pos (with mandatory fields & photo upload) ================= */
+/* =================== FAMILY LIST & VERIFY =================== */
+async function refreshFamilyList(){
+  const container = $('familyList');
+  if(!currentWarga){ container.innerHTML = '<div class="muted">Login untuk melihat anggota.</div>'; return; }
+  if(!currentWarga.data.kodeDusun || !currentWarga.data.rt || !currentWarga.data.rw){
+    container.innerHTML = '<div class="muted">Lengkapi RT/RW dan gabung dusun untuk melihat anggota keluarga.</div>';
+    return;
+  }
+  try{
+    const snap = await db.collection('Warga').where('kodeDusun','==', currentWarga.data.kodeDusun).where('rt','==', currentWarga.data.rt).where('rw','==', currentWarga.data.rw).get();
+    if(snap.empty){ container.innerHTML = '<div class="muted">Belum ada anggota di alamat ini.</div>'; return; }
+    let html = `<table class="table table-sm"><thead><tr><th>Nama</th><th>Status</th><th>Aksi</th></tr></thead><tbody>`;
+    snap.forEach(doc => {
+      const d = doc.data(); const uid = doc.id;
+      const isSelf = uid === currentWarga.id;
+      const kepalaRoles = ['kepala_desa','kepala_dusun','ketua_rt_rw','kepala_keluarga','istri_kepala_dusun'];
+      let aksi = '';
+      // tombol verifikasi muncul untuk semua subrole Kepala Keluarga (per request)
+      if(kepalaRoles.includes(currentWarga.data.role) && !isSelf){
+        if(d.status !== 'aktif'){
+          aksi = `<button class="btn btn-sm btn-success btn-small" onclick="verifyMember('${uid}')">Verifikasi</button>`;
+        } else {
+          aksi = `<span class="muted small">Terverifikasi</span>`;
+        }
+      }
+      html += `<tr><td>${d.nama}${isSelf? ' <small class="muted">(Anda)</small>':''}</td><td>${d.status||''}</td><td>${aksi}</td></tr>`;
+    });
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+  }catch(e){ console.error(e); container.innerHTML = '<div class="muted">Gagal memuat anggota.</div>'; }
+}
+async function verifyMember(uid){
+  try{
+    await db.collection('Warga').doc(uid).update({ status:'aktif', verifiedBy: currentWarga.id, verifiedAt: firebase.firestore.FieldValue.serverTimestamp() });
+    toast("Anggota diverifikasi");
+    refreshFamilyList();
+  }catch(e){ console.error(e); err(e.message || String(e)); }
+}
+
+/* =================== POS: add (with photo upload mandatory), edit, delete (only kepala_dusun) =================== */
 async function promptAddPos(){
   if(!currentWarga) return err("Login dulu");
-  // Only kepala roles allowed (per request)
   const kepalaRoles = ['kepala_desa','kepala_dusun','ketua_rt_rw','kepala_keluarga','istri_kepala_dusun'];
-  if(!kepalaRoles.includes(currentWarga.data.role)) return err("Hanya subrole kepala yang boleh menambah pos");
+  if(!kepalaRoles.includes(currentWarga.data.role)) return err("Hanya subrole Kepala yang boleh menambah pos");
 
-  const { value: formValues } = await Swal.fire({
-    title: 'Tambah Pos Jaga (wajib isi semua)',
+  const { value: form } = await Swal.fire({
+    title: 'Tambah Pos Jaga (semua wajib)',
     html:
       `<input id="pos_nama" class="swal2-input" placeholder="Nama Pos (contoh: Pos RT 01)"/>` +
       `<input id="pos_rt" class="swal2-input" placeholder="RT Pembuat (mis: 001)"/>` +
@@ -400,11 +486,11 @@ async function promptAddPos(){
       `<input id="pos_desa" class="swal2-input" placeholder="Desa Pos"/>` +
       `<select id="pos_jenis" class="swal2-input"><option value="pos_dusun">Pos Dusun</option><option value="pos_rt">Pos RT</option></select>` +
       `<select id="pos_status" class="swal2-input"><option value="active">Active</option><option value="pasif">Pasif</option></select>` +
-      `<div class="swal2-file"><input id="pos_foto" type="file" accept="image/*" /></div>` +
-      `<div class="muted small">Set lokasi akan mengambil koordinat GPS (opsional), jika tidak boleh, marker akan disimpan tanpa koordinat.</div>`,
+      `<div class="swal2-file" style="margin-top:6px"><input id="pos_foto" type="file" accept="image/*" /></div>` +
+      `<div class="muted small" style="text-align:left;margin-top:6px;">Opsional: setelah ini Anda akan diminta untuk mengambil lokasi GPS (boleh dilewati).</div>`,
     focusConfirm: false,
     preConfirm: () => {
-      const fotoInput = document.getElementById('pos_foto');
+      const fileEl = document.getElementById('pos_foto');
       return {
         nama: document.getElementById('pos_nama').value,
         rt: document.getElementById('pos_rt').value,
@@ -413,92 +499,180 @@ async function promptAddPos(){
         desa: document.getElementById('pos_desa').value,
         jenis: document.getElementById('pos_jenis').value,
         status: document.getElementById('pos_status').value,
-        fotoFile: fotoInput && fotoInput.files && fotoInput.files[0] ? fotoInput.files[0] : null
+        fotoFile: fileEl && fileEl.files && fileEl.files[0] ? fileEl.files[0] : null
       };
     },
     showCancelButton: true
   });
 
-  if(!formValues) return;
-  // Validate mandatory fields
-  if(!formValues.nama || !formValues.rt || !formValues.rw || !formValues.dusun || !formValues.desa || !formValues.fotoFile){
+  if(!form) return;
+  // validation
+  if(!form.nama || !form.rt || !form.rw || !form.dusun || !form.desa || !form.fotoFile){
     return err("Semua field wajib diisi, termasuk foto pos.");
   }
 
-  // Ask for GPS optionally
+  // optional GPS
   let lat = null, lng = null;
   try{
-    const getGps = await Swal.fire({
-      title: 'Ambil Lokasi?',
-      text: 'Ingin mengambil lokasi GPS sekarang? (opsional - bisa dilewati)',
-      showCancelButton: true,
-      confirmButtonText: 'Ya, ambil lokasi',
-      cancelButtonText: 'Lewati'
+    const gpsConfirm = await Swal.fire({
+      title:'Ambil Lokasi GPS?',
+      text:'Ingin mengambil lokasi GPS sekarang? (boleh lewati)',
+      showCancelButton:true,
+      confirmButtonText:'Ambil',
+      cancelButtonText:'Lewati'
     });
-    if(getGps.isConfirmed){
-      Swal.fire({ title:'Mencari lokasi...', didOpen: ()=>Swal.showLoading() });
-      const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 15000 }));
+    if(gpsConfirm.isConfirmed){
+      Swal.fire({ title:'Mencari lokasi...', didOpen: ()=> Swal.showLoading() });
+      const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout:15000 }));
       lat = pos.coords.latitude; lng = pos.coords.longitude;
       Swal.close();
     }
   }catch(e){
-    Swal.close();
-    console.warn("GPS fail or denied", e);
+    Swal.close(); console.warn("gps fail", e);
   }
 
-  // Upload foto to Firebase Storage (required)
-  const file = formValues.fotoFile;
-  const storageRef = storage.ref();
-  const filePath = `pos_photos/${Date.now()}_${file.name.replace(/\s+/g,'_')}`;
-  const fileRef = storageRef.child(filePath);
+  // upload foto to storage
   try{
-    const uploadTask = await fileRef.put(file);
-    const fotoUrl = await uploadTask.ref.getDownloadURL();
+    const file = form.fotoFile;
+    const path = `pos_photos/${Date.now()}_${file.name.replace(/\s+/g,'_')}`;
+    const ref = storage.ref().child(path);
+    const uploadTaskSnapshot = await ref.put(file);
+    const url = await uploadTaskSnapshot.ref.getDownloadURL();
 
-    // Save to Firestore
     const payload = {
-      nama: formValues.nama,
-      rt: formValues.rt,
-      rw: formValues.rw,
-      dusun: formValues.dusun,
-      desa: formValues.desa,
-      jenis: formValues.jenis,
-      status: formValues.status || 'active',
-      foto: fotoUrl,
+      nama: form.nama,
+      rt: form.rt,
+      rw: form.rw,
+      dusun: form.dusun,
+      desa: form.desa,
+      jenis: form.jenis,
+      status: form.status,
+      foto: url,
+      fotoPath: path,
       pembuatId: currentWarga.id,
       pembuatNama: currentWarga.data.nama,
-      pembuatRt: currentWarga.data.rt || formValues.rt,
-      pembuatRw: currentWarga.data.rw || formValues.rw,
+      pembuatRt: currentWarga.data.rt || form.rt,
+      pembuatRw: currentWarga.data.rw || form.rw,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      lat: lat,
-      lng: lng,
+      lat, lng,
       dusunCode: currentWarga.data.kodeDusun || null
     };
     await db.collection('PosDusun').add(payload);
-    toast("Pos tersimpan");
-    // refresh list & markers
-    if(currentWarga.data.kodeDusun) loadPosList(currentWarga.data.kodeDusun);
+    toast("Pos ditambahkan");
+    loadPosList(currentWarga.data.kodeDusun);
     loadPosMarkers(currentWarga.data.kodeDusun);
-  }catch(e){
-    console.error("upload/save pos err", e);
-    err("Gagal menyimpan pos: " + (e.message || e));
-  }
+  }catch(e){ console.error(e); err("Gagal upload foto atau simpan pos: " + (e.message||e)); }
 }
 
-/* ================= Load pos list for a dusun (if kode provided) ================= */
+/* =================== Edit Pos (kepala_dusun only) =================== */
+async function promptEditPos(posId){
+  if(!currentWarga) return err("Login dulu");
+  if(currentWarga.data.role !== 'kepala_dusun') return err("Hanya Kepala Dusun yang boleh edit pos");
+  try{
+    const doc = await db.collection('PosDusun').doc(posId).get();
+    if(!doc.exists) return err("Pos tidak ditemukan");
+    const d = doc.data();
+    const { value: form } = await Swal.fire({
+      title: 'Edit Pos',
+      html:
+        `<input id="e_pos_nama" class="swal2-input" placeholder="Nama Pos" value="${escapeHtml(d.nama||'')}"/>` +
+        `<input id="e_pos_rt" class="swal2-input" placeholder="RT" value="${escapeHtml(d.rt||'')}"/>` +
+        `<input id="e_pos_rw" class="swal2-input" placeholder="RW" value="${escapeHtml(d.rw||'')}"/>` +
+        `<input id="e_pos_dusun" class="swal2-input" placeholder="Dusun" value="${escapeHtml(d.dusun||'')}"/>` +
+        `<input id="e_pos_desa" class="swal2-input" placeholder="Desa" value="${escapeHtml(d.desa||'')}"/>` +
+        `<select id="e_pos_jenis" class="swal2-input"><option value="pos_dusun"${d.jenis==='pos_dusun'?' selected':''}>Pos Dusun</option><option value="pos_rt"${d.jenis==='pos_rt'?' selected':''}>Pos RT</option></select>` +
+        `<select id="e_pos_status" class="swal2-input"><option value="active"${(d.status||'active')==='active'?' selected':''}>Active</option><option value="pasif"${(d.status||'active')==='pasif'?' selected':''}>Pasif</option></select>` +
+        `<div class="swal2-file"><input id="e_pos_foto" type="file" accept="image/*" /></div>`,
+      focusConfirm: false,
+      preConfirm: () => {
+        const fileEl = document.getElementById('e_pos_foto');
+        return {
+          nama: document.getElementById('e_pos_nama').value,
+          rt: document.getElementById('e_pos_rt').value,
+          rw: document.getElementById('e_pos_rw').value,
+          dusun: document.getElementById('e_pos_dusun').value,
+          desa: document.getElementById('e_pos_desa').value,
+          jenis: document.getElementById('e_pos_jenis').value,
+          status: document.getElementById('e_pos_status').value,
+          newFoto: fileEl && fileEl.files && fileEl.files[0] ? fileEl.files[0] : null
+        };
+      },
+      showCancelButton: true
+    });
+    if(!form) return;
+    if(!form.nama || !form.rt || !form.rw || !form.dusun || !form.desa) return err("Semua field wajib diisi");
+    // if new photo uploaded, replace storage
+    let fotoUrl = d.foto;
+    let fotoPath = d.fotoPath || null;
+    if(form.newFoto){
+      // delete old photo if exists
+      try{
+        if(fotoPath) await storage.ref().child(fotoPath).delete();
+      }catch(e){ console.warn("hapus foto lama gagal", e); }
+      // upload new
+      const path = `pos_photos/${Date.now()}_${form.newFoto.name.replace(/\s+/g,'_')}`;
+      const ref = storage.ref().child(path);
+      const snap = await ref.put(form.newFoto);
+      fotoUrl = await snap.ref.getDownloadURL();
+      fotoPath = path;
+    }
+    // update doc
+    await db.collection('PosDusun').doc(posId).update({
+      nama: form.nama,
+      rt: form.rt,
+      rw: form.rw,
+      dusun: form.dusun,
+      desa: form.desa,
+      jenis: form.jenis,
+      status: form.status,
+      foto: fotoUrl,
+      fotoPath: fotoPath,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast("Pos diperbarui");
+    loadPosList(currentWarga.data.kodeDusun);
+    loadPosMarkers(currentWarga.data.kodeDusun);
+  }catch(e){ console.error(e); err(e.message || String(e)); }
+}
+
+/* =================== Delete Pos (kepala_dusun only) =================== */
+async function deletePos(posId){
+  if(!currentWarga) return err("Login dulu");
+  if(currentWarga.data.role !== 'kepala_dusun') return err("Hanya Kepala Dusun yang boleh menghapus pos");
+  const confirm = await Swal.fire({ title:'Hapus Pos?', text:'Pos akan dihapus permanen.', icon:'warning', showCancelButton:true, confirmButtonText:'Hapus' });
+  if(!confirm.isConfirmed) return;
+  try{
+    const doc = await db.collection('PosDusun').doc(posId).get();
+    if(!doc.exists) return err("Pos tidak ditemukan");
+    const d = doc.data();
+    // delete photo from storage if path provided
+    if(d.fotoPath){
+      try{ await storage.ref().child(d.fotoPath).delete(); }catch(e){ console.warn("hapus foto gagal", e); }
+    }
+    await db.collection('PosDusun').doc(posId).delete();
+    toast("Pos terhapus");
+    loadPosList(currentWarga.data.kodeDusun);
+    loadPosMarkers(currentWarga.data.kodeDusun);
+  }catch(e){ console.error(e); err(e.message || String(e)); }
+}
+
+/* =================== LOAD POS LIST (for a dusun) =================== */
 async function loadPosList(kodeDusun){
   try{
-    let qry = db.collection('PosDusun');
-    if(kodeDusun) qry = qry.where('dusunCode','==', kodeDusun);
-    else qry = qry.where('dusunCode','==', null).limit(0); // if not joined, show nothing
-    const snap = await qry.orderBy('createdAt','desc').get();
-    const container = $('posList');
-    container.innerHTML = '';
-    if(snap.empty){ container.innerHTML = '<div class="muted">Belum ada pos untuk dusun ini.</div>'; return; }
+    if(!kodeDusun){ $('posList').innerHTML = '<div class="muted">Gabung ke dusun untuk melihat pos.</div>'; return; }
+    const snap = await db.collection('PosDusun').where('dusunCode','==', kodeDusun).orderBy('createdAt','desc').get();
+    const container = $('posList'); container.innerHTML = '';
+    if(snap.empty){ container.innerHTML = '<div class="muted">Belum ada pos.</div>'; return; }
     snap.forEach(doc => {
       const d = doc.data();
       const fotoHtml = d.foto ? `<img src="${d.foto}" class="pos-photo">` : `<i class="muted">Belum ada foto</i>`;
       const statusText = (d.status || 'active').toUpperCase();
+      // buttons: lihat always, edit/delete only for kepala_dusun
+      let aksi = `<button class="btn btn-sm btn-link btn-small" onclick="lihatPos('${doc.id}')">Lihat</button>`;
+      if(currentWarga && currentWarga.data.role === 'kepala_dusun'){
+        aksi += ` <button class="btn btn-sm btn-primary btn-small" onclick="promptEditPos('${doc.id}')">Edit</button>`;
+        aksi += ` <button class="btn btn-sm btn-danger btn-small" onclick="deletePos('${doc.id}')">Hapus</button>`;
+      }
       container.innerHTML += `<div class="p-2 border rounded mb-2">
         <div><strong>${d.nama}</strong></div>
         <div class="muted small">RT/RW Pos: ${d.rt || '-'} / ${d.rw || '-'}</div>
@@ -506,80 +680,93 @@ async function loadPosList(kodeDusun){
         <div class="muted small">Desa: ${d.desa || '-'}</div>
         <div class="muted small">Status: ${statusText}</div>
         ${fotoHtml}
-        <div class="mt-2"><button class="btn btn-sm btn-link" onclick="lihatPos('${doc.id}')">Lihat</button></div>
+        <div class="mt-2">${aksi}</div>
       </div>`;
     });
   }catch(e){ console.error(e); $('posList').innerHTML = '<div class="muted">Gagal memuat pos.</div>'; }
 }
 
-/* ================= Load markers on Google Maps for a dusun ================= */
-async function loadPosMarkers(kodeDusun){
-  // clear markers
+/* =================== MAP MARKERS (load markers, show info) =================== */
+function clearMarkers(){
   posMarkers.forEach(m => { if(m.marker) m.marker.setMap(null); });
   posMarkers = [];
-  if(!mapObj && window.google){
-    mapObj = new google.maps.Map(document.getElementById('map'), { center: { lat: -2.0, lng: 117.0 }, zoom: 5 });
-  }
+}
+async function loadPosMarkers(kodeDusun){
   try{
+    clearMarkers();
+    if(!window.google) return;
+    if(!document.getElementById('map')) return;
+    if(!window.mapInstance){
+      window.mapInstance = new google.maps.Map(document.getElementById('map'), { center:{lat:-2.0,lng:117.0}, zoom:5 });
+    }
+    const map = window.mapInstance;
+    if(!kodeDusun) return;
     const snap = await db.collection('PosDusun').where('dusunCode','==', kodeDusun).get();
     snap.forEach(doc => {
       const d = doc.data();
-      if(d.lat && d.lng && window.google && mapObj){
-        const marker = new google.maps.Marker({ position: { lat: d.lat, lng: d.lng }, map: mapObj, title: d.nama });
-        const infoHtml = `<div><strong>${d.nama}</strong><div class="muted small">RT/RW: ${d.rt||'-'}/${d.rw||'-'}</div><div class="muted small">Dusun: ${d.dusun||'-'}</div><div class="muted small">Desa: ${d.desa||'-'}</div><div class="muted small">Status: ${(d.status||'active').toUpperCase()}</div>${d.foto?`<div style="margin-top:6px;"><img src="${d.foto}" style="max-width:160px;border-radius:6px;"></div>`:''}</div>`;
+      if(d.lat && d.lng){
+        const marker = new google.maps.Marker({ position: { lat: d.lat, lng: d.lng }, map, title: d.nama });
+        const infoHtml = `<div><strong>${escapeHtml(d.nama||'-')}</strong><div class="muted small">RT/RW: ${escapeHtml(d.rt||'-')}/${escapeHtml(d.rw||'-')}</div><div class="muted small">Dusun: ${escapeHtml(d.dusun||'-')}</div><div class="muted small">Desa: ${escapeHtml(d.desa||'-')}</div><div class="muted small">Status: ${(d.status||'active').toUpperCase()}</div>${d.foto?`<div style="margin-top:6px;"><img src="${d.foto}" style="max-width:160px;border-radius:6px;"></div>`:''}</div>`;
         const infow = new google.maps.InfoWindow({ content: infoHtml });
-        marker.addListener('click', () => infow.open(mapObj, marker));
+        marker.addListener('click', ()=> infow.open(map, marker));
         posMarkers.push({ id: doc.id, marker });
       }
     });
-    if(posMarkers[0] && posMarkers[0].marker) mapObj.setCenter(posMarkers[0].marker.getPosition());
+    if(posMarkers[0] && posMarkers[0].marker) map.setCenter(posMarkers[0].marker.getPosition());
   }catch(e){ console.error("loadPosMarkers", e); }
 }
 
-/* ================= lihat detail pos ================= */
+/* =================== VIEW POS DETAIL =================== */
 async function lihatPos(id){
   try{
     const doc = await db.collection('PosDusun').doc(id).get();
     if(!doc.exists) return err("Pos tidak ditemukan");
     const d = doc.data();
-    const fotoHtml = d.foto ? `<img src="${d.foto}" style="max-width:280px;border-radius:8px;margin-top:8px;">` : `<i class="muted">Belum ada foto</i>`;
-    const html = `<div><strong>${d.nama}</strong></div>
-      <div class="muted small">RT/RW Pos: ${d.rt||'-'}/${d.rw||'-'}</div>
-      <div class="muted small">Dusun: ${d.dusun||'-'}</div>
-      <div class="muted small">Desa: ${d.desa||'-'}</div>
+    const fotoHtml = d.foto ? `<img src="${d.foto}" style="max-width:320px;border-radius:8px;margin-top:8px;">` : `<i class="muted">Belum ada foto</i>`;
+    const html = `<div><strong>${escapeHtml(d.nama||'-')}</strong></div>
+      <div class="muted small">RT/RW Pos: ${escapeHtml(d.rt||'-')}/${escapeHtml(d.rw||'-')}</div>
+      <div class="muted small">Dusun: ${escapeHtml(d.dusun||'-')}</div>
+      <div class="muted small">Desa: ${escapeHtml(d.desa||'-')}</div>
       <div class="muted small">Status: ${(d.status||'active').toUpperCase()}</div>
-      <div class="muted small">Pembuat: ${d.pembuatNama||'-'}</div>
+      <div class="muted small">Pembuat: ${escapeHtml(d.pembuatNama||'-')}</div>
       ${fotoHtml}`;
-    Swal.fire({ title: 'Detail Pos', html, width: 420 });
+    Swal.fire({ title: 'Detail Pos', html, width: 500 });
   }catch(e){ console.error(e); err(e.message || String(e)); }
 }
 
-/* ================= SOS (keperluan demo) ================= */
+/* =================== REPORT / SOS =================== */
 async function openSOS(){
   if(!currentWarga) return err("Login dulu");
-  if(!currentWarga.data.kodeDusun) return err("Gabung ke dusun dahulu untuk mengirim laporan");
+  if(!currentWarga.data.kodeDusun) return err("Gabung ke dusun untuk mengirim laporan");
   const { value: form } = await Swal.fire({
     title: 'Kirim Laporan / SOS',
     html: `<select id="swalJenis" class="swal2-input"><option>Kebakaran</option><option>Kemalingan</option><option>Medis</option><option>Ambulance</option><option>Mencurigakan</option></select>
            <select id="swalLok" class="swal2-input"><option value="rumah">Di Rumah</option><option value="lainnya">Di Tempat Lain</option></select>
-           <input id="swalDesc" class="swal2-input hidden" placeholder="Deskripsi lokasi (contoh jalan/patakokan)">`,
+           <input id="swalDesc" class="swal2-input hidden" placeholder="Deskripsi lokasi (contoh jalan/patok)">`,
     preConfirm: () => ({
       jenis: document.getElementById('swalJenis').value,
       lokasiOpt: document.getElementById('swalLok').value,
       desc: document.getElementById('swalDesc').value
     }),
     didOpen: () => {
-      const lok = document.getElementById('swalLok'), desc = document.getElementById('swalDesc');
+      const lok = document.getElementById('swalLok'); const desc = document.getElementById('swalDesc');
       lok.addEventListener('change', ()=> lok.value === 'lainnya' ? desc.classList.remove('hidden') : desc.classList.add('hidden'));
     },
     showCancelButton: true
   });
   if(!form) return;
-  // minimal demo save
   try{
+    let lat=null,lng=null;
+    if(form.lokasiOpt === 'rumah'){
+      try{
+        const pos = await new Promise((res,rej) => navigator.geolocation.getCurrentPosition(res,rej,{ timeout:8000 }));
+        lat = pos.coords.latitude; lng = pos.coords.longitude;
+      }catch(e){ console.warn("gps denied", e); }
+    }
     await db.collection('Laporan').add({
       jenis: form.jenis,
       lokasiDeskripsi: form.desc || null,
+      lat, lng,
       dusunCode: currentWarga.data.kodeDusun || null,
       userId: currentWarga.id,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -589,44 +776,76 @@ async function openSOS(){
   }catch(e){ console.error(e); err("Gagal kirim laporan"); }
 }
 
-/* ================= Logout ================= */
-async function onLogout(){
-  try{ await auth.signOut(); toast("Logout"); location.reload(); }catch(e){ console.error(e); err("Gagal logout"); }
+/* =================== SUBSCRIBE & STATISTICS (30 days) =================== */
+function subscribeReportsForDusun(kodeDusun){
+  if(laporanUnsub) laporanUnsub();
+  if(!kodeDusun){ renderChartAndSummary([]); return; }
+  const since = new Date(Date.now() - (30*24*60*60*1000));
+  laporanUnsub = db.collection('Laporan').where('dusunCode','==', kodeDusun).where('createdAt','>=', firebase.firestore.Timestamp.fromDate(since)).orderBy('createdAt','desc')
+    .onSnapshot(snapshot => {
+      const arr = [];
+      snapshot.forEach(doc => { const d = doc.data(); d._id = doc.id; arr.push(d); });
+      renderReportsList(arr);
+      renderChartAndSummary(arr);
+    }, err => { console.error(err); });
+}
+function renderReportsList(arr){
+  const container = $('posList'); // reuse posList? keep separate - but requirement was pos list separate; keep reports minimal
+  // We won't mix posList; show reports inside securitySummary if needed
+}
+function renderChartAndSummary(arr){
+  const labels = ['Kebakaran','Kemalingan','Medis','Ambulance','Mencurigakan'];
+  const counts = labels.map(l => arr.filter(a => a.jenis === l).length);
+  const total = counts.reduce((s,t)=>s+t,0);
+  const ctx = $('chartKejadian').getContext('2d');
+  if(chartKej) chartKej.destroy();
+  chartKej = new Chart(ctx, { type:'bar', data:{ labels, datasets:[{ label:'Jumlah', data:counts }] }, options:{ responsive:true, maintainAspectRatio:false } });
+  // category thresholds: example -> AMAN: 0-5, WASPADA: 6-15, RAWAN: >15 (per previous)
+  let category='AMAN', cls='status-aman';
+  if(total>15){ category='RAWAN'; cls='status-rawan'; }
+  else if(total>=6){ category='WASPADA'; cls='status-waspada'; }
+  $('securitySummary').innerHTML = `<div>Total laporan 30 hari: <strong>${total}</strong> · <span class="${cls}">${category}</span></div>`;
+  // percentage table
+  let html = '<table class="table table-sm mt-2"><thead><tr><th>Jenis</th><th>Jumlah</th><th>Persentase</th></tr></thead><tbody>';
+  labels.forEach((l,i) => {
+    const c = counts[i]; const pct = total? Math.round(c/total*100):0;
+    html += `<tr><td>${l}</td><td>${c}</td><td style="width:60%"><div class="progress"><div class="progress-bar" role="progressbar" style="width:${pct}%">${pct}%</div></div></td></tr>`;
+  });
+  html += '</tbody></table>';
+  $('securitySummary').innerHTML += html;
+}
+async function loadStatistics(kodeDusun){
+  // trigger subscribe to recalc chart
+  subscribeReportsForDusun(kodeDusun);
 }
 
-/* ================= Startup ================= */
-window.addEventListener('load', async () => {
-  updateClock();
-  loadRegionDropdownsIfAny();
-  // nothing else; onAuthStateChanged will render
-});
-
-/* ================= Utility: load pos for current dusun if user already joined ================= */
-async function loadPosForCurrentUser(){
-  if(currentWarga && currentWarga.data.kodeDusun){
-    await loadPosList(currentWarga.data.kodeDusun);
-    await loadPosMarkers(currentWarga.data.kodeDusun);
-  } else {
-    // hide or show nothing
-    $('posList').innerHTML = '<div class="muted">Gabung ke dusun untuk melihat pos.</div>';
-    if(mapObj && posMarkers.length) { posMarkers.forEach(m=>m.marker.setMap(null)); posMarkers=[]; }
-  }
-}
-
-/* On auth state: when logged in load user & pos */
-auth.onAuthStateChanged(async u => {
+/* =================== STARTUP / AUTH STATE =================== */
+auth.onAuthStateChanged(async (u) => {
   if(u){
     currentUser = u;
-    await loadUserProfile(); // will call renderDashboard -> load pos if joined
-    if(currentWarga && currentWarga.data.kodeDusun) {
+    await loadUserProfile();
+    if(currentWarga && currentWarga.data.kodeDusun){
       await loadPosList(currentWarga.data.kodeDusun);
       await loadPosMarkers(currentWarga.data.kodeDusun);
+      await loadStatistics(currentWarga.data.kodeDusun);
     }
   } else {
     currentUser = null; currentWarga = null; currentDusun = null;
     showAuth();
   }
 });
+
+/* =================== LOGOUT =================== */
+async function onLogout(){
+  try{ await auth.signOut(); toast("Logout berhasil"); location.reload(); }catch(e){ console.error(e); err("Gagal logout"); }
+}
+
+/* =================== UTILITY =================== */
+function escapeHtml(str){ if(!str) return ''; return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s])); }
+
+/* =================== FINISH =================== */
+window.addEventListener('load', ()=>{ updateClock(); /* nothing else - wait for auth state */ });
+
 </script>
 </body>
 </html>
