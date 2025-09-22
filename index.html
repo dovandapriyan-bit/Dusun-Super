@@ -2,33 +2,29 @@
 <html lang="id">
 <head>
   <meta charset="utf-8" />
-  <title>SISTEM KEAMANAN DUSUN — FULL COMPLETE</title>
+  <title>SISTEM KEAMANAN DUSUN — FULL (Lengkap)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
   <style>
-    :root{
-      --muted:#6b7280; --accent:#ef4444; --safe:#16a34a; --caution:#f59e0b; --danger:#ef4444;
-      --card-radius:12px;
-    }
-    body{background:#f4f7ff;font-family:Inter,Arial;padding:16px;-webkit-text-size-adjust:100%;}
-    .card{border-radius:var(--card-radius);box-shadow:0 8px 30px rgba(14,30,60,0.06);}
+    :root{ --muted:#6b7280; --accent:#ef4444; --safe:#16a34a; --caution:#f59e0b; --danger:#ef4444; --card-radius:12px; }
+    body{background:#f4f7ff;font-family:Inter,Segoe UI,Arial,sans-serif;padding:16px;-webkit-text-size-adjust:100%;}
+    .card{border-radius:var(--card-radius);box-shadow:0 8px 30px rgba(14,30,60,0.06);margin-bottom:16px;}
     .form-control,.btn{border-radius:8px;}
-    .muted{color:var(--muted);font-size:0.92rem;}
-    #map{width:100%;height:420px;border-radius:8px;background:#eef;}
-    .sos-btn{width:110px;height:110px;border-radius:999px;background:var(--accent);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:18px;border:none;cursor:pointer;box-shadow:0 12px 32px rgba(239,68,68,0.25);}
-    @media(max-width:767px){.sos-btn{width:96px;height:96px;position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:999;}body{padding-bottom:140px;}}
-    .pos-photo{max-width:100%;max-height:160px;border-radius:8px;margin-top:6px;display:block;}
-    table.table-sm td,table.table-sm th{padding:.4rem .6rem;}
+    .muted{color:var(--muted);font-size:0.95rem;}
+    #map, #posFormMap, #posViewMap { width:100%; height:360px; border-radius:8px; }
     .hidden{display:none!important;}
+    .sos-btn{width:110px;height:110px;border-radius:999px;background:var(--accent);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:18px;border:none;cursor:pointer;box-shadow:0 12px 32px rgba(239,68,68,0.25);margin:0 auto;}
+    @media(max-width:767px){ .sos-btn{width:96px;height:96px;position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:999;} body{padding-bottom:160px;} }
+    .pos-photo{max-width:100%;max-height:160px;border-radius:8px;margin-top:6px;display:block;}
+    .small{font-size:0.85rem;color:#555;}
     .kejadian-option{display:inline-block;margin:6px;text-align:center;cursor:pointer;padding:8px;border-radius:8px;border:1px solid #eee;background:#fff;width:110px;}
     .kejadian-option span{display:block;margin-top:6px;font-size:0.9rem;}
     .status-aman{color:var(--safe);font-weight:700}.status-waspada{color:var(--caution);font-weight:700}.status-rawan{color:var(--danger);font-weight:700}
-    .small{font-size:0.85rem;color:#555;}
-    .leaflet-container{border-radius:8px;}
-    .centered{text-align:center;}
+    .table-sm td,.table-sm th{padding:.35rem .5rem;}
+    .modal-overlay{position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:1200;}
+    .modal-box{width:90%;max-width:760px;background:#fff;padding:14px;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.2);}
     .file-label{display:inline-block;padding:.45rem .6rem;border-radius:8px;background:#f8fafc;border:1px dashed #e5e7eb;cursor:pointer;}
-    .upper{ text-transform:uppercase; }
   </style>
 
   <!-- Firebase (compat) -->
@@ -46,23 +42,22 @@
 </head>
 <body>
 <div class="container" style="max-width:1200px;">
-  <h3 class="text-center mb-3">SISTEM KEAMANAN DUSUN — FULL COMPLETE</h3>
+  <h3 class="text-center mb-3">SISTEM KEAMANAN DUSUN — FULL</h3>
 
   <!-- AUTH / REGISTER -->
-  <div id="authCard" class="card p-3 mb-4">
+  <div id="authCard" class="card p-3">
     <div class="row g-3">
-      <!-- Register -->
-      <div class="col-lg-6">
+      <div class="col-md-6">
         <h5>Pendaftaran Warga</h5>
         <input id="reg_nama" class="form-control mb-2" placeholder="Nama lengkap">
         <input id="reg_hp" class="form-control mb-2" placeholder="Nomor HP (0812...)" oninput="formatPhoneTyping(this)">
         <input id="reg_password" type="password" class="form-control mb-2" placeholder="Password (disimpan hanya di Auth)">
         <label class="form-label small">Pilih Status / Subrole</label>
         <select id="reg_status" class="form-control mb-2">
-          <optgroup label="A. Kepala (Subrole)">
+          <optgroup label="A. Kepala">
             <option value="kepala_desa">Kepala Desa</option>
             <option value="kepala_dusun">Kepala Dusun</option>
-            <option value="ketua_rt_rw">Ketua RT/RW</option>
+            <option value="ketua_rt_rw">Ketua RT / RW</option>
             <option value="kepala_keluarga">Kepala Keluarga</option>
           </optgroup>
           <optgroup label="B. Istri">
@@ -78,113 +73,190 @@
         </select>
 
         <!-- Region dropdowns (EMSIFA) -->
-        <div class="mb-2">
-          <label class="form-label small">Provinsi / Kabupaten / Kecamatan / Desa</label>
-          <select id="reg_prov" class="form-control mb-1"><option value="">Pilih Provinsi</option></select>
-          <select id="reg_kab" class="form-control mb-1"><option value="">Pilih Kabupaten/Kota</option></select>
-          <select id="reg_kec" class="form-control mb-1"><option value="">Pilih Kecamatan</option></select>
-          <select id="reg_des" class="form-control"><option value="">Pilih Desa/Kelurahan</option></select>
+        <label class="form-label small">Provinsi / Kabupaten / Kecamatan / Desa / Dusun</label>
+        <select id="reg_prov" class="form-control mb-1"><option value="">Pilih Provinsi</option></select>
+        <select id="reg_kab" class="form-control mb-1"><option value="">Pilih Kabupaten/Kota</option></select>
+        <select id="reg_kec" class="form-control mb-1"><option value="">Pilih Kecamatan</option></select>
+        <select id="reg_des" class="form-control mb-1"><option value="">Pilih Desa/Kelurahan</option></select>
+        <select id="reg_dus" class="form-control mb-1"><option value="">Pilih Dusun (jika tersedia)</option></select>
+
+        <div class="row g-2 mb-2">
+          <div class="col"><input id="reg_blok" class="form-control" placeholder="Blok (opsional)"></div>
+          <div class="col"><input id="reg_no" class="form-control" placeholder="No Rumah (opsional)"></div>
+        </div>
+        <div class="row g-2 mb-2">
+          <div class="col"><input id="reg_rt" class="form-control" placeholder="RT (mis. 001)" maxlength="3" onblur="padRT(this)"></div>
+          <div class="col"><input id="reg_rw" class="form-control" placeholder="RW (mis. 001)" maxlength="3" onblur="padRW(this)"></div>
         </div>
 
-        <textarea id="reg_alamat" class="form-control mb-2" placeholder="Alamat lengkap (Jalan, Blok, No.)"></textarea>
-        <div class="row g-2 mb-2"><div class="col"><input id="reg_rt" class="form-control" placeholder="RT (001)" maxlength="3"></div><div class="col"><input id="reg_rw" class="form-control" placeholder="RW (001)" maxlength="3"></div></div>
+        <textarea id="reg_alamat" class="form-control mb-2" placeholder="Alamat lengkap (diisi otomatis dari dropdown)"></textarea>
+
         <div class="d-grid gap-2">
           <button id="btnRegister" class="btn btn-success" onclick="onRegister()">Daftar</button>
           <button class="btn btn-outline-secondary" onclick="clearRegister()">Reset</button>
         </div>
-        <div class="muted mt-2">Pendaftaran tidak langsung login — setelah berhasil, silakan login menggunakan panel di sebelah.</div>
+        <div class="muted mt-2">Setelah mendaftar: <strong>jangan langsung login</strong>. Silakan login di panel sebelah.</div>
       </div>
 
-      <!-- Login -->
-      <div class="col-lg-6">
+      <div class="col-md-6">
         <h5>Login</h5>
         <input id="login_hp" class="form-control mb-2" placeholder="Nomor HP (contoh: 0812...)" oninput="formatPhoneTyping(this)">
         <input id="login_pass" type="password" class="form-control mb-2" placeholder="Password">
-        <div class="d-grid gap-2 mb-2"><button class="btn btn-primary" onclick="onLogin()">Login</button></div>
-        <hr>
-        <div class="muted small">Jika muncul error `auth/api-key-not-valid` atau `Missing or insufficient permissions`, cek konfigurasi Firebase & Firestore rules.</div>
+        <div class="d-grid gap-2 mb-2">
+          <button class="btn btn-primary" onclick="onLogin()">Login</button>
+        </div>
+        <div class="muted small">Password disimpan hanya di Firebase Auth. Jika terjadi error terkait API key, periksa konfigurasi Firebase.</div>
       </div>
     </div>
   </div>
 
   <!-- Dashboard -->
   <div id="dashboardCard" class="card p-3 hidden">
-    <div class="d-flex justify-content-between align-items-start mb-3">
+    <div class="topbar d-flex justify-content-between align-items-center mb-2">
       <div>
         <h4>Dashboard Dusun</h4>
-        <div class="muted">Selamat datang, <b id="display_name"></b> · <span id="display_role"></span></div>
-        <div class="muted small">Status akun: <span id="display_status"></span> · Waktu: <span id="clock"></span></div>
+        <div class="muted">Selamat datang, <b id="display_name"></b> · <span id="display_role"></span> · <span id="display_status"></span></div>
+        <div class="muted small">Waktu: <span id="clock"></span></div>
       </div>
-      <div class="text-end"><button class="btn btn-danger btn-sm" onclick="onLogout()">Logout</button></div>
+      <div class="text-end">
+        <button class="btn btn-danger btn-sm" onclick="onLogout()">Logout</button>
+      </div>
     </div>
 
     <div class="row g-3">
       <div class="col-lg-4">
+        <!-- Kepala Dusun Info -->
         <div class="card p-3 mb-3">
           <h6>Informasi Kepala Dusun</h6>
           <div id="kepalaInfo" class="muted">Memuat...</div>
-          <div class="centered mt-3">
-            <button class="sos-btn" id="sosMain" onclick="openSOS()">SOS</button>
-          </div>
         </div>
 
-        <div id="adminPanel" class="card p-3 mb-3 hidden">
-          <h6>Manajemen Dusun (Hanya Kepala)</h6>
-          <div class="d-grid gap-2">
-            <button class="btn btn-outline-primary" onclick="promptCreateDusun()">Buat Dusun</button>
-            <button class="btn btn-outline-secondary" onclick="regenerateCode()">Regenerate Kode</button>
-            <button class="btn btn-outline-danger" onclick="expireCodeNow()">Expire Kode</button>
-          </div>
-          <div id="dusunInfo" class="muted mt-2"></div>
-        </div>
-
-        <div id="joinPanel" class="card p-3 mb-3">
-          <h6>Gabung Dusun</h6>
-          <div class="muted small mb-2">Masukkan kode dari Kepala Dusun</div>
-          <div class="input-group">
-            <input id="join_kode" class="form-control upper" placeholder="KODE DUSUN">
-            <button class="btn btn-success" onclick="onJoinDusun()">Gabung</button>
-          </div>
-        </div>
-
+        <!-- SOS card (jenis kejadian + lokasi + sos button) -->
         <div class="card p-3 mb-3">
-          <h6>Verifikasi Pendaftar (KK / Kepala)</h6>
-          <div id="pendingList">Memuat...</div>
+          <h6>Darurat / Lapor Cepat</h6>
+          <div id="kejadianGrid" class="mb-2"></div>
+          <label class="form-label small">Lokasi Laporan</label>
+          <select id="lap_loc_opt" class="form-control mb-2">
+            <option value="rumah">Di Rumah (alamat terdaftar)</option>
+            <option value="lainnya">Di Tempat Lain</option>
+          </select>
+          <textarea id="lap_lokasi" class="form-control mb-2 hidden" placeholder="Deskripsi alamat (jika di tempat lain)"></textarea>
+          <div class="centered mt-2"><button id="sosButton" class="sos-btn" onclick="openSOS()">SOS</button></div>
         </div>
 
+        <!-- Buat Dusun (hanya kepala) -->
+        <div id="createDusunCard" class="card p-3 mb-3 hidden">
+          <h6>Buat Dusun (Kepala)</h6>
+          <input id="dusun_nama" class="form-control mb-2" placeholder="Nama Dusun">
+          <div class="d-grid gap-2"><button class="btn btn-primary" onclick="createDusun()">Buat Dusun</button></div>
+          <div class="muted small mt-2">Kode dusun hanya terlihat oleh Kepala Dusun yang membuatnya.</div>
+          <div id="myDusunCode" class="muted small mt-2"></div>
+        </div>
+
+        <!-- Gabung Dusun -->
+        <div id="joinDusunCard" class="card p-3 mb-3 hidden">
+          <h6>Gabung Dusun</h6>
+          <input id="join_kode" class="form-control upper mb-2" placeholder="Masukkan Kode Dusun">
+          <div class="d-grid gap-2"><button class="btn btn-success" onclick="joinDusun()">Gabung</button></div>
+        </div>
       </div>
 
       <div class="col-lg-8">
+        <!-- Map -->
         <div class="card p-3 mb-3">
           <h6>Peta Pos & Dusun</h6>
           <div id="map">Memuat peta...</div>
           <div class="d-flex gap-2 mt-3">
-            <button class="btn btn-primary" id="btnAddPos" onclick="promptAddPos()">Tambah Pos RT</button>
+            <button id="btnOpenPosForm" class="btn btn-outline-primary" onclick="openPosForm()">Tambah Pos</button>
             <button class="btn btn-outline-secondary" onclick="loadPosList()">Muat Ulang Pos</button>
           </div>
-          <div id="listPos" class="mt-3"></div>
+          <div id="posList" class="mt-3"></div>
         </div>
 
-        <div id="familyPanel" class="card p-3 mb-3">
-          <h6>Anggota Keluarga</h6>
+        <!-- History Laporan -->
+        <div class="card p-3 mb-3">
+          <h6>Riwayat Laporan Saya</h6>
+          <div id="myReports">Memuat...</div>
+        </div>
+        <div class="card p-3 mb-3">
+          <h6>Riwayat Laporan Warga Lain (Dusun)</h6>
+          <div id="otherReports">Memuat...</div>
+        </div>
+
+        <!-- Statistik 30 hari -->
+        <div class="card p-3 mb-3">
+          <h6>Statistik Kejadian (30 hari)</h6>
+          <canvas id="chartKejadian" style="height:180px"></canvas>
+          <div id="statSummary" class="mt-2"></div>
+        </div>
+
+        <!-- Anggota Keluarga -->
+        <div class="card p-3 mb-3">
+          <h6>Anggota Keluarga (Alamat Sama)</h6>
           <div id="familyList">Memuat...</div>
         </div>
-
       </div>
     </div>
+  </div>
+</div>
 
-    <div class="card p-3 mb-3">
-      <h6>Statistik Kejadian 30 Hari</h6>
-      <canvas id="chart30" style="height:180px"></canvas>
-      <div id="statSummary" class="mt-2"></div>
+<!-- Pos Form Modal (inline, tidak keluar halaman) -->
+<div id="posModal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <h5>Tambah Pos</h5>
+    <div id="posFormArea">
+      <input id="pos_name" class="form-control mb-2" placeholder="Nama Pos (mis. Pos RT01)">
+      <div class="row g-2">
+        <div class="col"><input id="pos_rt" class="form-control" placeholder="RT (001)"></div>
+        <div class="col"><input id="pos_rw" class="form-control" placeholder="RW (001)"></div>
+      </div>
+      <div class="row g-2 mt-2">
+        <div class="col">
+          <select id="pos_status" class="form-control">
+            <option value="active">Active</option>
+            <option value="pasif">Pasif</option>
+          </select>
+        </div>
+        <div class="col">
+          <select id="pos_jenis" class="form-control">
+            <option value="pos_dusun">Pos Dusun</option>
+            <option value="pos_rt">Pos RT</option>
+          </select>
+        </div>
+      </div>
+      <div class="mt-2">
+        <label class="file-label">Pilih Foto <input id="pos_photo" type="file" accept="image/*" style="display:none"></label>
+        <div id="posPhotoPreview" class="mt-2"></div>
+      </div>
+      <div class="mt-2">
+        <small class="muted">Tandai lokasi di map (tetap di halaman ini). Klik "Set Lokasi" setelah memilih titik.</small>
+        <div id="posFormMap" class="mt-2"></div>
+        <div class="d-flex gap-2 mt-2">
+          <button class="btn btn-success" onclick="setPosLocationFromMap()">Set Lokasi</button>
+          <button class="btn btn-primary" onclick="savePos()">Simpan Pos</button>
+          <button class="btn btn-outline-secondary" onclick="closePosForm()">Batal</button>
+        </div>
+        <div id="chosenPosCoord" class="muted small mt-2">Lokasi belum ditetapkan.</div>
+      </div>
     </div>
+  </div>
+</div>
 
+<!-- Pos View Modal -->
+<div id="posViewModal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <h5>Detail Pos</h5>
+    <div id="posViewContent"></div>
+    <div id="posViewMap" class="mt-2"></div>
+    <div class="d-flex gap-2 mt-3 justify-content-end">
+      <button class="btn btn-secondary" onclick="closePosView()">Tutup</button>
+    </div>
   </div>
 </div>
 
 <script>
-/* ================= FIREBASE CONFIG =================
-   Ganti dengan config firebase project-mu jika perlu.
+/* ================== CONFIG FIREBASE ==================
+   Ganti dengan config Firebase-mu jika perlu.
 */
 const firebaseConfig = {
   apiKey: "AIzaSyA6GAeIc7ZesIed9MAelUf6x_sBFdp9E-Q",
@@ -200,250 +272,283 @@ const db = firebase.firestore();
 const storage = firebase.storage();
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e=>console.warn(e));
 
-/* ================= STATE ================= */
+/* ================== GLOBAL STATE ================== */
 let currentUser = null;
-let currentWarga = null;
-let currentDusun = null;
-let mapObj = null;
-let markersLayer = null;
-let chart30 = null;
-let laporanUnsub = null;
-let tempSelectLat = null;
-let tempSelectLng = null;
-let setLocationMode = false;
+let currentWarga = null;   // profile doc
+let currentDusun = null;   // dusun doc
+let mainMap = null;
+let mainMarkers = L ? L.layerGroup() : null;
+let posFormMap = null, posFormMarker = null;
+let posViewMap = null;
+let chartKej = null;
+let tempChosenPos = { lat:null, lng:null };
 
-/* ================= HELPERS ================= */
+/* ================== HELPERS ================== */
 const $ = id => document.getElementById(id);
 const show = id => { const e=$(id); if(e) e.classList.remove('hidden'); };
 const hide = id => { const e=$(id); if(e) e.classList.add('hidden'); };
-const toast = (t,icon='success') => Swal.fire({title:t,icon,toast:true,position:'top-end',showConfirmButton:false,timer:1400});
-const err = (m) => Swal.fire("Error",m,"error");
+const toast = (t) => Swal.fire({title:t,icon:'success',toast:true,position:'top-end',showConfirmButton:false,timer:1600});
+const err = (m) => Swal.fire('Error', m, 'error');
 function formatPhoneTyping(el){ el.value = el.value.replace(/[^\d\+]/g,''); }
-function normalizePhone(v){ let s=(v||"").replace(/\D/g,""); if(s.startsWith("0")) s = "62"+s.substring(1); if(!s.startsWith("62")) s = "62"+s; return s; }
-function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function updateClock(){ if($('clock')) $('clock').innerText = new Date().toLocaleString(); setTimeout(updateClock,1000); }
+function normalizePhoneForKey(v){ let s=(v||"").replace(/\D/g,""); if(s.startsWith("0")) s="62"+s.substring(1); if(!s.startsWith("62")) s="62"+s; return s; }
+function padRT(el){ let v=(el.value||'').replace(/\D/g,''); v=v.padStart(3,'0'); el.value=v; }
+function padRW(el){ let v=(el.value||'').replace(/\D/g,''); v=v.padStart(3,'0'); el.value=v; }
+function nowTs(){ return firebase.firestore.FieldValue.serverTimestamp(); }
 
-/* ================ LOAD REGION DROPDOWNS (EMSIFA) ================ */
+/* ================== CLOCK ================== */
+function updateClock(){ if($('clock')) $('clock').innerText = new Date().toLocaleString(); setTimeout(updateClock,1000); }
+updateClock();
+
+/* ================== LOAD REGION DROPDOWNS (EMSIFA) ================== */
 const API_REG = "https://www.emsifa.com/api-wilayah-indonesia/api/";
 async function loadRegionDropdowns(){
   try{
-    const resProv = await fetch(API_REG + 'provinces.json');
-    const provs = await resProv.json();
-    const regProv = $('reg_prov');
-    provs.forEach(p => regProv.innerHTML += `<option value="${p.id}">${p.name}</option>`);
-
+    const res = await fetch(API_REG + 'provinces.json'); const provs = await res.json();
+    const provSel = $('reg_prov');
+    provs.forEach(p=>provSel.innerHTML += `<option value="${p.id}">${p.name}</option>`);
     $('reg_prov').addEventListener('change', async function(){
-      $('reg_kab').innerHTML = '<option value="">Pilih Kabupaten/Kota</option>'; $('reg_kec').innerHTML = '<option value="">Pilih Kecamatan</option>'; $('reg_des').innerHTML = '<option value="">Pilih Desa/Kelurahan</option>';
-      if(this.value){ const res = await fetch(API_REG + 'regencies/' + this.value + '.json'); const data = await res.json(); data.forEach(k => $('reg_kab').innerHTML += `<option value="${k.id}">${k.name}</option>`); }
+      $('reg_kab').innerHTML = '<option value="">Pilih Kabupaten/Kota</option>'; $('reg_kec').innerHTML = '<option value="">Pilih Kecamatan</option>'; $('reg_des').innerHTML = '<option value="">Pilih Desa</option>';
+      if(!this.value) return;
+      const r = await fetch(API_REG + 'regencies/' + this.value + '.json'); const data = await r.json();
+      data.forEach(k => $('reg_kab').innerHTML += `<option value="${k.id}">${k.name}</option>`);
+      autofillAlamat();
     });
-    $('reg_kab').addEventListener('change', async function(){ $('reg_kec').innerHTML = '<option value="">Pilih Kecamatan</option>'; $('reg_des').innerHTML = '<option value="">Pilih Desa/Kelurahan</option>'; if(this.value){ const res = await fetch(API_REG + 'districts/' + this.value + '.json'); const data = await res.json(); data.forEach(k => $('reg_kec').innerHTML += `<option value="${k.id}">${k.name}</option>`); } });
-    $('reg_kec').addEventListener('change', async function(){ $('reg_des').innerHTML = '<option value="">Pilih Desa/Kelurahan</option>'; if(this.value){ const res = await fetch(API_REG + 'villages/' + this.value + '.json'); const data = await res.json(); data.forEach(d => $('reg_des').innerHTML += `<option value="${d.id}">${d.name}</option>`); } });
-  }catch(e){ console.warn('Gagal muat wilayah', e); }
+    $('reg_kab').addEventListener('change', async function(){ $('reg_kec').innerHTML = '<option value="">Pilih Kecamatan</option>'; $('reg_des').innerHTML = '<option value="">Pilih Desa</option>'; if(!this.value) return; const r = await fetch(API_REG + 'districts/' + this.value + '.json'); const data = await r.json(); data.forEach(k => $('reg_kec').innerHTML += `<option value="${k.id}">${k.name}</option>`); autofillAlamat(); });
+    $('reg_kec').addEventListener('change', async function(){ $('reg_des').innerHTML = '<option value="">Pilih Desa</option>'; if(!this.value) return; const r = await fetch(API_REG + 'villages/' + this.value + '.json'); const data = await r.json(); data.forEach(d => $('reg_des').innerHTML += `<option value="${d.id}">${d.name}</option>`); autofillAlamat(); });
+    $('reg_des').addEventListener('change', ()=>{ autofillAlamat(); loadDusunDropdown(); });
+    $('reg_dus').addEventListener('change', ()=>{ autofillAlamat(); });
+    ['reg_blok','reg_no','reg_rt','reg_rw'].forEach(id=>{ const el=$(id); if(el) el.addEventListener('input', autofillAlamat); });
+  }catch(e){ console.warn('Gagal load region', e); }
 }
 
-/* ================ INIT ================ */
-window.addEventListener('load', async ()=>{
-  updateClock();
-  initMap();
-  await loadRegionDropdowns();
-  await ensureDummyData();
-});
+/* ================== DUSUN DROPDOWN from Firestore ================== */
+async function loadDusunDropdown(){
+  try{
+    const desaText = $('reg_des').selectedOptions[0]?.text || '';
+    // load all Dusun; but we can filter by desaText if available
+    let snap = await db.collection('Dusun').orderBy('nama').limit(500).get();
+    const sel = $('reg_dus'); sel.innerHTML = '<option value="">Pilih Dusun</option>';
+    snap.forEach(doc => {
+      const d = doc.data();
+      const display = d.nama + (d.desa ? ' · ' + d.desa : '');
+      sel.innerHTML += `<option value="${doc.id}" data-nama="${escapeHtml(d.nama)}" data-desa="${escapeHtml(d.desa||'')}">${display}</option>`;
+    });
+  }catch(e){ console.warn('gagal muat dusun', e); }
+}
 
-/* ================ REGISTER ================ */
-async function onRegister(){
-  const nama = $('reg_nama').value.trim();
-  const hp = $('reg_hp').value.trim();
-  const password = $('reg_password').value;
-  const statusRole = $('reg_status').value;
+/* ================== AUTOFILL ALAMAT ================== */
+function autofillAlamat(){
   const prov = $('reg_prov').selectedOptions[0]?.text || '';
   const kab = $('reg_kab').selectedOptions[0]?.text || '';
   const kec = $('reg_kec').selectedOptions[0]?.text || '';
   const des = $('reg_des').selectedOptions[0]?.text || '';
+  const dusun = $('reg_dus').selectedOptions[0]?.text || '';
+  const blok = $('reg_blok').value || '';
+  const no = $('reg_no').value || '';
+  const rt = $('reg_rt').value || '';
+  const rw = $('reg_rw').value || '';
+  const parts = [];
+  if(dusun) parts.push(dusun);
+  if(blok || no) parts.push((blok?('Blok '+blok):'') + (no?('-'+no):''));
+  if(rt||rw) parts.push('RT '+(rt||'-')+' / RW '+(rw||'-'));
+  if(des) parts.push('Desa '+des);
+  if(kec) parts.push('Kec. '+kec);
+  if(kab) parts.push('Kab/Kota '+kab);
+  if(prov) parts.push(prov);
+  $('reg_alamat').value = parts.join(', ');
+}
+
+/* ================== REGISTER (no password stored) ================== */
+async function onRegister(){
+  const nama = $('reg_nama').value.trim();
+  const hp = $('reg_hp').value.trim();
+  const password = $('reg_password').value;
+  const role = $('reg_status').value || 'warga';
+  const prov = $('reg_prov').selectedOptions[0]?.text || '';
+  const kab = $('reg_kab').selectedOptions[0]?.text || '';
+  const kec = $('reg_kec').selectedOptions[0]?.text || '';
+  const des = $('reg_des').selectedOptions[0]?.text || '';
+  const dusunSel = $('reg_dus').selectedOptions[0] || null;
+  const dusunId = dusunSel ? dusunSel.value : null;
+  const dusunNama = dusunSel ? dusunSel.dataset.nama || '' : '';
   const alamat = $('reg_alamat').value.trim();
+  const blok = $('reg_blok').value.trim();
+  const no = $('reg_no').value.trim();
   const rt = $('reg_rt').value.trim();
   const rw = $('reg_rw').value.trim();
 
-  if(!nama||!hp||!password) return err("Lengkapi Nama, HP, Password");
+  if(!nama || !hp || !password) return err("Lengkapi Nama, HP, Password");
   if(password.length < 6) return err("Password minimal 6 karakter");
+
   try{
-    const norm = normalizePhone(hp);
+    const norm = normalizePhoneForKey(hp);
     const dup = await db.collection('Warga').where('phone','==',norm).limit(1).get();
     if(!dup.empty) return err("Nomor HP sudah terdaftar");
 
-    const fakeEmail = norm + "@dusun.fake";
-    const userCred = await auth.createUserWithEmailAndPassword(fakeEmail, password);
-    const uid = userCred.user.uid;
+    // create auth user (password stored only di Auth)
+    const email = norm + "@dusun.fake";
+    const uc = await auth.createUserWithEmailAndPassword(email, password);
+    const uid = uc.user.uid;
 
+    // determine status: kepala subroles auto aktif
     const kepalaRoles = ['kepala_desa','kepala_dusun','ketua_rt_rw','kepala_keluarga','istri_kepala_dusun'];
-    const accStatus = kepalaRoles.includes(statusRole) ? 'aktif' : 'pending';
+    const status = kepalaRoles.includes(role) ? 'aktif' : 'pending';
 
+    // store profile WITHOUT password
     await db.collection('Warga').doc(uid).set({
-      nama, phone: norm, role: statusRole, status: accStatus,
-      provinsi: prov, kabupaten: kab, kecamatan: kec, desa: des,
-      alamat, rt, rw, kodeDusun: null,
+      nama, phone: norm, role, status,
+      provinsi: prov, kabupaten: kab, kecamatan: kec, desa: des, dusunId: dusunId, dusunNama: dusunNama,
+      alamat, blok, no, rt, rw, kodeDusun: null,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 
+    // clear password input immediately (no history)
+    $('reg_password').value = '';
+    // do not auto-login
     await auth.signOut();
-    Swal.fire("Sukses","Pendaftaran berhasil. Silakan login.","success");
+    Swal.fire('Sukses','Pendaftaran berhasil. Silakan login menggunakan panel sebelah.','success');
     clearRegister();
   }catch(e){ console.error(e); err(e.message || String(e)); }
 }
+
 function clearRegister(){
-  ['reg_nama','reg_hp','reg_password','reg_alamat','reg_rt','reg_rw'].forEach(id=>{ if($(id)) $(id).value=''; });
+  ['reg_nama','reg_hp','reg_password','reg_blok','reg_no','reg_rt','reg_rw','reg_alamat'].forEach(id=>{ if($(id)) $(id).value=''; });
   $('reg_status').selectedIndex = 0;
   $('reg_prov').selectedIndex = 0;
   $('reg_kab').innerHTML = '<option value="">Pilih Kabupaten/Kota</option>';
   $('reg_kec').innerHTML = '<option value="">Pilih Kecamatan</option>';
-  $('reg_des').innerHTML = '<option value="">Pilih Desa/Kelurahan</option>';
+  $('reg_des').innerHTML = '<option value="">Pilih Desa</option>';
+  $('reg_dus').innerHTML = '<option value="">Pilih Dusun</option>';
 }
 
-/* ================ LOGIN ================ */
+/* ================== LOGIN ================== */
 async function onLogin(){
   const hp = $('login_hp').value.trim();
-  const password = $('login_pass').value;
-  if(!hp||!password) return err("Nomor HP & password wajib");
+  const pass = $('login_pass').value;
+  if(!hp || !pass) return err("Nomor HP & password wajib");
   try{
-    const norm = normalizePhone(hp);
-    const fakeEmail = norm + "@dusun.fake";
+    const norm = normalizePhoneForKey(hp);
+    const email = norm + "@dusun.fake";
     await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-    const cred = await auth.signInWithEmailAndPassword(fakeEmail, password);
+    const cred = await auth.signInWithEmailAndPassword(email, pass);
     currentUser = cred.user;
-    await loadUserProfile();
+    await loadProfileAndShow();
+    $('login_pass').value = ''; // clear password
     toast("Login berhasil");
   }catch(e){ console.error(e); err(e.message || String(e)); }
 }
 
-/* ================ LOAD PROFILE ================ */
-async function loadUserProfile(){
-  if(!auth.currentUser) return;
-  const uid = auth.currentUser.uid;
-  const doc = await db.collection('Warga').doc(uid).get();
-  if(!doc.exists){ err("Profil tidak ditemukan"); return; }
-  currentWarga = { id: doc.id, data: doc.data() };
-  renderDashboard();
-}
-
-/* ================ AUTH STATE LISTENER ================ */
-auth.onAuthStateChanged(async (u)=>{
+/* ================== AUTH STATE LISTENER ================== */
+auth.onAuthStateChanged(async u=>{
   if(u){
     currentUser = u;
-    try{
-      const doc = await db.collection('Warga').doc(u.uid).get();
-      if(doc.exists){
-        currentWarga = { id: doc.id, data: doc.data() };
-        renderDashboard();
-      } else {
-        show('authCard'); hide('dashboardCard');
-      }
-    }catch(e){ console.warn(e); show('authCard'); hide('dashboardCard'); }
+    try{ await loadProfileAndShow(); } catch(e){ console.warn(e); showAuth(); }
   } else {
-    currentUser = null; currentWarga = null; show('authCard'); hide('dashboardCard');
+    currentUser = null; currentWarga = null; currentDusun = null;
+    showAuth();
   }
 });
 
-/* ================ RENDER DASHBOARD ================ */
-function renderDashboard(){
-  hide('authCard'); show('dashboardCard');
-  $('display_name').innerText = currentWarga.data.nama || 'Pengguna';
-  $('display_role').innerText = (currentWarga.data.role || 'warga').toUpperCase();
-  $('display_status').innerText = (currentWarga.data.status || 'pending').toUpperCase();
+function showAuth(){ show('authCard'); hide('dashboardCard'); }
+function showDashboard(){ hide('authCard'); show('dashboardCard'); }
 
+/* ================== LOAD PROFILE & INIT DASHBOARD ================== */
+async function loadProfileAndShow(){
+  if(!auth.currentUser) return;
+  const uid = auth.currentUser.uid;
+  const doc = await db.collection('Warga').doc(uid).get();
+  if(!doc.exists){ // profile missing
+    showAuth(); return;
+  }
+  currentWarga = { id: doc.id, data: doc.data() };
+  // show dashboard with profile data
+  $('display_name').innerText = currentWarga.data.nama || '';
+  $('display_role').innerText = (currentWarga.data.role || '').toUpperCase();
+  $('display_status').innerText = (currentWarga.data.status || '').toUpperCase();
+  showDashboard();
+
+  // show buttons based on role
   const kepalaRoles = ['kepala_desa','kepala_dusun','ketua_rt_rw','kepala_keluarga','istri_kepala_dusun'];
   if(kepalaRoles.includes(currentWarga.data.role)){
-    show('adminPanel'); show('btnAddPos');
-  } else { hide('adminPanel'); hide('btnAddPos'); }
-
-  // pending list for kepala (all kepala subroles)
-  if(kepalaRoles.includes(currentWarga.data.role)) loadPending();
-
-  // if already part of dusun
-  if(currentWarga.data.kodeDusun){
-    loadDusunByKode(currentWarga.data.kodeDusun);
-    loadPosList(currentWarga.data.kodeDusun);
-    loadMarkers(currentWarga.data.kodeDusun);
-    subscribeReportsForDusun(currentWarga.data.kodeDusun);
+    show('createDusunCard'); show('btnOpenPosForm'); show('posList');
   } else {
-    $('kepalaInfo').innerHTML = '<div class="muted">Anda belum bergabung ke dusun manapun.</div>';
-    $('listPos').innerHTML = '<div class="muted">Gabung untuk melihat pos.</div>';
-    if(laporanUnsub) { laporanUnsub(); laporanUnsub = null; }
+    hide('createDusunCard');
+  }
+
+  // if user already has kodeDusun, load details
+  if(currentWarga.data.kodeDusun){
+    await loadDusunByCode(currentWarga.data.kodeDusun);
+    loadPosList();
+    loadMarkers();
+    subscribeReports();
+  } else {
+    // show join panel
+    show('joinDusunCard');
+    $('kepalaInfo').innerHTML = '<div class="muted">Anda belum bergabung dengan dusun manapun.</div>';
+    $('posList').innerHTML = '<div class="muted">Gabung dusun untuk melihat pos.</div>';
+    renderEmptyReports();
   }
 
   refreshFamilyList();
+  loadRegionDropdowns(); // ensure dropdowns present
+  loadDusunDropdown();   // fill dusun dropdown for registration
+  loadKejadianOptions();
+  initMainMap();
 }
 
-/* ================ PENDING: load & approve/reject ================ */
-async function loadPending(){
-  if(!currentWarga || !currentWarga.data.kodeDusun) { $('pendingList').innerHTML = '<div class="muted">Tidak ada dusun</div>'; return; }
+/* ================== DUSUN BY CODE ================== */
+async function loadDusunByCode(code){
   try{
-    const kode = currentWarga.data.kodeDusun;
-    const snap = await db.collection('Warga').where('kodeDusun','==',kode).where('status','==','pending').get();
-    const container = $('pendingList'); container.innerHTML = '';
-    if(snap.empty){ container.innerHTML = '<div class="muted">Tidak ada pendaftar pending.</div>'; return; }
-    snap.forEach(doc=>{
-      const d = doc.data();
-      const div = document.createElement('div'); div.className = 'd-flex justify-content-between align-items-center mb-2';
-      div.innerHTML = `<div><strong>${d.nama}</strong><div class="muted small">${d.phone} · ${d.desa||''} · RT ${d.rt||'-'}/RW ${d.rw||'-'}</div></div>
-        <div><button class="btn btn-success btn-sm me-2" onclick="approveUser('${doc.id}')">Setujui</button><button class="btn btn-danger btn-sm" onclick="rejectUser('${doc.id}')">Tolak</button></div>`;
-      container.appendChild(div);
-    });
-  }catch(e){ console.error(e); $('pendingList').innerHTML = '<div class="muted">Gagal muat pending</div>'; }
+    const snap = await db.collection('Dusun').where('kode','==',code).limit(1).get();
+    if(snap.empty){ $('kepalaInfo').innerHTML = '<div class="muted">Dusun tidak ditemukan.</div>'; return; }
+    const doc = snap.docs[0]; currentDusun = { id: doc.id, data: doc.data() };
+    const d = currentDusun.data;
+    const kepalaAlamat = d.kepalaAlamat || (currentWarga.data.alamat || '-');
+    $('kepalaInfo').innerHTML = `<div><strong>${escapeHtml(d.kepalaNama||'-')}</strong></div><div class="muted small">HP: ${escapeHtml(d.kepalaHp||'-')}</div><div class="muted small">Alamat: ${escapeHtml(kepalaAlamat||'-')}</div>`;
+    // if current user is kepala and is the kepalaId, show code
+    if(currentWarga.data.role && currentWarga.data.role.includes('kepala') && currentWarga.id === d.kepalaId){
+      show('myDusunCode'); $('myDusunCode').innerText = 'Kode dusun: ' + (d.kode||'');
+    } else {
+      hide('myDusunCode');
+    }
+    // hide join card if already in dusun
+    hide('joinDusunCard');
+  }catch(e){ console.error(e); }
 }
 
-async function approveUser(uid){
-  try{
-    await db.collection('Warga').doc(uid).update({ status:'aktif', approvedBy: currentWarga.id, approvedAt: firebase.firestore.FieldValue.serverTimestamp() });
-    toast("Warga disetujui");
-    loadPending(); refreshFamilyList();
-  }catch(e){ err(e.message || String(e)); }
-}
-async function rejectUser(uid){
-  try{
-    await db.collection('Warga').doc(uid).update({ status:'rejected', rejectedBy: currentWarga.id, rejectedAt: firebase.firestore.FieldValue.serverTimestamp() });
-    toast("Pendaftar ditolak");
-    loadPending();
-  }catch(e){ err(e.message || String(e)); }
-}
-
-/* ================ CREATE / JOIN DUSUN ================ */
-async function promptCreateDusun(){
+/* ================== CREATE DUSUN (only kepala) ================== */
+async function createDusun(){
+  if(!currentWarga) return err("Login dulu");
   const kepalaRoles = ['kepala_desa','kepala_dusun','ketua_rt_rw','kepala_keluarga','istri_kepala_dusun'];
-  if(!currentWarga || !kepalaRoles.includes(currentWarga.data.role)) return err("Hanya subrole kepala boleh membuat dusun");
-
-  const { value: form } = await Swal.fire({
-    title:'Buat Dusun',
-    html:
-      '<input id="d_nama" class="swal2-input" placeholder="Nama Dusun">' +
-      '<input id="d_prov" class="swal2-input" placeholder="Provinsi (ketik atau pilih)">' +
-      '<input id="d_kab" class="swal2-input" placeholder="Kabupaten">' +
-      '<input id="d_kec" class="swal2-input" placeholder="Kecamatan">' +
-      '<input id="d_des" class="swal2-input" placeholder="Desa">' +
-      '<input id="d_blok" class="swal2-input" placeholder="Blok Kepala (opsional)">' +
-      '<input id="d_no" class="swal2-input" placeholder="No Rumah Kepala (opsional)">' ,
-    focusConfirm:false,
-    preConfirm: ()=>({ nama:document.getElementById('d_nama').value, prov:document.getElementById('d_prov').value, kab:document.getElementById('d_kab').value, kec:document.getElementById('d_kec').value, des:document.getElementById('d_des').value, blok:document.getElementById('d_blok').value, no:document.getElementById('d_no').value }),
-    showCancelButton:true
-  });
-  if(!form || !form.nama) return;
+  if(!kepalaRoles.includes(currentWarga.data.role)) return err("Hanya subrole kepala boleh membuat dusun");
+  const nama = $('dusun_nama').value.trim();
+  if(!nama) return err("Nama dusun wajib");
   try{
     const kode = generateCode(6);
     const payload = {
-      nama: form.nama, kode,
-      provinsi: form.prov, kabupaten: form.kab, kecamatan: form.kec, desa: form.des,
-      kepalaId: currentWarga.id, kepalaNama: currentWarga.data.nama, kepalaHp: currentWarga.data.phone || '', kepalaAlamat: `${form.blok||''} ${form.no||''}`.trim(),
+      nama, kode,
+      kepalaId: currentWarga.id,
+      kepalaNama: currentWarga.data.nama,
+      kepalaHp: currentWarga.data.phone || currentWarga.data.phone || '',
+      kepalaAlamat: (currentWarga.data.blok||'') + (currentWarga.data.no?(' '+currentWarga.data.no):''),
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
     await db.collection('Dusun').add(payload);
+    // assign this kepala to the new dusun (update warga)
     await db.collection('Warga').doc(currentWarga.id).update({ kodeDusun: kode });
     currentWarga.data.kodeDusun = kode;
     toast("Dusun dibuat: " + kode);
-    loadDusunByKode(kode);
-    loadPosList(kode);
-    loadMarkers(kode);
-  }catch(e){ err(e.message || String(e)); }
+    $('dusun_nama').value = '';
+    await loadDusunByCode(kode);
+    loadPosList();
+    loadMarkers();
+    subscribeReports();
+    loadDusunDropdown();
+  }catch(e){ console.error(e); err(e.message || String(e)); }
 }
 
-async function onJoinDusun(){
+/* ================== JOIN DUSUN ================== */
+async function joinDusun(){
   const kode = ($('join_kode').value || '').trim().toUpperCase();
   if(!kode) return err("Masukkan kode dusun");
   try{
@@ -451,357 +556,491 @@ async function onJoinDusun(){
     if(snap.empty) return err("Kode tidak ditemukan");
     await db.collection('Warga').doc(currentWarga.id).update({ kodeDusun: kode });
     currentWarga.data.kodeDusun = kode;
-    toast("Berhasil gabung ke dusun " + kode);
-    loadDusunByKode(kode);
-    loadPosList(kode);
-    loadMarkers(kode);
-    subscribeReportsForDusun(kode);
-  }catch(e){ err(e.message || String(e)); }
-}
-
-/* ================ LOAD DUSUN DETAILS ================ */
-async function loadDusunByKode(kode){
-  try{
-    const snap = await db.collection('Dusun').where('kode','==',kode).limit(1).get();
-    if(snap.empty){ $('kepalaInfo').innerHTML = '<div class="muted">Dusun tidak ditemukan</div>'; return; }
-    currentDusun = { id: snap.docs[0].id, data: snap.docs[0].data() };
-    const d = currentDusun.data;
-    const kepalaAlamat = d.kepalaAlamat || (currentWarga.data.alamat || '-');
-    $('kepalaInfo').innerHTML = `<div><strong>${escapeHtml(d.kepalaNama||'-')}</strong></div><div class="muted small">HP: ${escapeHtml(d.kepalaHp||'-')}</div><div class="muted small">Alamat Kepala: ${escapeHtml(kepalaAlamat||'-')}</div>`;
-    $('dusunInfo') && ($('dusunInfo').innerText = `${d.nama} (kode: ${d.kode})`);
-  }catch(e){ err(e.message || String(e)); }
-}
-
-/* ================ FAMILY LIST & VERIFY ================ */
-async function refreshFamilyList(){
-  const container = $('familyList');
-  if(!currentWarga) { container.innerHTML = '<div class="muted">Login untuk melihat</div>'; return; }
-  if(!currentWarga.data.kodeDusun){ container.innerHTML = '<div class="muted">Belum bergabung ke dusun</div>'; return; }
-  try{
-    // load all warga in same dusun, group by rt/rw or role
-    const snap = await db.collection('Warga').where('kodeDusun','==', currentWarga.data.kodeDusun).get();
-    if(snap.empty){ container.innerHTML = '<div class="muted">Tidak ada anggota</div>'; return; }
-    const rows = [];
-    snap.forEach(doc => { rows.push({ id: doc.id, data: doc.data() }); });
-    let html = '<table class="table table-sm"><thead><tr><th>Nama</th><th>Role</th><th>RT/RW</th><th>Status</th><th>Aksi</th></tr></thead><tbody>';
-    rows.forEach(r=>{
-      const d = r.data;
-      let aksi = '';
-      const kepalaRoles = ['kepala_desa','kepala_dusun','ketua_rt_rw','kepala_keluarga','istri_kepala_dusun'];
-      if(kepalaRoles.includes(currentWarga.data.role) && r.id !== currentWarga.id){
-        aksi = d.status !== 'aktif' ? `<button class="btn btn-sm btn-success" onclick="approveUser('${r.id}')">Verifikasi</button>` : '<span class="muted small">Terverifikasi</span>';
-      }
-      html += `<tr><td>${escapeHtml(d.nama||'')}</td><td>${escapeHtml(d.role||'')}</td><td>${escapeHtml((d.rt||'-')+'/'+(d.rw||'-'))}</td><td>${escapeHtml(d.status||'')}</td><td>${aksi}</td></tr>`;
-    });
-    html += '</tbody></table>';
-    container.innerHTML = html;
-  }catch(e){ container.innerHTML = '<div class="muted">Gagal muat anggota</div>'; }
-}
-
-/* ================ POS: ADD / EDIT / DELETE / VIEW ================ */
-async function promptAddPos(){
-  if(!currentWarga) return err("Login dulu");
-  const kepalaRoles = ['kepala_desa','kepala_dusun','ketua_rt_rw','kepala_keluarga','istri_kepala_dusun'];
-  if(!kepalaRoles.includes(currentWarga.data.role)) return err("Hanya subrole kepala boleh menambah pos");
-
-  const htmlForm = `<input id="p_nama" class="swal2-input" placeholder="Nama Pos (ex: Pos RT01)">
-    <input id="p_rt" class="swal2-input" placeholder="RT Pembuat (001)">
-    <input id="p_rw" class="swal2-input" placeholder="RW Pembuat (001)">
-    <input id="p_dusun" class="swal2-input" placeholder="Dusun">
-    <input id="p_desa" class="swal2-input" placeholder="Desa">
-    <input id="p_blok" class="swal2-input" placeholder="Blok (opsional)">
-    <input id="p_no" class="swal2-input" placeholder="No Rumah (opsional)">
-    <select id="p_jenis" class="swal2-input"><option value="pos_dusun">Pos Dusun</option><option value="pos_rt">Pos RT</option></select>
-    <select id="p_status" class="swal2-input"><option value="active">Active</option><option value="pasif">Pasif</option></select>
-    <div style="text-align:left;padding:.4rem"><input id="p_foto" type="file" accept="image/*"></div>
-    <div style="text-align:left;padding:.4rem"><button id="btnSetLoc" class="swal2-confirm swal2-styled" type="button">Set lokasi dengan klik peta</button></div>
-    <div id="chosenLoc" class="muted small">Lokasi belum dipilih</div>`;
-
-  const { value: form } = await Swal.fire({ title:'Tambah Pos (wajib semua)', html: htmlForm, focusConfirm:false, preConfirm: () => ({
-    nama: document.getElementById('p_nama').value,
-    rt: document.getElementById('p_rt').value,
-    rw: document.getElementById('p_rw').value,
-    dusun: document.getElementById('p_dusun').value,
-    desa: document.getElementById('p_desa').value,
-    blok: document.getElementById('p_blok').value,
-    no: document.getElementById('p_no').value,
-    jenis: document.getElementById('p_jenis').value,
-    status: document.getElementById('p_status').value,
-    foto: document.getElementById('p_foto').files[0],
-    lat: tempSelectLat, lng: tempSelectLng
-  }), showCancelButton:true, didOpen: () => {
-    document.getElementById('btnSetLoc').addEventListener('click', ()=>{ setLocationMode = true; toast("Klik peta untuk memilih lokasi"); });
-  } });
-
-  if(!form) return;
-  if(!form.nama||!form.rt||!form.rw||!form.dusun||!form.desa||!form.foto) return err("Semua field wajib, termasuk foto");
-
-  if(!form.lat || !form.lng){
-    const useGPS = await Swal.fire({ title:'Lokasi belum dipilih', text:'Gunakan posisi GPS saat ini?', showCancelButton:true, confirmButtonText:'Gunakan GPS', cancelButtonText:'Batal' });
-    if(useGPS.isConfirmed){
-      try{
-        Swal.fire({ title:'Mencari lokasi...', didOpen: ()=> Swal.showLoading() });
-        const pos = await new Promise((res, rej)=> navigator.geolocation.getCurrentPosition(res, rej, { timeout: 15000 }));
-        form.lat = pos.coords.latitude; form.lng = pos.coords.longitude; Swal.close();
-      }catch(e){ Swal.close(); return err("Gagal ambil lokasi GPS"); }
-    } else return;
-  }
-
-  try{
-    const file = form.foto;
-    const path = `pos_photos/${Date.now()}_${file.name.replace(/\s+/g,'_')}`;
-    const ref = storage.ref().child(path);
-    const up = await ref.put(file);
-    const url = await up.ref.getDownloadURL();
-    const payload = {
-      nama: form.nama, rt: form.rt, rw: form.rw, dusun: form.dusun, desa: form.desa,
-      blok: form.blok||null, no: form.no||null,
-      jenis: form.jenis, status: form.status, foto: url, fotoPath: path,
-      pembuatId: currentWarga.id, pembuatNama: currentWarga.data.nama, pembuatRt: currentWarga.data.rt || form.rt, pembuatRw: currentWarga.data.rw || form.rw,
-      pembuatDusun: currentWarga.data.kodeDusun || null,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(), lat: form.lat, lng: form.lng,
-      dusunCode: currentWarga.data.kodeDusun || null
-    };
-    await db.collection('PosDusun').add(payload);
-    tempSelectLat = null; tempSelectLng = null; setLocationMode = false;
-    toast("Pos tersimpan");
-    loadPosList(currentWarga.data.kodeDusun);
-    loadMarkers(currentWarga.data.kodeDusun);
-  }catch(e){ console.error(e); err("Gagal upload / simpan pos"); }
-}
-
-async function promptEditPos(posId){
-  if(!currentWarga) return err("Login dulu");
-  if(currentWarga.data.role !== 'kepala_dusun') return err("Hanya Kepala Dusun boleh edit pos");
-  try{
-    const doc = await db.collection('PosDusun').doc(posId).get();
-    if(!doc.exists) return err("Pos tidak ditemukan");
-    const d = doc.data();
-    const { value: form } = await Swal.fire({
-      title: 'Edit Pos',
-      html:
-        `<input id="e_nama" class="swal2-input" value="${escapeHtml(d.nama||'')}">` +
-        `<input id="e_rt" class="swal2-input" value="${escapeHtml(d.rt||'')}">` +
-        `<input id="e_rw" class="swal2-input" value="${escapeHtml(d.rw||'')}">` +
-        `<input id="e_dusun" class="swal2-input" value="${escapeHtml(d.dusun||'')}">` +
-        `<input id="e_desa" class="swal2-input" value="${escapeHtml(d.desa||'')}">` +
-        `<input id="e_blok" class="swal2-input" value="${escapeHtml(d.blok||'')}">` +
-        `<input id="e_no" class="swal2-input" value="${escapeHtml(d.no||'')}">` +
-        `<select id="e_jenis" class="swal2-input"><option value="pos_dusun"${d.jenis==='pos_dusun'?' selected':''}>Pos Dusun</option><option value="pos_rt"${d.jenis==='pos_rt'?' selected':''}>Pos RT</option></select>` +
-        `<select id="e_status" class="swal2-input"><option value="active"${(d.status||'active')==='active'?' selected':''}>Active</option><option value="pasif"${(d.status||'active')==='pasif'?' selected':''}>Pasif</option></select>` +
-        `<div style="text-align:left;padding:.4rem"><input id="e_foto" type="file" accept="image/*"></div>`,
-      preConfirm: ()=>({
-        nama: document.getElementById('e_nama').value,
-        rt: document.getElementById('e_rt').value,
-        rw: document.getElementById('e_rw').value,
-        dusun: document.getElementById('e_dusun').value,
-        desa: document.getElementById('e_desa').value,
-        blok: document.getElementById('e_blok').value,
-        no: document.getElementById('e_no').value,
-        jenis: document.getElementById('e_jenis').value,
-        status: document.getElementById('e_status').value,
-        foto: document.getElementById('e_foto').files[0]
-      }), showCancelButton:true
-    });
-    if(!form) return;
-    if(!form.nama||!form.rt||!form.rw||!form.dusun||!form.desa) return err("Semua field wajib");
-
-    let fotoUrl = d.foto, fotoPath = d.fotoPath || null;
-    if(form.foto){
-      try{ if(fotoPath) await storage.ref().child(fotoPath).delete(); }catch(e){ console.warn(e); }
-      const path = `pos_photos/${Date.now()}_${form.foto.name.replace(/\s+/g,'_')}`;
-      const ref = storage.ref().child(path);
-      const up = await ref.put(form.foto);
-      fotoUrl = await up.ref.getDownloadURL();
-      fotoPath = path;
-    }
-
-    await db.collection('PosDusun').doc(posId).update({
-      nama: form.nama, rt: form.rt, rw: form.rw, dusun: form.dusun, desa: form.desa,
-      blok: form.blok||null, no: form.no||null,
-      jenis: form.jenis, status: form.status, foto: fotoUrl, fotoPath, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    toast("Pos diperbarui");
-    loadPosList(currentWarga.data.kodeDusun);
-    loadMarkers(currentWarga.data.kodeDusun);
+    toast("Berhasil gabung dusun " + kode);
+    $('join_kode').value = '';
+    await loadDusunByCode(kode);
+    loadPosList();
+    loadMarkers();
+    subscribeReports();
   }catch(e){ console.error(e); err(e.message || String(e)); }
 }
 
-async function deletePos(posId){
+/* ================== MAIN MAP & MARKERS ================== */
+function initMainMap(){
+  if(mainMap) return;
+  mainMap = L.map('map').setView([-6.2, 106.8166], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap' }).addTo(mainMap);
+  mainMarkers = L.layerGroup().addTo(mainMap);
+}
+
+async function loadMarkers(){
+  if(!mainMap) initMainMap();
+  mainMarkers.clearLayers();
+  if(!currentWarga || !currentWarga.data.kodeDusun) return;
+  try{
+    const snap = await db.collection('PosDusun').where('dusunCode','==', currentWarga.data.kodeDusun).get();
+    if(snap.empty) return;
+    const bounds = [];
+    snap.forEach(doc=>{
+      const d = doc.data();
+      if(d.lat && d.lng){
+        const color = d.status === 'active' ? 'green' : 'red';
+        const marker = L.circleMarker([d.lat, d.lng], { radius:8, color: color, fillColor: color, fillOpacity:0.9 }).addTo(mainMarkers);
+        let popup = `<div><strong>${escapeHtml(d.nama||'-')}</strong></div><div class="muted small">RT/RW: ${escapeHtml(d.rt||'-')}/${escapeHtml(d.rw||'-')}</div><div class="muted small">Jenis: ${escapeHtml(d.jenis||'')}</div><div class="muted small">Status: ${escapeHtml(d.status||'')}</div><div class="muted small">Pembuat: ${escapeHtml(d.pembuatNama||'-')}</div>`;
+        if(d.foto) popup += `<div style="margin-top:6px"><img src="${d.foto}" style="max-width:200px;border-radius:6px;"></div>`;
+        marker.bindPopup(popup);
+        bounds.push([d.lat,d.lng]);
+      }
+    });
+    if(bounds.length) mainMap.fitBounds(bounds,{padding:[40,40],maxZoom:16});
+  }catch(e){ console.error(e); }
+}
+
+/* ================== POS: FORM (inline modal) ================== */
+function openPosForm(){
+  if(!currentWarga) return err("Login dulu");
+  const kepalaRoles = ['kepala_desa','kepala_dusun','ketua_rt_rw','kepala_keluarga','istri_kepala_dusun'];
+  if(!kepalaRoles.includes(currentWarga.data.role)) return err("Hanya subrole kepala boleh menambah pos");
+  // show modal
+  show('posModal');
+  // init map inside form (only once)
+  setTimeout(()=>{ initPosFormMap(); }, 200);
+}
+
+function closePosForm(){
+  hide('posModal');
+  // clear form fields
+  ['pos_name','pos_rt','pos_rw','pos_photo'].forEach(id=>{ if($(id)) $(id).value=''; });
+  $('posPhotoPreview').innerHTML = '';
+  tempChosenPos = { lat:null, lng:null };
+  if(posFormMarker){ posFormMap.removeLayer(posFormMarker); posFormMarker=null; }
+  if(posFormMap){ posFormMap.setView([-6.2,106.8166], 12); }
+  $('chosenPosCoord').innerText = 'Lokasi belum ditetapkan.';
+}
+
+function initPosFormMap(){
+  if(posFormMap) return;
+  posFormMap = L.map('posFormMap').setView([-6.2,106.8166], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap' }).addTo(posFormMap);
+  posFormMap.on('click', function(e){
+    tempChosenPos.lat = e.latlng.lat; tempChosenPos.lng = e.latlng.lng;
+    if(posFormMarker) posFormMap.removeLayer(posFormMarker);
+    posFormMarker = L.marker([tempChosenPos.lat, tempChosenPos.lng]).addTo(posFormMap);
+    $('chosenPosCoord').innerText = `Terpilih: ${tempChosenPos.lat.toFixed(5)}, ${tempChosenPos.lng.toFixed(5)}`;
+  });
+
+  // preview photo handler
+  $('pos_photo').addEventListener('change', function(){
+    const f = this.files[0];
+    if(!f) return;
+    const url = URL.createObjectURL(f);
+    $('posPhotoPreview').innerHTML = `<img src="${url}" class="pos-photo">`;
+  });
+}
+
+function setPosLocationFromMap(){
+  if(!tempChosenPos.lat || !tempChosenPos.lng) return err("Pilih titik di peta terlebih dahulu");
+  $('chosenPosCoord').innerText = `Lokasi ditetapkan: ${tempChosenPos.lat.toFixed(6)}, ${tempChosenPos.lng.toFixed(6)}`;
+  toast("Lokasi pos telah ditetapkan (jangan lupa Simpan Pos)");
+}
+
+/* ================== SAVE POS ================== */
+async function savePos(){
+  if(!currentWarga) return err("Login dulu");
+  const name = $('pos_name').value.trim();
+  const rt = $('pos_rt').value.trim();
+  const rw = $('pos_rw').value.trim();
+  const status = $('pos_status').value;
+  const jenis = $('pos_jenis').value;
+  const fotoFile = $('pos_photo').files[0];
+  if(!name || !rt || !rw || !fotoFile) return err("Isi semua field dan upload foto pos (wajib)");
+  if(!currentWarga.data.kodeDusun) return err("Anda belum tergabung dalam dusun");
+
+  try{
+    Swal.fire({ title:'Mengunggah foto...', didOpen: ()=> Swal.showLoading() });
+    const path = `pos_photos/${Date.now()}_${fotoFile.name.replace(/\s+/g,'_')}`;
+    const upTask = await storage.ref().child(path).put(fotoFile);
+    const url = await upTask.ref.getDownloadURL();
+    Swal.close();
+
+    const payload = {
+      nama: name,
+      rt, rw,
+      jenis,
+      status,
+      foto: url,
+      fotoPath: path,
+      pembuatId: currentWarga.id,
+      pembuatNama: currentWarga.data.nama,
+      pembuatRt: currentWarga.data.rt || rt,
+      pembuatRw: currentWarga.data.rw || rw,
+      pembuatDusun: currentWarga.data.kodeDusun || null,
+      lat: tempChosenPos.lat || null,
+      lng: tempChosenPos.lng || null,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      dusunCode: currentWarga.data.kodeDusun || null
+    };
+    await db.collection('PosDusun').add(payload);
+    toast("Pos tersimpan");
+    closePosForm();
+    loadPosList();
+    loadMarkers();
+  }catch(e){ console.error(e); Swal.close(); err("Gagal simpan pos"); }
+}
+
+/* ================== LOAD POS LIST ================== */
+async function loadPosList(){
+  if(!currentWarga || !currentWarga.data.kodeDusun){ $('posList').innerHTML = '<div class="muted">Gabung dusun untuk melihat daftar pos.</div>'; return; }
+  try{
+    const snap = await db.collection('PosDusun').where('dusunCode','==', currentWarga.data.kodeDusun).orderBy('createdAt','desc').get();
+    if(snap.empty){ $('posList').innerHTML = '<div class="muted">Belum ada pos.</div>'; return; }
+    let html = '';
+    snap.forEach(doc=>{
+      const d = doc.data(); const id = doc.id;
+      html += `<div class="p-2 border rounded mb-2"><div class="d-flex justify-content-between"><div><strong>${escapeHtml(d.nama)}</strong><div class="muted small">RT/RW: ${escapeHtml(d.rt||'-')}/${escapeHtml(d.rw||'-')}</div></div><div>`;
+      html += `<button class="btn btn-sm btn-link" onclick="viewPos('${id}')">View</button>`;
+      if(currentWarga.data.role === 'kepala_dusun') html += ` <button class="btn btn-sm btn-primary" onclick="editPos('${id}')">Edit</button> <button class="btn btn-sm btn-danger" onclick="deletePos('${id}')">Hapus</button>`;
+      html += `</div></div>`;
+      if(d.foto) html += `<div class="mt-2"><img src="${d.foto}" class="pos-photo"></div>`;
+      html += `<div class="muted small mt-2">Pembuat: ${escapeHtml(d.pembuatNama||'-')}</div></div>`;
+    });
+    $('posList').innerHTML = html;
+  }catch(e){ console.error(e); $('posList').innerHTML = '<div class="muted">Gagal muat pos</div>'; }
+}
+
+/* ================== VIEW / EDIT / DELETE POS ================== */
+async function viewPos(id){
+  try{
+    const doc = await db.collection('PosDusun').doc(id).get();
+    if(!doc.exists) return err("Pos tidak ditemukan");
+    const d = doc.data();
+    const html = `<div><strong>${escapeHtml(d.nama||'-')}</strong></div>
+      <div class="muted small">RT/RW: ${escapeHtml(d.rt||'-')}/${escapeHtml(d.rw||'-')}</div>
+      <div class="muted small">Jenis: ${escapeHtml(d.jenis||'')}</div>
+      <div class="muted small">Status: ${(d.status||'').toUpperCase()}</div>
+      <div class="muted small">Pembuat: ${escapeHtml(d.pembuatNama||'-')}</div>
+      ${d.foto?`<div class="mt-2"><img src="${d.foto}" style="max-width:360px;border-radius:8px;"></div>`:''}`;
+    $('posViewContent').innerHTML = html;
+    show('posViewModal');
+    setTimeout(()=>{ initPosViewMap(d.lat,d.lng); }, 200);
+  }catch(e){ console.error(e); err("Gagal tampilkan pos"); }
+}
+
+function closePosView(){ hide('posViewModal'); if(posViewMap){ posViewMap.remove(); posViewMap=null; } }
+
+function initPosViewMap(lat,lng){
+  if(posViewMap) posViewMap.remove();
+  posViewMap = L.map('posViewMap').setView([lat||-6.2, lng||106.8166], 15);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ attribution:'© OpenStreetMap' }).addTo(posViewMap);
+  if(lat && lng) L.marker([lat,lng]).addTo(posViewMap);
+}
+
+/* Edit pos (open as posForm with pre-filled) */
+async function editPos(id){
+  if(!currentWarga) return err("Login dulu");
+  if(currentWarga.data.role !== 'kepala_dusun') return err("Hanya Kepala Dusun boleh edit pos");
+  try{
+    const doc = await db.collection('PosDusun').doc(id).get();
+    if(!doc.exists) return err("Pos tidak ditemukan");
+    const d = doc.data();
+    // fill form
+    $('pos_name').value = d.nama || '';
+    $('pos_rt').value = d.rt || '';
+    $('pos_rw').value = d.rw || '';
+    $('pos_status').value = d.status || 'active';
+    $('pos_jenis').value = d.jenis || 'pos_dusun';
+    $('posPhotoPreview').innerHTML = d.foto ? `<img src="${d.foto}" class="pos-photo">` : '';
+    tempChosenPos.lat = d.lat || null; tempChosenPos.lng = d.lng || null;
+    $('chosenPosCoord').innerText = tempChosenPos.lat ? `Terpilih: ${tempChosenPos.lat.toFixed(6)}, ${tempChosenPos.lng.toFixed(6)}` : 'Lokasi belum ditetapkan.';
+    // open modal
+    show('posModal'); setTimeout(()=>{ initPosFormMap(); if(tempChosenPos.lat && tempChosenPos.lng){ if(posFormMarker) posFormMap.removeLayer(posFormMarker); posFormMarker = L.marker([tempChosenPos.lat,tempChosenPos.lng]).addTo(posFormMap); posFormMap.setView([tempChosenPos.lat,tempChosenPos.lng],15); } },200);
+    // change savePos to update pos (simple approach: overwrite by storing id on modal element)
+    $('posModal').dataset.editingId = id;
+  }catch(e){ console.error(e); err("Gagal edit pos"); }
+}
+
+/* Delete pos */
+async function deletePos(id){
   if(!currentWarga) return err("Login dulu");
   if(currentWarga.data.role !== 'kepala_dusun') return err("Hanya Kepala Dusun boleh hapus pos");
   const conf = await Swal.fire({ title:'Hapus pos?', text:'Data akan dihapus permanen', icon:'warning', showCancelButton:true });
   if(!conf.isConfirmed) return;
   try{
-    const doc = await db.collection('PosDusun').doc(posId).get();
-    if(!doc.exists) return err("Pos tidak ditemukan");
-    const d = doc.data();
-    if(d.fotoPath){
-      try{ await storage.ref().child(d.fotoPath).delete(); }catch(e){ console.warn(e); }
-    }
-    await db.collection('PosDusun').doc(posId).delete();
-    toast("Pos dihapus");
-    loadPosList(currentWarga.data.kodeDusun);
-    loadMarkers(currentWarga.data.kodeDusun);
-  }catch(e){ console.error(e); err(e.message || String(e)); }
-}
-
-async function lihatPos(posId){
-  try{
-    const doc = await db.collection('PosDusun').doc(posId).get();
-    if(!doc.exists) return err("Pos tidak ditemukan");
-    const d = doc.data();
-    const fotoHtml = d.foto?`<img src="${d.foto}" style="max-width:320px;border-radius:8px;margin-top:6px;">`:'<i class="muted">Belum ada foto</i>';
-    const html = `<div><strong>${escapeHtml(d.nama||'-')}</strong></div><div class="muted small">RT/RW: ${escapeHtml(d.rt||'-')}/${escapeHtml(d.rw||'-')}</div><div class="muted small">Dusun: ${escapeHtml(d.dusun||'-')}</div><div class="muted small">Desa: ${escapeHtml(d.desa||'-')}</div><div class="muted small">Status: ${(d.status||'active').toUpperCase()}</div><div class="muted small">Pembuat: ${escapeHtml(d.pembuatNama||'-')}</div>${fotoHtml}`;
-    Swal.fire({ title:'Detail Pos', html, width:560 });
-  }catch(e){ console.error(e); err(e.message || String(e)); }
-}
-
-/* ================ LOAD POS LIST ================ */
-async function loadPosList(kodeDusun){
-  const container = $('listPos');
-  container.innerHTML = 'Memuat...';
-  if(!kodeDusun){ container.innerHTML = '<div class="muted">Gabung ke dusun untuk melihat pos.</div>'; return; }
-  try{
-    const snap = await db.collection('PosDusun').where('dusunCode','==', kodeDusun).orderBy('createdAt','desc').get();
-    if(snap.empty){ container.innerHTML = '<div class="muted">Belum ada pos</div>'; return; }
-    let html = '';
-    snap.forEach(doc => {
-      const d = doc.data(); const id = doc.id;
-      const fotoHtml = d.foto?`<img src="${d.foto}" class="pos-photo">`:'<i class="muted">Belum foto</i>';
-      const status = (d.status||'active').toUpperCase();
-      let aksi = `<button class="btn btn-sm btn-link" onclick="lihatPos('${id}')">Lihat</button>`;
-      if(currentWarga && currentWarga.data.role === 'kepala_dusun'){
-        aksi += ` <button class="btn btn-sm btn-primary" onclick="promptEditPos('${id}')">Edit</button> <button class="btn btn-sm btn-danger" onclick="deletePos('${id}')">Hapus</button>`;
-      }
-      html += `<div class="p-2 border rounded mb-2"><div><strong>${escapeHtml(d.nama)}</strong></div><div class="muted small">RT/RW: ${d.rt||'-'}/${d.rw||'-'}</div><div class="muted small">Dusun: ${d.dusun||'-'}</div><div class="muted small">Desa: ${d.desa||'-'}</div><div class="muted small">Status: ${status}</div>${fotoHtml}<div class="mt-2">Pembuat: ${escapeHtml(d.pembuatNama||'-')} · ${aksi}</div></div>`;
-    });
-    container.innerHTML = html;
-  }catch(e){ console.error(e); container.innerHTML = '<div class="muted">Gagal muat pos</div>'; }
-}
-
-/* ================ MAP (Leaflet) ================ */
-function initMap(){
-  if(mapObj) return;
-  mapObj = L.map('map').setView([-6.2, 106.8166], 12);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OpenStreetMap', maxZoom:19 }).addTo(mapObj);
-  markersLayer = L.layerGroup().addTo(mapObj);
-
-  mapObj.on('click', function(e){
-    if(setLocationMode){
-      tempSelectLat = e.latlng.lat; tempSelectLng = e.latlng.lng;
-      // remove temp markers
-      markersLayer.eachLayer(l => { if(l.options && l.options._temp) markersLayer.removeLayer(l); });
-      const mk = L.marker([tempSelectLat, tempSelectLng], { _temp:true }).addTo(markersLayer);
-      toast("Lokasi dipilih: " + tempSelectLat.toFixed(5) + ", " + tempSelectLng.toFixed(5));
-      setLocationMode = false;
-    }
-  });
-}
-
-async function loadMarkers(kodeDusun){
-  if(!mapObj) initMap();
-  markersLayer.clearLayers();
-  if(!kodeDusun) return;
-  try{
-    const snap = await db.collection('PosDusun').where('dusunCode','==', kodeDusun).get();
-    if(snap.empty) return;
-    const bounds = [];
-    snap.forEach(doc => {
+    const doc = await db.collection('PosDusun').doc(id).get();
+    if(doc.exists){
       const d = doc.data();
-      if(d.lat && d.lng){
-        const marker = L.marker([d.lat, d.lng]).addTo(markersLayer);
-        let popup = `<div><strong>${escapeHtml(d.nama)}</strong></div><div class="muted small">RT/RW: ${d.rt||'-'}/${d.rw||'-'}</div><div class="muted small">Dusun: ${escapeHtml(d.dusun||'-')}</div><div class="muted small">Desa: ${escapeHtml(d.desa||'-')}</div><div class="muted small">Pembuat: ${escapeHtml(d.pembuatNama||'-')}</div>`;
-        if(d.foto) popup += `<div style="margin-top:6px"><img src="${d.foto}" style="max-width:200px;border-radius:6px;"></div>`;
-        marker.bindPopup(popup);
-        bounds.push([d.lat, d.lng]);
-      }
-    });
-    if(bounds.length) mapObj.fitBounds(bounds, { padding:[40,40], maxZoom:16 });
-  }catch(e){ console.error(e); }
+      if(d.fotoPath){ try{ await storage.ref().child(d.fotoPath).delete(); }catch(e){ console.warn(e); } }
+      await db.collection('PosDusun').doc(id).delete();
+      toast("Pos dihapus");
+      loadPosList(); loadMarkers();
+    } else err("Pos tidak ditemukan");
+  }catch(e){ console.error(e); err("Gagal hapus pos"); }
 }
 
-/* ================ SOS / LAPORAN ================ */
-async function openSOS(){
+/* ================== SAVE POS (support update) ================== */
+async function savePos(){
+  // if editing id exists -> update; else add new
+  const editingId = $('posModal').dataset.editingId || null;
+  if(editingId){ await updatePos(editingId); return; }
+  await savePosNew();
+}
+
+/* update existing pos */
+async function updatePos(id){
   if(!currentWarga) return err("Login dulu");
-  if(!currentWarga.data.kodeDusun) return err("Gabung ke dusun untuk kirim laporan");
-  const types = [{k:'Kebakaran',i:'🔥'},{k:'Kemalingan',i:'🛑'},{k:'Medis',i:'🏥'},{k:'Ambulance',i:'🚑'},{k:'Mencurigakan',i:'👀'}];
-  let html = '';
-  types.forEach(t => html += `<div class="kejadian-option" onclick="chooseLocationAndSend('${t.k}')"><div style="font-size:34px">${t.i}</div><span>${t.k}</span></div>`);
-  await Swal.fire({ title:'Pilih jenis kejadian', html, showCancelButton:true, showConfirmButton:false, width:620 });
-}
-
-async function chooseLocationAndSend(jenis){
-  Swal.close();
-  const { value: where } = await Swal.fire({
-    title: 'Lokasi Laporan',
-    input: 'radio',
-    inputOptions: { rumah: 'Di Rumah (alamat terdaftar)', lainnya: 'Di Tempat Lain' },
-    inputValidator: value => !value && 'Pilih lokasi'
-  });
-  if(!where) return;
-  let desc = null;
-  if(where === 'lainnya'){
-    const res = await Swal.fire({ title:'Deskripsi lokasi', input:'text', inputPlaceholder:'Jelaskan alamat atau titik', showCancelButton:true });
-    if(res.isDismissed) return;
-    desc = res.value || null;
-  }
   try{
-    await db.collection('Laporan').add({ jenis, lokasiDeskripsi: desc, tempat: where, dusunCode: currentWarga.data.kodeDusun || null, userId: currentWarga.id, createdAt: firebase.firestore.FieldValue.serverTimestamp(), status:'open' });
-    toast("Laporan terkirim!");
-  }catch(e){ err("Gagal kirim laporan"); }
+    const docRef = db.collection('PosDusun').doc(id);
+    const doc = await docRef.get();
+    if(!doc.exists) return err("Pos tidak ditemukan");
+    const d = doc.data();
+    const name = $('pos_name').value.trim();
+    const rt = $('pos_rt').value.trim();
+    const rw = $('pos_rw').value.trim();
+    const status = $('pos_status').value;
+    const jenis = $('pos_jenis').value;
+    const fotoFile = $('pos_photo').files[0];
+    let fotoUrl = d.foto, fotoPath = d.fotoPath || null;
+    if(fotoFile){
+      // delete old
+      try{ if(fotoPath) await storage.ref().child(fotoPath).delete(); }catch(e){ console.warn(e); }
+      const path = `pos_photos/${Date.now()}_${fotoFile.name.replace(/\s+/g,'_')}`;
+      const up = await storage.ref().child(path).put(fotoFile);
+      fotoUrl = await up.ref.getDownloadURL();
+      fotoPath = path;
+    }
+    await docRef.update({
+      nama: name, rt, rw, status, jenis, foto: fotoUrl, fotoPath, lat: tempChosenPos.lat || null, lng: tempChosenPos.lng || null, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    toast("Pos diperbarui");
+    delete $('posModal').dataset.editingId;
+    closePosForm();
+    loadPosList();
+    loadMarkers();
+  }catch(e){ console.error(e); err("Gagal update pos"); }
 }
 
-/* ================ SUBSCRIBE REPORTS & STATS (30 hari) ================ */
-function subscribeReportsForDusun(kodeDusun){
-  if(laporanUnsub) laporanUnsub();
-  if(!kodeDusun){ renderStats([]); return; }
-  const since = new Date(Date.now() - 30*24*60*60*1000);
-  laporanUnsub = db.collection('Laporan').where('dusunCode','==', kodeDusun).where('createdAt','>=', firebase.firestore.Timestamp.fromDate(since)).orderBy('createdAt','desc').onSnapshot(snap => {
-    const arr = [];
-    snap.forEach(d => arr.push(d.data()));
-    renderStats(arr);
-  }, e => console.error(e));
+async function savePosNew(){
+  if(!currentWarga) return err("Login dulu");
+  try{
+    const name = $('pos_name').value.trim();
+    const rt = $('pos_rt').value.trim();
+    const rw = $('pos_rw').value.trim();
+    const status = $('pos_status').value;
+    const jenis = $('pos_jenis').value;
+    const fotoFile = $('pos_photo').files[0];
+    if(!name || !rt || !rw || !fotoFile) return err("Isi semua field dan upload foto pos (wajib)");
+    if(!tempChosenPos.lat || !tempChosenPos.lng) return err("Tentukan lokasi pos pada peta");
+
+    Swal.fire({ title:'Mengunggah foto...', didOpen: ()=> Swal.showLoading() });
+    const path = `pos_photos/${Date.now()}_${fotoFile.name.replace(/\s+/g,'_')}`;
+    const up = await storage.ref().child(path).put(fotoFile);
+    const url = await up.ref.getDownloadURL();
+    Swal.close();
+
+    const payload = {
+      nama: name, rt, rw, status, jenis, foto: url, fotoPath: path,
+      pembuatId: currentWarga.id, pembuatNama: currentWarga.data.nama,
+      pembuatRt: currentWarga.data.rt || rt, pembuatRw: currentWarga.data.rw || rw,
+      pembuatDusun: currentWarga.data.kodeDusun || null,
+      lat: tempChosenPos.lat, lng: tempChosenPos.lng,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      dusunCode: currentWarga.data.kodeDusun || null
+    };
+    await db.collection('PosDusun').add(payload);
+    toast("Pos tersimpan");
+    closePosForm(); loadPosList(); loadMarkers();
+  }catch(e){ console.error(e); err("Gagal simpan pos"); }
 }
 
-function renderStats(arr){
-  const labels = ['Kebakaran','Kemalingan','Medis','Ambulance','Mencurigakan'];
-  const counts = labels.map(l => arr.filter(a => a.jenis === l).length);
-  const total = counts.reduce((s,v)=>s+v,0);
-  if(chart30) chart30.destroy();
-  chart30 = new Chart($('chart30').getContext('2d'), { type:'bar', data:{ labels, datasets:[{ label:'Jumlah', data: counts, backgroundColor:['#ef4444','#f59e0b','#16a34a','#3b82f6','#9b59b6'] }] }, options:{ responsive:true, maintainAspectRatio:false } });
-  // determine category based on total 30-day reports
-  let cat='AMAN', cls='status-aman';
-  // thresholds: 0-5 = AMAN, 6-19 = WASPADA, >=20 = RAWAN
-  if(total >= 20){ cat='RAWAN'; cls='status-rawan'; }
-  else if(total >= 6){ cat='WASPADA'; cls='status-waspada'; }
-  $('statSummary').innerHTML = `<div>Total laporan 30 hari: <strong>${total}</strong> · <span class="${cls}">${cat}</span></div>`;
-  let html = '<table class="table table-sm mt-2"><thead><tr><th>Jenis</th><th>Jumlah</th><th>Persentase</th></tr></thead><tbody>';
-  labels.forEach((l,i)=>{
-    const c = counts[i];
-    const pct = total ? Math.round(c/total*100) : 0;
-    html += `<tr><td>${l}</td><td>${c}</td><td style="width:60%"><div class="progress"><div class="progress-bar" role="progressbar" style="width:${pct}%">${pct}%</div></div></td></tr>`;
+/* ================== KEJADIAN OPTIONS (SOS card) ================== */
+function loadKejadianOptions(){
+  const types = [
+    { key:'Kebakaran', icon:'🔥' },
+    { key:'Kemalingan', icon:'🛑' },
+    { key:'Medis', icon:'🏥' },
+    { key:'Ambulance', icon:'🚑' },
+    { key:'Mencurigakan', icon:'👀' }
+  ];
+  const container = $('kejadianGrid'); container.innerHTML = '';
+  types.forEach(t=>{
+    const el = document.createElement('div'); el.className='kejadian-option';
+    el.innerHTML = `<div style="font-size:28px">${t.icon}</div><span>${t.key}</span>`;
+    el.onclick = ()=> { selectKejadian(t.key, t.icon); };
+    container.appendChild(el);
   });
+  // store default selected
+  window._selectedKejadian = null;
+}
+function selectKejadian(key, icon){
+  window._selectedKejadian = key;
+  // visually mark selected
+  Array.from(document.querySelectorAll('.kejadian-option')).forEach(el=>el.style.borderColor='#eee');
+  const found = Array.from(document.querySelectorAll('.kejadian-option')).find(el=>el.innerText.includes(key));
+  if(found) found.style.borderColor = '#3b82f6';
+}
+
+/* ================== OPEN SOS (submit) ================== */
+async function openSOS(){
+  // pick selected type or ask
+  const jenis = window._selectedKejadian || null;
+  if(!jenis) return err("Pilih jenis kejadian terlebih dahulu");
+  // lokasi option
+  const locOpt = $('lap_loc_opt').value;
+  let desc = null;
+  if(locOpt === 'lainnya'){
+    const { value: input } = await Swal.fire({ title:'Deskripsi lokasi', input: 'text', inputPlaceholder: 'Jelaskan alamat atau titik', showCancelButton:true });
+    if(!input) return;
+    desc = input;
+  }
+  // gps if needed
+  let lat=null,lng=null;
+  try{
+    if(navigator.geolocation){
+      const pos = await new Promise((res,rej)=> navigator.geolocation.getCurrentPosition(res,rej,{ timeout:10000 }));
+      lat = pos.coords.latitude; lng = pos.coords.longitude;
+    }
+  }catch(e){ console.warn('gps denied'); }
+  // send report
+  if(!currentWarga || !currentWarga.data.kodeDusun) return err("Anda belum bergabung ke dusun");
+  try{
+    await db.collection('Laporan').add({
+      jenis, lokasiDeskripsi: desc || null, tempat: locOpt, lat, lng,
+      userId: currentWarga.id, userNama: currentWarga.data.nama, dusunCode: currentWarga.data.kodeDusun,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(), status:'open'
+    });
+    toast("Laporan terkirim!");
+    // refresh lists
+    fetchReports();
+  }catch(e){ console.error(e); err("Gagal kirim laporan"); }
+}
+
+/* ================== REPORTS: fetch and render ================== */
+let reportsCache = [];
+async function subscribeReports(){
+  if(!currentWarga || !currentWarga.data.kodeDusun) return renderEmptyReports();
+  const since = new Date(Date.now() - 90*24*60*60*1000); // fetch recent 90d for good measure
+  db.collection('Laporan').where('dusunCode','==', currentWarga.data.kodeDusun).where('createdAt','>=', firebase.firestore.Timestamp.fromDate(since)).orderBy('createdAt','desc')
+    .onSnapshot(snap=>{
+      reportsCache = [];
+      snap.forEach(d => reportsCache.push({ id:d.id, data:d.data() }));
+      renderReportsFromCache();
+      renderStatsFromCache();
+    }, e => console.error(e));
+}
+
+function fetchReports(){ if(currentWarga && currentWarga.data.kodeDusun) subscribeReports(); else renderEmptyReports(); }
+
+function renderReportsFromCache(){
+  // split my reports & others
+  const my = reportsCache.filter(r => r.data.userId === currentWarga.id);
+  const others = reportsCache.filter(r => r.data.userId !== currentWarga.id);
+  // my
+  const myEl = $('myReports'); const otherEl = $('otherReports');
+  if(!my.length) myEl.innerHTML = '<div class="muted">Belum ada laporan Anda.</div>'; else {
+    myEl.innerHTML = my.map(r => `<div class="p-2 border rounded mb-2"><strong>${escapeHtml(r.data.jenis||'-')}</strong> <div class="muted small">${r.data.lokasiDeskripsi||''} · ${r.data.createdAt ? new Date(r.data.createdAt.seconds*1000).toLocaleString() : '-'}</div></div>`).join('');
+  }
+  if(!others.length) otherEl.innerHTML = '<div class="muted">Belum ada laporan warga lain.</div>'; else {
+    otherEl.innerHTML = others.map(r => `<div class="p-2 border rounded mb-2"><strong>${escapeHtml(r.data.jenis||'-')}</strong><div class="muted small">Oleh: ${escapeHtml(r.data.userNama||'')} · ${r.data.createdAt ? new Date(r.data.createdAt.seconds*1000).toLocaleString() : '-'}</div><div class="muted small">${r.data.lokasiDeskripsi||''}</div></div>`).join('');
+  }
+}
+
+/* render empty reports */
+function renderEmptyReports(){
+  $('myReports').innerHTML = '<div class="muted">Tidak ada laporan</div>';
+  $('otherReports').innerHTML = '<div class="muted">Tidak ada laporan</div>';
+}
+
+/* ================== STATISTICS (30 hari) ================== */
+function renderStatsFromCache(){
+  const since = new Date(Date.now() - 30*24*60*60*1000);
+  const recent = reportsCache.filter(r => r.data.createdAt && new Date(r.data.createdAt.seconds*1000) >= since);
+  const labels = ['Kebakaran','Kemalingan','Medis','Ambulance','Mencurigakan'];
+  const counts = labels.map(l => recent.filter(x => x.data.jenis === l).length);
+  const total = counts.reduce((s,v)=>s+v,0);
+  // chart
+  if(chartKej) chartKej.destroy();
+  const ctx = $('chartKejadian').getContext('2d');
+  chartKej = new Chart(ctx,{ type:'bar', data:{ labels, datasets:[{ label:'Jumlah', data:counts, backgroundColor:['#ef4444','#f59e0b','#16a34a','#3b82f6','#9b59b6'] }] }, options:{ responsive:true, maintainAspectRatio:false }});
+  // category
+  let cat='AMAN', cls='status-aman';
+  if(total>=20){ cat='RAWAN'; cls='status-rawan'; } else if(total>=6){ cat='WASPADA'; cls='status-waspada'; }
+  $('statSummary').innerHTML = `<div>Total 30 hari: <strong>${total}</strong> · <span class="${cls}">${cat}</span></div>`;
+  // table with percentages
+  let html = '<table class="table table-sm mt-2"><thead><tr><th>Jenis</th><th>Jumlah</th><th>Persen</th></tr></thead><tbody>';
+  labels.forEach((l,i)=>{ const c = counts[i]; const pct = total ? Math.round(c/total*100) : 0; html += `<tr><td>${l}</td><td>${c}</td><td style="width:60%"><div class="progress"><div class="progress-bar" role="progressbar" style="width:${pct}%">${pct}%</div></div></td></tr>`; });
   html += '</tbody></table>';
   $('statSummary').innerHTML += html;
 }
 
-/* ================ DUMMY DATA IF EMPTY ================ */
-async function ensureDummyData(){
+/* ================== FAMILY LIST (alamat sama) ================== */
+async function refreshFamilyList(){
+  if(!currentWarga) return;
+  if(!currentWarga.data.kodeDusun){ $('familyList').innerHTML = '<div class="muted">Belum gabung dusun</div>'; return; }
   try{
-    const dSnap = await db.collection('Dusun').limit(1).get();
-    if(dSnap.empty){
-      const kode = 'DUSUN' + generateCode(3);
-      await db.collection('Dusun').add({ nama:'Dusun Contoh', kode, kepalaId:null, kepalaNama:'Budi K.', kepalaHp:'081200000', kepalaAlamat:'Jl. Contoh Blok A No.5', createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-      await db.collection('PosDusun').add({ nama:'Pos RT01', rt:'001', rw:'001', dusun:'Dusun Contoh', desa:'Desaku', jenis:'pos_rt', status:'active', foto:null, fotoPath:null, pembuatId:null, pembuatNama:'System', createdAt: firebase.firestore.FieldValue.serverTimestamp(), lat:-6.2005, lng:106.816, dusunCode:kode });
-      await db.collection('PosDusun').add({ nama:'Pos Dusun Utama', rt:'002', rw:'001', dusun:'Dusun Contoh', desa:'Desaku', jenis:'pos_dusun', status:'active', foto:null, fotoPath:null, pembuatId:null, pembuatNama:'System', createdAt: firebase.firestore.FieldValue.serverTimestamp(), lat:-6.205, lng:106.82, dusunCode:kode });
-    }
-  }catch(e){ console.error("dummy create error", e); }
+    // fetch all warga in same dusun, filter by identical alamat, blok, no, rt, rw
+    const snap = await db.collection('Warga').where('kodeDusun','==', currentWarga.data.kodeDusun).get();
+    if(snap.empty){ $('familyList').innerHTML = '<div class="muted">Tidak ada anggota</div>'; return; }
+    const list = [];
+    snap.forEach(doc => { list.push({ id:doc.id, data:doc.data() }); });
+    const keyComparator = (d) => `${d.alamat||''}|${d.blok||''}|${d.no||''}|${d.rt||''}|${d.rw||''}`;
+    const myKey = keyComparator(currentWarga.data);
+    const myMembers = list.filter(x => keyComparator(x.data) === myKey);
+    if(!myMembers.length) { $('familyList').innerHTML = '<div class="muted">Belum ada anggota keluarga di alamat ini</div>'; return; }
+    let html = '<table class="table table-sm"><thead><tr><th>Nama</th><th>Role</th><th>Status</th><th>Aksi</th></tr></thead><tbody>';
+    myMembers.forEach(m => {
+      const d = m.data;
+      let aksi = '';
+      // verifikasi by kepala roles
+      const kepalaRoles = ['kepala_desa','kepala_dusun','ketua_rt_rw','kepala_keluarga','istri_kepala_dusun'];
+      if(kepalaRoles.includes(currentWarga.data.role) && m.id !== currentWarga.id){
+        aksi = d.status !== 'aktif' ? `<button class="btn btn-sm btn-success" onclick="approveUser('${m.id}')">Verifikasi</button>` : '<span class="muted small">Terverifikasi</span>';
+      }
+      html += `<tr><td>${escapeHtml(d.nama||'')}</td><td>${escapeHtml(d.role||'')}</td><td>${escapeHtml(d.status||'')}</td><td>${aksi}</td></tr>`;
+    });
+    html += '</tbody></table>';
+    $('familyList').innerHTML = html;
+  }catch(e){ console.error(e); $('familyList').innerHTML = '<div class="muted">Gagal muat keluarga</div>'; }
 }
 
-/* ================ UTIL ================ */
-function generateCode(len=6){ return Math.random().toString(36).substring(2, 2+len).toUpperCase(); }
-async function onLogout(){ await auth.signOut(); localStorage.removeItem('userUID'); currentUser=null; currentWarga=null; currentDusun=null; location.reload(); }
+/* approve user (for kepala) */
+async function approveUser(uid){
+  try{ await db.collection('Warga').doc(uid).update({ status:'aktif', approvedBy: currentWarga.id, approvedAt: firebase.firestore.FieldValue.serverTimestamp() }); toast("Warga disetujui"); refreshFamilyList(); loadPendingList(); } catch(e){ console.error(e); err("Gagal approve"); }
+}
+
+/* pending list load */
+async function loadPendingList(){
+  // list pending in current dusun, only for kepala
+  const kepalaRoles = ['kepala_desa','kepala_dusun','ketua_rt_rw','kepala_keluarga','istri_kepala_dusun'];
+  if(!currentWarga || !kepalaRoles.includes(currentWarga.data.role) || !currentWarga.data.kodeDusun) { $('pendingList') && ($('pendingList').innerHTML=''); return; }
+  try{
+    const snap = await db.collection('Warga').where('kodeDusun','==', currentWarga.data.kodeDusun).where('status','==','pending').get();
+    const container = $('pendingList');
+    if(!container) return;
+    if(snap.empty){ container.innerHTML = '<div class="muted">Tidak ada pendaftar pending</div>'; return; }
+    let html=''; snap.forEach(doc => { const d = doc.data(); html += `<div class="d-flex justify-content-between align-items-center mb-2"><div><strong>${escapeHtml(d.nama||'')}</strong><div class="muted small">${escapeHtml(d.phone||'')}</div></div><div><button class="btn btn-sm btn-success" onclick="approveUser('${doc.id}')">Setujui</button></div></div>`; });
+    container.innerHTML = html;
+  }catch(e){ console.error(e); }
+}
+
+/* ================== UTILS ================== */
+function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function generateCode(len=6){ return Math.random().toString(36).substring(2,2+len).toUpperCase(); }
+
+/* ================== INITIAL LOAD ================== */
+(async function init(){
+  try{
+    loadRegionDropdowns();
+    loadDusunDropdown();
+    initMainMap();
+    loadKejadianOptions();
+    // Load some dummy data if collections are empty (for demo)
+    const dSnap = await db.collection('Dusun').limit(1).get();
+    if(dSnap.empty){
+      const kode = 'DUSUN'+generateCode(3);
+      await db.collection('Dusun').add({ nama:'Dusun Demo', kode, desa:'Desa Demo', createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    }
+  }catch(e){ console.warn(e); }
+})();
 
 </script>
 </body>
