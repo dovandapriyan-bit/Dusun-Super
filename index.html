@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
   <meta charset="utf-8" />
-  <title>SISTEM KEAMANAN DUSUN — FULL (Perbaikan Pos, Laporan, Countdown Kode)</title>
+  <title>SISTEM KEAMANAN DUSUN — FINAL (Perbaikan Index/CORS/Countdown)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
@@ -25,7 +25,6 @@
     .modal-overlay{position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:1200;}
     .modal-box{width:92%;max-width:820px;background:#fff;padding:14px;border-radius:10px;box-shadow:0 10px 40px rgba(0,0,0,.2);overflow:auto;max-height:90vh;}
     .file-label{display:inline-block;padding:.45rem .6rem;border-radius:8px;background:#f8fafc;border:1px dashed #e5e7eb;cursor:pointer;}
-    .muted-inline{color:#666;font-size:0.9rem;}
   </style>
 
   <!-- Firebase (compat) -->
@@ -43,7 +42,7 @@
 </head>
 <body>
 <div class="container" style="max-width:1200px;">
-  <h3 class="text-center mb-3">SISTEM KEAMANAN DUSUN — FULL</h3>
+  <h3 class="text-center mb-3">SISTEM KEAMANAN DUSUN — FINAL</h3>
 
   <!-- AUTH / REGISTER -->
   <div id="authCard" class="card p-3">
@@ -141,7 +140,7 @@
             <option value="rumah">Di Rumah (alamat terdaftar)</option>
             <option value="lainnya">Di Tempat Lain</option>
           </select>
-          <textarea id="lap_lokasi" class="form-control mb-2 hidden" placeholder="Deskripsi alamat (jika di tempat lain)"></textarea>
+          <textarea id="lap_lokasi" class="form-control mb-2 hidden" placeholder="Deskripsi alamat (jika di tempat lain!"></textarea>
           <div class="centered mt-2"><button id="sosButton" class="sos-btn" onclick="openSOS()">SOS</button></div>
         </div>
 
@@ -268,6 +267,7 @@
 
 <script>
 /* ================== CONFIG FIREBASE ================== */
+/* Ganti jika perlu. Kamu sudah berikan apiKey di awal; saya pakai itu sebagai default. */
 const firebaseConfig = {
   apiKey: "AIzaSyA6GAeIc7ZesIed9MAelUf6x_sBFdp9E-Q",
   authDomain: "dusun-super.firebaseapp.com",
@@ -293,7 +293,8 @@ let posViewMap = null;
 let chartKej = null;
 let reportsUnsub = null;
 let posModalEditingId = null;
-let kodeCountdownInterval = null;
+let kodeCountdownTimer = null;
+let tempChosenPos = { lat:null, lng:null };
 
 /* ================== HELPERS ================== */
 const $ = id => document.getElementById(id);
@@ -341,7 +342,7 @@ async function loadDusunDropdown(){
     snap.forEach(doc=>{
       const d = doc.data();
       const display = d.nama + (d.desa ? ' · ' + d.desa : '');
-      sel.innerHTML += `<option value="${doc.id}" data-nama="${escapeHtml(d.nama)}" data-desa="${escapeHtml(d.desa||'')}" data-kode="${d.kode||''}">${display}</option>`;
+      sel.innerHTML += `<option value="${d.kode||doc.id}" data-nama="${escapeHtml(d.nama)}" data-desa="${escapeHtml(d.desa||'')}" data-kode="${d.kode||''}">${display}</option>`;
     });
   }catch(e){ console.warn('gagal muat dusun', e); }
 }
@@ -379,7 +380,7 @@ async function onRegister(){
   const kec = $('reg_kec').selectedOptions[0]?.text || '';
   const des = $('reg_des').selectedOptions[0]?.text || '';
   const dusunSel = $('reg_dus').selectedOptions[0] || null;
-  const dusunId = dusunSel ? dusunSel.value : null;
+  const dusunId = dusunSel ? (dusunSel.dataset?.kode || dusunSel.value) : null;
   const dusunNama = dusunSel ? (dusunSel.dataset.nama || '') : '';
   const alamat = $('reg_alamat').value.trim();
   const blok = $('reg_blok').value.trim();
@@ -517,14 +518,11 @@ async function createDusun(){
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
     const docRef = await db.collection('Dusun').add(payload);
-    // set warga.kodeDusun
     await db.collection('Warga').doc(currentWarga.id).update({ kodeDusun: kode });
     currentWarga.data.kodeDusun = kode;
     $('dusun_nama').value = '';
     await loadDusunByCode(kode);
-    loadPosList();
-    loadMarkers();
-    subscribeReportsForDusun(kode);
+    loadPosList(); loadMarkers(); subscribeReportsForDusun(kode);
     toast("Dusun dibuat: " + kode);
   }catch(e){ console.error(e); err(e.message || String(e)); }
 }
@@ -537,7 +535,6 @@ async function regenerateKodeDusun(){
     const newCode = generateCode(6);
     const expiresMs = Date.now() + (60*60*1000);
     await db.collection('Dusun').doc(currentDusun.id).update({ kode:newCode, kodeExpiresAt: firebase.firestore.Timestamp.fromMillis(expiresMs) });
-    // update local profile and UI
     await loadDusunByCode(newCode);
     toast("Kode berhasil diganti");
   }catch(e){ console.error(e); err("Gagal regenerate kode"); }
@@ -553,16 +550,16 @@ async function expireKodeNow(){
 }
 
 /* ================== LOAD DUSUN BY CODE & COUNTDOWN ================== */
-let kodeCountdownTimer = null;
 async function loadDusunByCode(kode){
   try{
+    // get by kode
     const snap = await db.collection('Dusun').where('kode','==',kode).limit(1).get();
     if(snap.empty){ $('kepalaInfo').innerHTML = '<div class="muted">Dusun tidak ditemukan.</div>'; return; }
     const doc = snap.docs[0]; currentDusun = { id: doc.id, data: doc.data() };
     const d = currentDusun.data;
     const kepalaAlamat = d.kepalaAlamat || (currentWarga.data.alamat || '-');
     $('kepalaInfo').innerHTML = `<div><strong>${escapeHtml(d.kepalaNama||'-')}</strong></div><div class="muted small">HP: ${escapeHtml(d.kepalaHp||'-')}</div><div class="muted small">Alamat Kepala: ${escapeHtml(kepalaAlamat||'-')}</div>`;
-    // show kode only if current user is the kepala that created it
+    // show kode only if current user is kepala that created it
     if(currentWarga && currentWarga.id === d.kepalaId){
       $('myDusunCode').innerText = 'Kode dusun: ' + (d.kode||'');
       $('myDusunCode').classList.remove('hidden');
@@ -577,7 +574,6 @@ async function loadDusunByCode(kode){
         if(kodeCountdownTimer){ clearInterval(kodeCountdownTimer); kodeCountdownTimer = null; }
       }
     } else {
-      // hide kode UI for non-kepala
       $('myDusunCode').innerText = '';
       $('kodeCountdown').innerText = '';
       hide('regenKodeBtn'); hide('expireKodeBtn');
@@ -634,6 +630,7 @@ async function loadMarkers(){
   mainMarkers.clearLayers();
   if(!currentWarga || !currentWarga.data.kodeDusun) return;
   try{
+    // Avoid composite index by not using orderBy in Firestore query; retrieve all and sort client-side
     const snap = await db.collection('PosDusun').where('dusunCode','==', currentWarga.data.kodeDusun).get();
     if(snap.empty) return;
     const bounds = [];
@@ -678,8 +675,6 @@ function closePosForm(){
   delete $('posModal').dataset.editingId;
 }
 
-let tempChosenPos = { lat:null, lng:null };
-
 function initPosFormMap(){
   if(posFormMap) return;
   posFormMap = L.map('posFormMap').setView([-6.2,106.8166], 12);
@@ -707,7 +702,6 @@ function setPosLocationFromMap(){
 
 /* ================== SAVE POS (modal) - supports add & edit ================== */
 async function savePosFromModal(){
-  // if editing id exists (dataset.editingId), update; otherwise add new
   const editingId = $('posModal').dataset.editingId || null;
   if(editingId) { return updatePos(editingId); }
   return savePosNew();
@@ -784,11 +778,20 @@ async function updatePos(id){
 async function loadPosList(){
   if(!currentWarga || !currentWarga.data.kodeDusun){ $('posList').innerHTML = '<div class="muted">Gabung dusun untuk melihat daftar pos.</div>'; return; }
   try{
-    const snap = await db.collection('PosDusun').where('dusunCode','==', currentWarga.data.kodeDusun).orderBy('createdAt','desc').get();
+    // avoid composite index: get then sort client-side by createdAt
+    const snap = await db.collection('PosDusun').where('dusunCode','==', currentWarga.data.kodeDusun).get();
     if(snap.empty){ $('posList').innerHTML = '<div class="muted">Belum ada pos.</div>'; return; }
+    const arr = [];
+    snap.forEach(doc => arr.push({ id: doc.id, data: doc.data() }));
+    // sort desc by createdAt
+    arr.sort((a,b)=>{
+      const ta = a.data.createdAt ? a.data.createdAt.seconds || 0 : 0;
+      const tb = b.data.createdAt ? b.data.createdAt.seconds || 0 : 0;
+      return tb - ta;
+    });
     let html = '';
-    snap.forEach(doc=>{
-      const d = doc.data(); const id = doc.id;
+    arr.forEach(item=>{
+      const d = item.data; const id = item.id;
       html += `<div class="p-2 border rounded mb-2"><div class="d-flex justify-content-between"><div><strong>${escapeHtml(d.nama)}</strong><div class="muted small">RT/RW: ${escapeHtml(d.rt||'-')}/${escapeHtml(d.rw||'-')}</div></div><div>`;
       html += `<button class="btn btn-sm btn-link" onclick="viewPos('${id}')">View</button>`;
       if(currentWarga.data.role === 'kepala_dusun') html += ` <button class="btn btn-sm btn-primary" onclick="editPos('${id}')">Edit</button> <button class="btn btn-sm btn-danger" onclick="deletePos('${id}')">Hapus</button>`;
@@ -914,20 +917,32 @@ async function openSOS(){
       createdAt: firebase.firestore.FieldValue.serverTimestamp(), status:'open'
     });
     toast("Laporan terkirim!");
-    // refresh reports
     subscribeReportsForDusun(currentWarga.data.kodeDusun);
   }catch(e){ console.error(e); err("Gagal kirim laporan"); }
 }
 
-/* ================== REPORTS: subscribe & render ================== */
+/* ================== REPORTS: subscribe & render (avoid composite index) ================== */
 let reportsCache = [];
 function subscribeReportsForDusun(kodeDusun){
   if(reportsUnsub) reportsUnsub();
   if(!kodeDusun) { renderEmptyReports(); return; }
+  // Avoid using orderBy in query; get all then client-side filter & sort
   const since = new Date(Date.now() - 90*24*60*60*1000);
-  reportsUnsub = db.collection('Laporan').where('dusunCode','==', kodeDusun).where('createdAt','>=', firebase.firestore.Timestamp.fromDate(since)).orderBy('createdAt','desc').onSnapshot(snapshot=>{
+  // fetch once and set listener on collection changes (simple approach: onSnapshot without orderBy)
+  reportsUnsub = db.collection('Laporan').where('dusunCode','==', kodeDusun).onSnapshot(snapshot=>{
     reportsCache = [];
-    snapshot.forEach(doc => reportsCache.push({ id: doc.id, data: doc.data() }));
+    snapshot.forEach(doc => {
+      const d = doc.data();
+      // filter by createdAt >= since if present
+      if(d.createdAt && d.createdAt.toDate && d.createdAt.toDate() < since) return;
+      reportsCache.push({ id: doc.id, data: d });
+    });
+    // sort by createdAt desc
+    reportsCache.sort((a,b)=>{
+      const ta = a.data.createdAt ? (a.data.createdAt.seconds || 0) : 0;
+      const tb = b.data.createdAt ? (b.data.createdAt.seconds || 0) : 0;
+      return tb - ta;
+    });
     renderReportsFromCache();
     renderStatsFromCache();
   }, e=>console.error(e));
@@ -1028,11 +1043,6 @@ function generateCode(len=6){ return Math.random().toString(36).substring(2,2+le
   }catch(e){ console.warn(e); }
 })();
 
-/* ================== SHOW / HIDE helpers for initial UI ================== */
-function showAuth(){ show('authCard'); hide('dashboardCard'); }
-function showDashboard(){ hide('authCard'); show('dashboardCard'); }
-
-/* ================== End of script ================== */
 </script>
 </body>
 </html>
